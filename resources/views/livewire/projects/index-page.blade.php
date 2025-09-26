@@ -8,7 +8,7 @@ new class extends Component {
     public $projects = [];
     public $chartData = [];
     public string $ticketStatus = 'all';
-    public $daterange = 1;
+    public $daterange = 0;
 
     public function mount(): void
     {
@@ -244,6 +244,16 @@ new class extends Component {
 <script>
     let chartInstance = null;
 
+    // 🔹 Mapping des périodes
+    const dayLabels = {
+        0: "7 jours",
+        1: "15 jours",
+        2: "1 mois",
+        3: "3 mois",
+        4: "6 mois",
+        5: "1 an"
+    };
+
     function renderTicketChart(labels, values, status = 'all', days = 1) {
         const ctx = document.getElementById('ticketLineChart')?.getContext('2d');
         if (!ctx) return;
@@ -258,7 +268,9 @@ new class extends Component {
         if (status !== 'all') {
             datasetLabel += ` (${status})`;
         }
-        datasetLabel += ` - ${days} jour${days > 1 ? 's' : ''}`;
+
+        // Ajouter la période
+        datasetLabel += ` - ${dayLabels[days] ?? ""}`;
 
         chartInstance = new Chart(ctx, {
             type: 'line',
@@ -336,7 +348,9 @@ new class extends Component {
             if (status !== 'all') {
                 datasetLabel += ` (${status})`;
             }
-            datasetLabel += ` - ${days} jour${days > 1 ? 's' : ''}`;
+
+            // Utiliser le mapping
+            datasetLabel += ` - ${dayLabels[days] ?? ""}`;
 
             chartInstance.data.labels = labels;
             chartInstance.data.datasets[0].data = values;
@@ -368,8 +382,8 @@ new class extends Component {
     });
 
     // 🔹 Écouter l'événement de mise à jour du graphique
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('chart-updated', (event) => {
+    document.addEventListener("livewire:init", () => {
+        Livewire.on("chart-updated", (event) => {
             const [data] = event;
             updateChart(data.labels, data.values, data.status, data.days);
         });
