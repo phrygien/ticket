@@ -123,7 +123,7 @@ new class extends Component {
                         </div>
                     </div>
                     <div class="mt-5 flex justify-center sm:mt-0">
-                        <x-button icon-right="o-arrow-long-right" href="{{ route('project.view', ['id' => $project['id']]) }}" wire:navigate label="en savoir plus" class="btn-primary" />
+                        <x-button icon-right="o-arrow-long-right" href="{{ route('project.view', ['id' => $project['id']]) }}" wire:navigate label="en savoir plus" class="btn-primary btn-outline" />
                     </div>
                     </div>
                 </div>
