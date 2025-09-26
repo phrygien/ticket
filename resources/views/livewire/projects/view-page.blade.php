@@ -213,7 +213,7 @@ new class extends Component {
                         <div class="bg-white shadow-sm sm:rounded-lg">
                             <div class="px-4 py-5 sm:p-6">
                                 <h3 class="text-base font-semibold text-gray-900">
-                                    {{ Str::limit($ticket['subject_ticket'], 30) }}
+                                    {{ Str::limit($ticket['subject_ticket'], 30) }} @if($ticket['need_attention'] == 1)<span class="indicator-item badge badge-primary">Le client a répondu</span>@endif
                                 </h3>
                                 <div class="mt-2 max-w-xl text-sm text-gray-500">
                                     <p>{{ $ticket['num_ticket'] }} - {{ Str::limit($ticket['subject_ticket'], 30) }}</p>

@@ -42,7 +42,12 @@ new #[Layout('components.layouts.guest')] class extends Component {
 
             // Succès => token trouvé
             if (!empty($data['token'])) {
-                session(['token' => $data['token']]);
+                session([
+                'token' => $data['token'],
+                'name'  => $data['name'] ?? null,
+                'email' => $data['email'] ?? null,
+                'role'  => $data['role'] ?? null,
+            ]);
                 return redirect()->route('project.index');
             }
 
@@ -110,11 +115,11 @@ new #[Layout('components.layouts.guest')] class extends Component {
 
 <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
   <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-    <img src="https://raw.githubusercontent.com/n8n-io/n8n/master/assets/n8n-logo.png" alt="Your Company" class="mx-auto h-10 w-auto" />
+    <img src="{{ asset('logo2.png') }}" alt="Your Company" class="mx-auto h-[200px] w-auto" />
     {{-- <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">{{ __('TICKET - N8N')}}</h2> --}}
   </div>
 
-  <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+  <div class="mt-3 sm:mx-auto sm:w-full sm:max-w-sm">
 
         <!-- Session Status -->
     @if ($errorList)
@@ -134,7 +139,7 @@ new #[Layout('components.layouts.guest')] class extends Component {
         <x-input label="Email" wire:model="email" />
         <x-input type="password" label="Mot de passe" wire:model="password" />
         <x-slot:actions>
-            <x-button label="Login" class="btn-primary" type="submit" spinner="login" />
+            <x-button label="Connexion" class="btn-primary" type="submit" spinner="login" />
         </x-slot:actions>
     </x-form>
 

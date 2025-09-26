@@ -1,3 +1,18 @@
+@php
+    $token = session('token');
+    $name = $token ? session('name') : null;
+
+    // Calculer les initiales (2 lettres max), en respectant les caractères accentués
+    $initials = null;
+    if (!empty($name)) {
+        $words = preg_split('/\s+/', trim($name));
+        $initials = strtoupper(collect($words)
+            ->filter()
+            ->map(fn($w) => mb_substr($w, 0, 1))
+            ->take(2)
+            ->join(''));
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -38,25 +53,55 @@
 
 <body class="min-h-screen font-sans antialiased bg-base-200">
  <x-toast /> 
-    {{-- NAVBAR mobile only --}}
-    <x-nav sticky class="lg:hidden">
-        <x-slot:brand>
-            <x-app-brand />
-        </x-slot:brand>
-        <x-slot:actions>
-            <label for="main-drawer" class="lg:hidden me-3">
-                <x-icon name="o-bars-3" class="cursor-pointer" />
-            </label>
-        </x-slot:actions>
-    </x-nav>
+<div class="navbar bg-base-100 shadow-sm">
+    <div class="flex-1">
+        <span class="text-xl text-gray-500 font-bold">COSM</span> <span class="text-xl text-amber-500 font-bold">IA</span>
+    </div>
+    <div class="flex-none">
+        <ul class="menu menu-horizontal px-1">
+            <li>
+                <details class="dropdown dropdown-end">
+                    <summary class="flex items-center gap-3 cursor-pointer rounded-full px-2 py-1 hover:bg-gray-100">
+                        <!-- Avatar cercle avec initiales -->
+                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+                            {{ $initials ?? '??' }}
+                        </div>
+
+                        <!-- Nom (caché sur petits écrans si besoin) -->
+                        <span class="hidden md:inline text-sm text-gray-700">
+                            {{ $name ?? 'Invité' }}
+                        </span>
+                    </summary>
+
+                    <!-- Menu déroulant -->
+                    <ul
+                        tabindex="0"
+                        class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+                        <li>
+                        <a class="justify-between">
+                            Profil
+                        </a>
+                        </li>
+                        <li>
+                            <form method="POST" action="{{ route('logout') }}" class="w-full">
+                                @csrf
+                                <button type="submit" class="w-full text-pink-600 underline hover:text-pink-800 bg-transparent border-0 p-0 cursor-pointer">
+                                    {{ __('Déconnexion') }}
+                                </button>
+                            </form>
+                        </li>
+
+                    </ul>
+                </details>
+            </li>
+        </ul>
+    </div>
+    </div>
 
     {{-- MAIN --}}
     <x-main full-width>
         {{-- SIDEBAR --}}
         <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
-
-            {{-- BRAND --}}
-            <x-app-brand class="px-5 pt-4" />
 
             {{-- MENU --}}
             <x-menu activate-by-route>
