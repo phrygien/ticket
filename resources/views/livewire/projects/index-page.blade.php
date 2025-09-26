@@ -171,7 +171,22 @@ new class extends Component {
                     <span class="label">Optionnel</span>
                 </fieldset>
 
+                                
                 <fieldset class="fieldset flex-1">
+                    <legend class="fieldset-legend">Période (jours)</legend>
+                    <select class="select w-full" wire:model.live.debounce.500ms="daterange" >
+                        <option value="0">7 Jours</option>
+                        <option value="1">15 Jours</option>
+                        <option value="2">1 Mois</option>
+                        <option value="3">3 Mois</option>
+                        <option value="4">6 Mois</option>
+                        <option value="5">1 Ans</option>
+                    </select>
+                    <span class="label">Optionnel</span>
+                </fieldset>
+
+
+                {{-- <fieldset class="fieldset flex-1">
                     <legend class="fieldset-legend">Période (jours)</legend>
                     <input 
                         wire:model.live.debounce.500ms="daterange" 
@@ -182,7 +197,7 @@ new class extends Component {
                         placeholder="Ex: 30" 
                     />
                     <p class="label">Nombre de jours à analyser</p>
-                </fieldset>
+                </fieldset> --}}
 
             </div>
 
@@ -201,8 +216,8 @@ new class extends Component {
                 <p>
                     Filtres actifs: 
                     <span class="font-medium">{{ $ticketStatus === 'all' ? 'Tous les statuts' : ucfirst($ticketStatus) }}</span>
-                    • 
-                    <span class="font-medium">{{ $daterange }} jour{{ $daterange > 1 ? 's' : '' }}</span>
+                    {{-- • 
+                    <span class="font-medium">{{ $daterange }} jour{{ $daterange > 1 ? 's' : '' }}</span> --}}
                 </p>
             </div>
         </x-card>
