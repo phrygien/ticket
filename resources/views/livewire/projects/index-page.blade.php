@@ -7,11 +7,22 @@ new class extends Component {
 
     public $projects = [];
     public $chartData = [];
+    public string $ticketStatus = 'all';
 
     public function mount(): void
     {
         $this->allProject();
         $this->loadTicketSummary();
+    }
+
+    public function updatedTicketStatus()
+    {
+        $this->loadTicketSummary();
+        // Déclencher la mise à jour du graphique
+        $this->dispatch('chart-updated', [
+            'labels' => $this->chartData['labels'] ?? [],
+            'values' => $this->chartData['values'] ?? []
+        ]);
     }
 
     // Liste des projets
@@ -40,14 +51,10 @@ new class extends Component {
         }
     }
 
-    // Charger le résumé des tickets (chart)
     public function loadTicketSummary()
     {
         try {
-            $token = session('token');
-            if (!$token) {
-                $token = $this->loginAndGetToken();
-            }
+            $token = session('token') ?: $this->loginAndGetToken();
 
             if ($token) {
                 $response = Http::withHeaders([
@@ -55,8 +62,8 @@ new class extends Component {
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
                 ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getticketsummary', [
-                    "ticket_status" => "all",
-                    "date_range"    => 1,
+                    "ticket_status" => $this->ticketStatus,
+                    "date_range" => 1,
                 ]);
 
                 if ($response->successful()) {
@@ -67,15 +74,13 @@ new class extends Component {
                             'labels' => collect($data['details'])->pluck('period')->toArray(),
                             'values' => collect($data['details'])->pluck('nombre')->toArray(),
                         ];
-
                     } else {
                         $this->chartData = ['labels' => [], 'values' => []];
                     }
                 }
-
             }
         } catch (\Throwable $th) {
-            $this->chartData = [];
+            $this->chartData = ['labels' => [], 'values' => []];
         }
     }
 
@@ -96,22 +101,6 @@ new class extends Component {
         <!-- Liste des projets -->
         <div class="grid grid-cols-1 space-y-6">
             @foreach($projects as $project)
-                {{-- <div class="bg-white rounded-md shadow-sm sm:rounded-lg">
-                    <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-base font-semibold text-gray-900">{{ $project['code'] }}</h3>
-                        <div class="mt-2 max-w-xl text-sm text-gray-500">
-                            <p>{{ $project['name'] }}</p>
-                        </div>
-                        <div class="mt-3 text-sm/6">
-                            <a href="{{ route('project.view', ['id' => $project['id']]) }}" wire:navigate
-                                class="font-semibold text-indigo-600 hover:text-indigo-500">
-                                en savoir plus
-                                <span aria-hidden="true"> &rarr;</span>
-                            </a>
-                        </div>
-                    </div>
-                </div> --}}
-
                 <div class="overflow-hidden rounded-lg bg-white shadow-sm">
                 <h2 class="sr-only" id="profile-overview-title">Profile Overview</h2>
                 <div class="bg-white p-6">
@@ -148,7 +137,23 @@ new class extends Component {
 
         <!-- Chart -->
         <x-card subtitle="Statistics par mois">
-            <canvas id="ticketLineChart"></canvas>
+            <div class="mb-3">
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Filtrer par status</legend>
+                    <select class="select" wire:model.live="ticketStatus">
+                        <option value="all">Tous</option>
+                        <option value="en attente">En attente</option>
+                        <option value="en cours">en cours</option>
+                        <option value="cloture">clôture</option>
+                    </select>
+                    <span class="label">Optional</span>
+                </fieldset>
+            </div>
+
+            <div wire:ignore>
+                <canvas id="ticketLineChart"></canvas>
+            </div>
+            
         </x-card>
 
     </div>
@@ -157,11 +162,18 @@ new class extends Component {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+    let chartInstance = null;
+
     function renderTicketChart(labels, values) {
         const ctx = document.getElementById('ticketLineChart')?.getContext('2d');
         if (!ctx) return;
 
-        new Chart(ctx, {
+        // Détruire l'instance existante si elle existe
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
@@ -189,6 +201,17 @@ new class extends Component {
         });
     }
 
+    // Fonction pour mettre à jour le graphique
+    function updateChart(labels, values) {
+        if (chartInstance) {
+            chartInstance.data.labels = labels;
+            chartInstance.data.datasets[0].data = values;
+            chartInstance.update('active');
+        } else {
+            renderTicketChart(labels, values);
+        }
+    }
+
     // 🔹 Exécuter au premier chargement
     document.addEventListener("DOMContentLoaded", () => {
         renderTicketChart(@json($chartData['labels'] ?? []), @json($chartData['values'] ?? []));
@@ -197,5 +220,13 @@ new class extends Component {
     // 🔹 Réexécuter après navigation Livewire
     document.addEventListener("livewire:navigated", () => {
         renderTicketChart(@json($chartData['labels'] ?? []), @json($chartData['values'] ?? []));
+    });
+
+    // 🔹 Écouter l'événement de mise à jour du graphique
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('chart-updated', (event) => {
+            const [data] = event;
+            updateChart(data.labels, data.values);
+        });
     });
 </script>
