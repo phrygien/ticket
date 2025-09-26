@@ -25,7 +25,7 @@ new class extends Component {
     {
         // Valider que daterange est un nombre positif
         if (!is_numeric($this->daterange) || $this->daterange < 1) {
-            $this->daterange = 1;
+            $this->daterange = 0;
         }
         $this->refreshChart();
     }
