@@ -235,13 +235,57 @@ new class extends Component {
     }
 
 
+    public function updateStatus($newStatus)
+    {
+        $token = session('token');
+        if (!$token) {
+            return redirect()->route('login');
+        }
+
+        $response = Http::withHeaders([
+            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+            'Authorization' => "Bearer {$token}",
+            'Accept' => 'application/json',
+        ])->put("https://dev-ia.astucom.com/n8n_cosmia/ticket/{$this->ticketId}", [
+            "status" => $newStatus,
+        ]);
+
+        if ($response->successful()) {
+            $this->ticketDetails['status'] = $newStatus; // mettre à jour localement
+            $this->success("Le ticket est maintenant en statut : {$newStatus}");
+        } else {
+            $this->error("Impossible de mettre à jour le ticket !");
+        }
+    }
+
+
+public function getNextStatus(): array
+{
+    $current = $this->ticketDetails['details'][0]['status'] ?? 'en attente';
+
+    return match ($current) {
+        'en attente' => ['label' => 'Mettre en cours', 'next' => 'en cours'],
+        'en cours'   => ['label' => 'Clôturer le ticket', 'next' => 'cloture'],
+        'cloture'    => ['label' => 'Réouvrir (en attente)', 'next' => 'en attente'],
+        default      => ['label' => 'Mettre en attente', 'next' => 'en attente'],
+    };
+}
+
 
 };
 ?>
 
 <div class="max-w-7xl mx-auto">
 
-    <x-header title="Détail du ticket #{{ $ticketId }}" subtitle="Informations complètes" separator />
+    <x-header title="Détail du ticket #{{ $ticketId }}" subtitle="Informations complètes" separator>
+        <x-slot:actions>
+        <x-button 
+            class="btn-primary"
+            label="{{ $this->getNextStatus()['label'] }}"
+            wire:click="updateStatus('{{ $this->getNextStatus()['next'] }}')" 
+        />
+        </x-slot:actions>
+    </x-header>
 
     <div class="mx-auto max-w-7xl">
 
@@ -365,8 +409,8 @@ new class extends Component {
 
                         <div class="mt-2 max-w-xl text-sm text-gray-700 max-h-[500px] overflow-y-auto pr-2">
                             @php
-    $todos = $ticketDetails['details'][0]['to_do'] ?? '';
-    $items = preg_split('/\r\n|\r|\n/', trim($todos));
+                            $todos = $ticketDetails['details'][0]['to_do'] ?? '';
+                            $items = preg_split('/\r\n|\r|\n/', trim($todos));
                             @endphp
 
                             <ul class="list-disc pl-5 space-y-1">
