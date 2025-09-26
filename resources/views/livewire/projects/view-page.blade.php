@@ -14,12 +14,12 @@ new class extends Component {
 
     public int|string $projectId = 'all';
 
-public function mount($id = 'all')
-{
-    // si id est "all" → on garde tout
-    $this->projectId = $id === 'all' ? 'all' : (int) $id;
-    $this->fetchTickets();
-}
+    public function mount($id = 'all')
+    {
+        // si id est "all" → on garde tout
+        $this->projectId = $id === 'all' ? 'all' : (int) $id;
+        $this->fetchTickets();
+    }
 
     public function fetchTicketsOld()
     {

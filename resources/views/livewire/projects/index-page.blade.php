@@ -96,7 +96,7 @@ new class extends Component {
         <!-- Liste des projets -->
         <div class="grid grid-cols-1 space-y-6">
             @foreach($projects as $project)
-                <div class="bg-white rounded-md shadow-sm sm:rounded-lg">
+                {{-- <div class="bg-white rounded-md shadow-sm sm:rounded-lg">
                     <div class="px-4 py-5 sm:p-6">
                         <h3 class="text-base font-semibold text-gray-900">{{ $project['code'] }}</h3>
                         <div class="mt-2 max-w-xl text-sm text-gray-500">
@@ -110,7 +110,39 @@ new class extends Component {
                             </a>
                         </div>
                     </div>
+                </div> --}}
+
+                <div class="overflow-hidden rounded-lg bg-white shadow-sm">
+                <h2 class="sr-only" id="profile-overview-title">Profile Overview</h2>
+                <div class="bg-white p-6">
+                    <div class="sm:flex sm:items-center sm:justify-between">
+                    <div class="sm:flex sm:space-x-5">
+                        <div class="mt-4 text-center sm:mt-0 sm:pt-1 sm:text-left">
+                        <p class="text-sm font-medium text-gray-600">{{ $project['name'] }}</p>
+                        <p class="text-xl font-bold text-gray-900 sm:text-2xl">{{ $project['code'] }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-5 flex justify-center sm:mt-0">
+                        <x-button icon-right="o-arrow-long-right" href="{{ route('project.view', ['id' => $project['id']]) }}" wire:navigate label="en savoir plus" class="btn-primary" />
+                    </div>
+                    </div>
                 </div>
+                <div class="grid grid-cols-1 divide-y divide-gray-200 border-t border-gray-200 bg-gray-50 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                    <div class="px-6 py-5 text-center text-sm font-medium">
+                    <span class="text-gray-900">{{ $project['pending_ticket'] }}</span>
+                    <span class="text-gray-600">ticket en attente</span>
+                    </div>
+                    <div class="px-6 py-5 text-center text-sm font-medium">
+                    <span class="text-gray-900">{{ $project['in_progress_ticket'] }}</span>
+                    <span class="text-gray-600">ticket encours</span>
+                    </div>
+                    <div class="px-6 py-5 text-center text-sm font-medium">
+                    <span class="text-gray-900">{{ $project['closed_ticket'] }}</span>
+                    <span class="text-gray-600">ticket ferme</span>
+                    </div>
+                </div>
+                </div>
+
             @endforeach
         </div>
 
