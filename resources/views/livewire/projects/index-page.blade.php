@@ -216,8 +216,22 @@ new class extends Component {
                 <p>
                     Filtres actifs: 
                     <span class="font-medium">{{ $ticketStatus === 'all' ? 'Tous les statuts' : ucfirst($ticketStatus) }}</span>
-                    {{-- • 
-                    <span class="font-medium">{{ $daterange }} jour{{ $daterange > 1 ? 's' : '' }}</span> --}}
+                    • 
+                    @php
+                        $labels = [
+                            0 => '7 jours',
+                            1 => '15 jours',
+                            2 => '1 mois',
+                            3 => '3 mois',
+                            4 => '6 mois',
+                            5 => '1 an',
+                        ];
+                    @endphp
+
+                    <span class="font-medium">
+                        {{ $labels[$daterange] ?? '' }}
+                    </span>
+
                 </p>
             </div>
         </x-card>
