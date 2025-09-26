@@ -76,7 +76,7 @@
                     <x-menu-separator />
                 @endif
 
-                <x-menu-item title="Project" icon="o-sparkles" link="/" />
+                <x-menu-item title="Projet disponible" icon="o-sparkles" link="/" />
             </x-menu>
         </x-slot:sidebar>
 

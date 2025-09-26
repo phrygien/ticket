@@ -35,12 +35,20 @@ new class extends Component {
 
     public $message_client;
 
+    public $translatedMessage = '';
+
     public function mount($ticket)
     {
         $this->ticketId = $ticket;
         $this->fetchTicketDetails();
     }
 
+    public function selectMessage(array $message)
+    {
+        $this->selectedMessage = $message;
+        $this->translatedMessage = ''; // Réinitialiser la traduction
+    }
+    
     public function fetchTicketDetails()
     {
         $token = session('token');
@@ -70,6 +78,7 @@ new class extends Component {
     {
         $messages = $this->ticketDetails['conversation']['messages'] ?? [];
         $this->selectedMessage = $messages[$index] ?? null;
+        $this->translatedMessage = '';
     }
 
     function formatMessage($message)
@@ -275,6 +284,45 @@ public function getNextStatus(): array
 }
 
 
+    // Bouton "Traduire en français"
+
+
+// 🔹 Traduire le message sélectionné
+        public function translateMessage()
+        {
+            $token = session('token');
+            if (!$token) {
+                return redirect()->route('login');
+            }
+
+            if (empty($this->selectedMessage['message'])) {
+                $this->translatedMessage = 'Aucun message à traduire.';
+                return;
+            }
+
+            $messageText = $this->selectedMessage['message'];
+
+            $response = Http::withHeaders([
+                'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+                'Authorization' => "Bearer {$token}",
+                'Accept' => 'application/json',
+            ])->post("https://dev-ia.astucom.com/n8n_cosmia/openai/translateandcorrect", [
+                "text" => $messageText,
+                "target" => "fr",
+            ]);
+
+            if ($response->successful()) {
+                $translated = $response->json('translated_text') ?? 'Erreur de traduction';
+                $this->translatedMessage = $this->formatMessage($translated);
+            } else {
+                $this->translatedMessage = 'Erreur lors de l\'appel API';
+            }
+        }
+
+    public function updatedSelectedMessage($value)
+    {
+        $this->translatedMessage = '';
+    }
 };
 ?>
 
@@ -431,10 +479,6 @@ public function getNextStatus(): array
             @elseif($activeTab === 'conversation')
 
                         <div class="md:text-end text-start">
-                            {{-- <x-button icon="o-arrow-path" class="btn-circle btn-outline float-left btn-warning"
-                                wire:click="translateOpenAI" spiner="translateOpenAI" />
- --}}
-
                             @if( count($ticketDetails['conversation']['messages'] ?? []) > 0 )
                             <button wire:click="replyFirstMessage" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300
                                             font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2
@@ -531,76 +575,38 @@ public function getNextStatus(): array
 
                                 </div>
 
-                                @if($selectedMessage)
-                                    <div class="bg-gray-50 sm:rounded-lg">
-                                        <div class="px-4 py-5 sm:p-6">
-                                            <h3 class="text-base font-semibold text-gray-900">
-                                                {{ $selectedMessage['subject'] ?? '(Sans objet)' }}
-                                            </h3>
-                                            <p class="text-sm text-gray-500"><strong>Expéditeur :</strong>
-                                                {{ $selectedMessage['from'] ?? '-' }}
-                                            </p>
-                                            <p class="text-sm text-gray-500"><strong>Date :</strong>
-                                                {{ isset($selectedMessage['date']) ? \Carbon\Carbon::parse($selectedMessage['date'])->format('d/m/Y H:i') : '-' }}
-                                            </p>
+@if($selectedMessage)
+    <div class="bg-gray-50 sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-base font-semibold text-gray-900">
+                {{ $selectedMessage['subject'] ?? '(Sans objet)' }}
+            </h3>
+            <p class="text-sm text-gray-500"><strong>Expéditeur :</strong> {{ $selectedMessage['from'] ?? '-' }}</p>
+            <p class="text-sm text-gray-500"><strong>Date :</strong>
+                {{ isset($selectedMessage['date']) ? \Carbon\Carbon::parse($selectedMessage['date'])->format('d/m/Y H:i') : '-' }}
+            </p>
 
-                                            <div class="mt-2 max-w-xl text-sm text-gray-700 prose">
-                                                {!! $this->formatMessage($selectedMessage['message'] ?? '') !!}
-                                            </div>
+            <!-- Message original -->
+            <div class="mt-2 max-w-xl text-sm text-gray-700 prose">
+                {!! $this->formatMessage($selectedMessage['message'] ?? '') !!}
+            </div>
 
-                                            @if(!empty($selectedMessage['attachments']))
-                                                        @php
-            $images = [];
-            $otherFiles = [];
-            foreach ($selectedMessage['attachments'] as $file) {
-                if (Str::startsWith($file['mimeType'], 'image/')) {
-                    $images[] = $file['data'];
-                } else {
-                    $otherFiles[] = $file;
-                }
-            }
-                                                        @endphp
+            <!-- Message traduit -->
+            @if($translatedMessage)
+                <div class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 prose">
+                    <strong>Traduction :</strong>
+                    <div class="mt-1">{!! $translatedMessage !!}</div>
+                </div>
+            @endif
 
-                                                        @if(!empty($otherFiles))
-                                                            <div class="mt-4 border-t pt-3">
-                                                                <p class="text-sm font-medium text-gray-700 mb-2">Autres fichiers :</p>
-                                                                <ul class="space-y-4">
-                                                                    @foreach($otherFiles as $file)
-                                                                        @php
-                    $ext = pathinfo($file['filename'], PATHINFO_EXTENSION);
-                                                                        @endphp
+            <div class="mt-3 text-sm/6">
+                <x-button label="Traduire en francais" class="btn-accent btn-sm btn-soft" wire:click="translateMessage" spinner="translateMessage" />
+            </div>
+        </div>
+    </div>
+@endif
 
-                                                                        @if(strtolower($ext) === 'pdf')
-                                                                            <!-- Prévisualisation PDF -->
-                                                                            <x-card title="Nice things">
-                                                                                                                                                            <p class="text-sm font-medium text-gray-700 mb-1">{{ $file['filename'] }}</p>
-                                                                                <iframe src="{{ $file['data'] }}" class="w-full h-64" frameborder="0"></iframe>
-                                                                                <a href="{{ $file['data'] }}" download="{{ $file['filename'] }}"
-                                                                                    class="text-blue-600 hover:underline mt-1 inline-block">
-                                                                                    Télécharger
-                                                                                </a>
-                                                                            </x-card>
-                                                                        @else
-                                                                            <!-- Autres fichiers -->
-                                                                            <li class="flex items-center space-x-2">
-                                                                                <a href="{{ $file['data'] }}" download="{{ $file['filename'] }}" target="_blank"
-                                                                                    class="text-blue-600 hover:underline">
-                                                                                    {{ $file['filename'] }}
-                                                                                </a>
-                                                                                <span class="text-xs text-gray-500">
-                                                                                    ({{ number_format($file['size'] / 1024, 1) }} KB)
-                                                                                </span>
-                                                                            </li>
-                                                                        @endif
-                                                                    @endforeach
-                                                                </ul>
-                                                            </div>
-                                                        @endif
-                                            @endif
 
-                                        </div>
-                                    </div>
-                                @endif
 
                             </div>
 

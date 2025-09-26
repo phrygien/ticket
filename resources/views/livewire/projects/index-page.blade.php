@@ -94,7 +94,7 @@ new class extends Component {
 ?>
 
 <div class="mx-auto max-w-9xl">
-    <x-header title="Projet" subtitle="Nos projet sur N8N" separator />
+    <x-header title="Projet" subtitle="Nos projets sur N8N" separator />
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
