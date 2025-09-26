@@ -235,28 +235,31 @@ new class extends Component {
     }
 
 
-    public function updateStatus($newStatus)
-    {
-        $token = session('token');
-        if (!$token) {
-            return redirect()->route('login');
-        }
-
-        $response = Http::withHeaders([
-            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
-            'Authorization' => "Bearer {$token}",
-            'Accept' => 'application/json',
-        ])->put("https://dev-ia.astucom.com/n8n_cosmia/ticket/{$this->ticketId}", [
-            "status" => $newStatus,
-        ]);
-
-        if ($response->successful()) {
-            $this->ticketDetails['status'] = $newStatus; // mettre à jour localement
-            $this->success("Le ticket est maintenant en statut : {$newStatus}");
-        } else {
-            $this->error("Impossible de mettre à jour le ticket !");
-        }
+public function updateStatus($newStatus)
+{
+    $token = session('token');
+    if (!$token) {
+        return redirect()->route('login');
     }
+
+    $response = Http::withHeaders([
+        'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+        'Authorization' => "Bearer {$token}",
+        'Accept' => 'application/json',
+    ])->put("https://dev-ia.astucom.com/n8n_cosmia/ticket/{$this->ticketId}", [
+        "status" => $newStatus,
+    ]);
+
+    if ($response->successful()) {
+        $this->success("Le ticket est maintenant en statut : {$newStatus}");
+        
+        // **rafraîchir les infos du ticket**
+        $this->fetchTicketDetails();
+    } else {
+        $this->error("Impossible de mettre à jour le ticket !");
+    }
+}
+
 
 
 public function getNextStatus(): array
@@ -428,9 +431,9 @@ public function getNextStatus(): array
             @elseif($activeTab === 'conversation')
 
                         <div class="md:text-end text-start">
-                            <x-button icon="o-arrow-path" class="btn-circle btn-outline float-left btn-warning"
+                            {{-- <x-button icon="o-arrow-path" class="btn-circle btn-outline float-left btn-warning"
                                 wire:click="translateOpenAI" spiner="translateOpenAI" />
-
+ --}}
 
                             <button wire:click="replyFirstMessage" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300
                                             font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2
