@@ -202,7 +202,7 @@ new class extends Component {
 }; ?>
 
 <div class="max-w-9xl mx-auto px-4">
-    <x-header title="Details projet" subtitle="Tous les tickets" separator>
+    <x-header title="Détails du projet" subtitle="Tous les tickets" separator>
         <x-slot:middle class="!justify-end">
 
         </x-slot:middle>
