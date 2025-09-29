@@ -185,20 +185,6 @@ new class extends Component {
                     <span class="label">Optionnel</span>
                 </fieldset>
 
-
-                {{-- <fieldset class="fieldset flex-1">
-                    <legend class="fieldset-legend">Période (jours)</legend>
-                    <input 
-                        wire:model.live.debounce.500ms="daterange" 
-                        type="number" 
-                        min="1" 
-                        max="365"
-                        class="input w-full" 
-                        placeholder="Ex: 30" 
-                    />
-                    <p class="label">Nombre de jours à analyser</p>
-                </fieldset> --}}
-
             </div>
 
             <!-- Indicateur de chargement -->

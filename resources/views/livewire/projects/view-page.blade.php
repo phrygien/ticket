@@ -7,52 +7,68 @@ new class extends Component {
     public bool $myModal1 = false;
     public array $selectedTicket = [];
     public array $ticketDetails = [];
-    public array $tickets = [];
-    public int $page = 1;
-    public int $totalPage = 1;
+    
+    // Tickets organisés par statut
+    public array $ticketsByStatus = [
+        'en attente' => [],
+        'en cours' => [],
+        'cloture' => []
+    ];
+    
+    // Pagination par statut
+    public array $pagesByStatus = [
+        'en attente' => 1,
+        'en cours' => 1,
+        'cloture' => 1
+    ];
+    
+    // Indique s'il y a plus de pages pour chaque statut
+    public array $hasMorePages = [
+        'en attente' => true,
+        'en cours' => true,
+        'cloture' => true
+    ];
+    
+    // Loading states pour chaque statut
+    public array $loadingByStatus = [
+        'en attente' => false,
+        'en cours' => false,
+        'cloture' => false
+    ];
+    
     public bool $loadingDetails = false;
-
     public int|string $projectId = 'all';
 
     public function mount($id = 'all')
     {
-        // si id est "all" → on garde tout
         $this->projectId = $id === 'all' ? 'all' : (int) $id;
-        $this->fetchTickets();
+        $this->loadAllStatuses();
     }
 
-    public function fetchTicketsOld()
+    /**
+     * Charge les tickets pour tous les statuts
+     */
+    public function loadAllStatuses()
     {
-        // ⚡ On récupère le token de session
-        $token = session('token');
-
-        if (!$token) {
-            // 👉 Si pas de token, redirection vers login
-            return redirect()->route('login');
-        }
-
-        $response = Http::withHeaders([
-            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
-            'Authorization' => "Bearer {$token}",
-            'Accept' => 'application/json',
-        ])->get("https://dev-ia.astucom.com/n8n_cosmia/ticket?page={$this->page}");
-
-        if ($response->successful()) {
-            $data = $response->json();
-            $this->tickets = $data['data'] ?? [];
-            $this->totalPage = $data['total_page'] ?? 1;
-        }
+        $this->fetchTicketsByStatus('en attente');
+        $this->fetchTicketsByStatus('en cours');
+        $this->fetchTicketsByStatus('cloture');
     }
 
-    public function fetchTickets()
+    /**
+     * Récupère les tickets pour un statut donné
+     */
+    public function fetchTicketsByStatus($status, $append = false)
     {
+        $this->loadingByStatus[$status] = true;
+        
         $token = session('token');
-
         if (!$token) {
             return redirect()->route('login');
         }
 
-        $url = "https://dev-ia.astucom.com/n8n_cosmia/ticket?page={$this->page}";
+        $page = $this->pagesByStatus[$status];
+        $url = "https://dev-ia.astucom.com/n8n_cosmia/ticket?page={$page}&status=" . urlencode($status);
 
         if ($this->projectId !== 'all') {
             $url .= "&project_id={$this->projectId}";
@@ -66,11 +82,70 @@ new class extends Component {
 
         if ($response->successful()) {
             $data = $response->json();
-            $this->tickets = $data['data'] ?? [];
-            $this->totalPage = $data['total_page'] ?? 1;
+            $newTickets = $data['data'] ?? [];
+            
+            if ($append) {
+                // Ajouter les nouveaux tickets aux existants
+                $this->ticketsByStatus[$status] = array_merge(
+                    $this->ticketsByStatus[$status], 
+                    $newTickets
+                );
+            } else {
+                // Remplacer les tickets existants
+                $this->ticketsByStatus[$status] = $newTickets;
+            }
+            
+            // Vérifier s'il y a plus de pages
+            $currentPage = $data['current_page'] ?? $page;
+            $totalPages = $data['total_page'] ?? 1;
+            $this->hasMorePages[$status] = $currentPage < $totalPages;
+        }
+        
+        $this->loadingByStatus[$status] = false;
+    }
+
+    /**
+     * Charge plus de tickets pour un statut (infinity scroll)
+     */
+    public function loadMore($status)
+    {
+        if ($this->hasMorePages[$status] && !$this->loadingByStatus[$status]) {
+            $this->pagesByStatus[$status]++;
+            $this->fetchTicketsByStatus($status, true);
         }
     }
 
+    /**
+     * Recharge tous les tickets quand le projet change
+     */
+    public function setProject($id)
+    {
+        $this->projectId = $id;
+        
+        // Reset pagination pour tous les statuts
+        $this->pagesByStatus = [
+            'en attente' => 1,
+            'en cours' => 1,
+            'cloture' => 1
+        ];
+        
+        // Reset hasMorePages
+        $this->hasMorePages = [
+            'en attente' => true,
+            'en cours' => true,
+            'cloture' => true
+        ];
+        
+        // Vider les tickets existants
+        $this->ticketsByStatus = [
+            'en attente' => [],
+            'en cours' => [],
+            'cloture' => []
+        ];
+        
+        // Recharger
+        $this->loadAllStatuses();
+    }
 
     public function fetchTicketDetails($ticketId)
     {
@@ -91,31 +166,18 @@ new class extends Component {
         $this->loadingDetails = false;
     }
 
-    public function setPage(int $page)
-    {
-        $this->page = $page;
-        $this->fetchTickets();
-    }
-
-    public function nextPage()
-    {
-        if ($this->page < $this->totalPage) {
-            $this->page++;
-            $this->fetchTickets();
-        }
-    }
-
-    public function prevPage()
-    {
-        if ($this->page > 1) {
-            $this->page--;
-            $this->fetchTickets();
-        }
-    }
-
     public function openTicket($ticketId)
     {
-        $ticket = collect($this->tickets)->firstWhere('id', $ticketId);
+        // Chercher le ticket dans tous les statuts
+        $ticket = null;
+        foreach ($this->ticketsByStatus as $tickets) {
+            $found = collect($tickets)->firstWhere('id', $ticketId);
+            if ($found) {
+                $ticket = $found;
+                break;
+            }
+        }
+        
         if ($ticket) {
             $this->selectedTicket = $ticket;
             $this->myModal1 = true;
@@ -130,13 +192,13 @@ new class extends Component {
         $this->selectedTicket = [];
     }
 
-    public function setProject($id)
+    /**
+     * Retourne le nombre total de tickets pour un statut
+     */
+    public function getTicketCountForStatus($status)
     {
-        $this->projectId = $id;
-        $this->page = 1; // reset pagination
-        $this->fetchTickets();
+        return count($this->ticketsByStatus[$status]);
     }
-   
 }; ?>
 
 <div class="max-w-9xl mx-auto px-4">
@@ -191,29 +253,38 @@ new class extends Component {
         </x-slot:actions>
     </x-header>
 
-
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        <!-- Open -->
+        <!-- En attente -->
         <div class="flex flex-col">
             <div class="space-y-3">
-
                 <div class="border-l-4 border-purple-400 bg-purple-50 p-4">
-                    <div class="flex">
+                    <div class="flex justify-between items-center">
                         <div class="ml-3">
                             <p class="text-sm text-purple-700">
                                 En attente
                             </p>
                         </div>
+                        <span class="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
+                            {{ $this->getTicketCountForStatus('en attente') }}
+                        </span>
                     </div>
                 </div>
 
-
-                @foreach($tickets as $ticket)
-                    @if($ticket['status'] === 'en attente')
+                <div 
+                    id="status-en-attente" 
+                    class="space-y-3 max-h-[600px] overflow-y-auto"
+                    x-data="infiniteScroll('en attente')"
+                    x-init="init()"
+                    @scroll="handleScroll"
+                >
+                    @foreach($ticketsByStatus['en attente'] as $ticket)
                         <div class="bg-white shadow-sm sm:rounded-lg">
                             <div class="px-4 py-5 sm:p-6">
                                 <h3 class="text-base font-semibold text-gray-900">
-                                    {{ Str::limit($ticket['subject_ticket'], 30) }} @if($ticket['need_attention'] == 1)<span class="indicator-item badge badge-primary">Le client a répondu</span>@endif
+                                    {{ Str::limit($ticket['subject_ticket'], 30) }} 
+                                    @if($ticket['need_attention'] == 1)
+                                        <span class="indicator-item badge badge-primary">Le client a répondu</span>
+                                    @endif
                                 </h3>
                                 <div class="mt-2 max-w-xl text-sm text-gray-500">
                                     <p>{{ $ticket['num_ticket'] }} - {{ Str::limit($ticket['subject_ticket'], 30) }}</p>
@@ -229,27 +300,42 @@ new class extends Component {
                                 </div>
                             </div>
                         </div>
+                    @endforeach
+                    
+                    @if($loadingByStatus['en attente'])
+                        <div class="flex items-center justify-center py-4">
+                            <div class="loading loading-spinner loading-md"></div>
+                            <span class="ml-2 text-sm text-gray-500">Chargement...</span>
+                        </div>
                     @endif
-                @endforeach
+                </div>
             </div>
         </div>
 
-        <!-- In Progress -->
+        <!-- En cours -->
         <div class="flex flex-col">
             <div class="space-y-3">
-
                 <div class="border-l-4 border-amber-400 bg-amber-50 p-4">
-                    <div class="flex">
+                    <div class="flex justify-between items-center">
                         <div class="ml-3">
                             <p class="text-sm text-amber-700">
                                 En cours
                             </p>
                         </div>
+                        <span class="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
+                            {{ $this->getTicketCountForStatus('en cours') }}
+                        </span>
                     </div>
                 </div>
 
-                @foreach ($tickets as $ticket)
-                    @if($ticket['status'] === 'en cours')
+                <div 
+                    id="status-en-cours" 
+                    class="space-y-3 max-h-[600px] overflow-y-auto"
+                    x-data="infiniteScroll('en cours')"
+                    x-init="init()"
+                    @scroll="handleScroll"
+                >
+                    @foreach($ticketsByStatus['en cours'] as $ticket)
                         <div class="bg-white shadow-sm sm:rounded-lg">
                             <div class="px-4 py-5 sm:p-6">
                                 <h3 class="text-base font-semibold text-gray-900">
@@ -261,34 +347,50 @@ new class extends Component {
                                     <p>Label : {{ $ticket['label'] }} </p>
                                 </div>
                                 <div class="mt-3 text-sm/6">
-                                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" wire:navigate class="font-semibold text-amber-600 hover:text-amber-500">
+                                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" wire:navigate 
+                                        class="font-semibold text-amber-600 hover:text-amber-500">
                                         voir plus
                                         <span aria-hidden="true"> &rarr;</span>
                                     </a>
                                 </div>
                             </div>
                         </div>
+                    @endforeach
+                    
+                    @if($loadingByStatus['en cours'])
+                        <div class="flex items-center justify-center py-4">
+                            <div class="loading loading-spinner loading-md"></div>
+                            <span class="ml-2 text-sm text-gray-500">Chargement...</span>
+                        </div>
                     @endif
-                @endforeach
+                </div>
             </div>
         </div>
 
-        <!-- Done -->
+        <!-- Clôturé -->
         <div class="flex flex-col">
             <div class="space-y-3">
-
                 <div class="border-l-4 border-green-400 bg-green-50 p-4">
-                    <div class="flex">
+                    <div class="flex justify-between items-center">
                         <div class="ml-3">
                             <p class="text-sm text-green-700">
-                                Clôturé 
+                                Clôturé 
                             </p>
                         </div>
+                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                            {{ $this->getTicketCountForStatus('cloture') }}
+                        </span>
                     </div>
                 </div>
 
-                @foreach($tickets as $ticket)
-                    @if($ticket['status'] === 'cloture')
+                <div 
+                    id="status-cloture" 
+                    class="space-y-3 max-h-[600px] overflow-y-auto"
+                    x-data="infiniteScroll('cloture')"
+                    x-init="init()"
+                    @scroll="handleScroll"
+                >
+                    @foreach($ticketsByStatus['cloture'] as $ticket)
                         <div class="bg-white shadow-sm sm:rounded-lg">
                             <div class="px-4 py-5 sm:p-6">
                                 <h3 class="text-base font-semibold text-gray-900">
@@ -308,101 +410,18 @@ new class extends Component {
                                 </div>
                             </div>
                         </div>
+                    @endforeach
+                    
+                    @if($loadingByStatus['cloture'])
+                        <div class="flex items-center justify-center py-4">
+                            <div class="loading loading-spinner loading-md"></div>
+                            <span class="ml-2 text-sm text-gray-500">Chargement...</span>
+                        </div>
                     @endif
-                @endforeach
-
-                {{-- @foreach($tickets as $ticket)
-                @if($ticket['status'] === 'cloture')
-                <div class="bg-white rounded-lg shadow-sm p-3 hover:shadow-md transition cursor-pointer"">
-                                            <h3 class=" text-sm font-semibold text-gray-800 mb-1">
-                    {{ $ticket['num_ticket'] }} - {{ Str::limit($ticket['subject_ticket'], 30) }}
-                    </h3>
-                    <p class="text-xs text-gray-500 mb-2">{{ $ticket['label'] }}</p>
-                    <div class="flex items-center justify-between text-xs text-gray-400">
-                        <span>#{{ $ticket['id'] }}</span>
-                        <span>{{ $ticket['nom_client'] }}</span>
-                    </div>
-                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}">detail</a>
                 </div>
-                @endif
-                @endforeach --}}
             </div>
         </div>
     </div>
-
-    <nav class="flex items-center justify-between border-t border-gray-200 px-4 sm:px-0 mt-6">
-        <!-- Bouton Previous -->
-        <div class="-mt-px flex w-0 flex-1">
-            <button wire:click="prevPage" @if($page <= 1) disabled @endif
-                class="inline-flex items-center border-t-2 border-transparent pt-4 pr-1 text-sm font-medium 
-                   text-gray-500 hover:border-gray-300 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg class="mr-3 size-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd"
-                        d="M18 10a.75.75 0 0 1-.75.75H4.66l2.1 1.95a.75.75 0 1 1-1.02 1.1l-3.5-3.25a.75.75 0 0 1 0-1.1l3.5-3.25a.75.75 0 1 1 1.02 1.1l-2.1 1.95h12.59A.75.75 0 0 1 18 10Z"
-                        clip-rule="evenodd" />
-                </svg>
-                Previous
-            </button>
-        </div>
-
-        <!-- Numéros de pages -->
-        <div class="hidden md:-mt-px md:flex">
-            @php
-                $start = max(1, $page - 2);
-                $end = min($totalPage, $page + 2);
-            @endphp
-
-            {{-- Première page avec ... --}}
-            @if($start > 1)
-                <button wire:click="setPage(1)" class="inline-flex items-center border-t-2 border-transparent px-4 pt-4 text-sm font-medium 
-                                   text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                    1
-                </button>
-                @if($start > 2)
-                    <span
-                        class="inline-flex items-center border-t-2 border-transparent px-4 pt-4 text-sm font-medium text-gray-500">...</span>
-                @endif
-            @endif
-
-            {{-- Pages dynamiques --}}
-            @for($i = $start; $i <= $end; $i++)
-                    <button wire:click="setPage({{ $i }})" class="inline-flex items-center px-4 pt-4 text-sm font-medium 
-                                               {{ $i === $page
-                ? 'border-t-2 border-indigo-500 text-indigo-600'
-                : 'border-t-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
-                        aria-current="{{ $i === $page ? 'page' : '' }}">
-                        {{ $i }}
-                    </button>
-            @endfor
-
-            {{-- Dernière page avec ... --}}
-            @if($end < $totalPage)
-                @if($end < $totalPage - 1)
-                    <span
-                        class="inline-flex items-center border-t-2 border-transparent px-4 pt-4 text-sm font-medium text-gray-500">...</span>
-                @endif
-                <button wire:click="setPage({{ $totalPage }})" class="inline-flex items-center border-t-2 border-transparent px-4 pt-4 text-sm font-medium 
-                                   text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                    {{ $totalPage }}
-                </button>
-            @endif
-        </div>
-
-        <!-- Bouton Next -->
-        <div class="-mt-px flex w-0 flex-1 justify-end">
-            <button wire:click="nextPage" @if($page >= $totalPage) disabled @endif
-                class="inline-flex items-center border-t-2 border-transparent pt-4 pl-1 text-sm font-medium 
-                   text-gray-500 hover:border-gray-300 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                Next
-                <svg class="ml-3 size-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd"
-                        d="M2 10a.75.75 0 0 1 .75-.75h12.59l-2.1-1.95a.75.75 0 1 1 1.02-1.1l3.5 3.25a.75.75 0 0 1 0 1.1l-3.5 3.25a.75.75 0 1 1-1.02-1.1l2.1-1.95H2.75A.75.75 0 0 1 2 10Z"
-                        clip-rule="evenodd" />
-                </svg>
-            </button>
-        </div>
-    </nav>
-
 
     <!-- Modal Détails -->
     <x-modal wire:model="myModal1" title="Détails du Ticket" class="backdrop-blur"
@@ -431,4 +450,60 @@ new class extends Component {
             <x-button label="Fermer" @click="$wire.closeModal()" class="btn-primary" />
         </x-slot:actions>
     </x-modal>
+
+    <script>
+    function infiniteScroll(status) {
+        return {
+            status: status,
+            isLoading: false,
+            
+            init() {
+                // Initialisation si nécessaire
+            },
+            
+            handleScroll(event) {
+                const element = event.target;
+                const threshold = 100; // Déclencher quand on est à 100px du bas
+                
+                if (element.scrollTop + element.clientHeight >= element.scrollHeight - threshold) {
+                    this.loadMore();
+                }
+            },
+            
+            loadMore() {
+                if (this.isLoading) return;
+                
+                this.isLoading = true;
+                
+                // Appeler la méthode Livewire
+                @this.call('loadMore', this.status).then(() => {
+                    this.isLoading = false;
+                }).catch(() => {
+                    this.isLoading = false;
+                });
+            }
+        }
+    }
+    </script>
+
+    <style>
+    /* Styles pour la scrollbar */
+    .overflow-y-auto::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+    </style>
 </div>
