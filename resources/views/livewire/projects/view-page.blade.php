@@ -273,7 +273,7 @@ new class extends Component {
     @endif --}}
 
     <!-- Kanban Board -->
-    <div class="max-w-8xl mx-auto px-4 py-6 min-h-[900px]">
+    <div class="mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Colonne En Attente -->
             <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
