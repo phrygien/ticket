@@ -104,7 +104,7 @@
     {{-- MAIN --}}
     <x-main full-width>
         {{-- SIDEBAR --}}
-        <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
+        <x-slot:sidebar drawer="main-drawer" collapsible class="bg-[#f6f6f7] text-gray-900 border-r border-gray-200 shadow-sm">
 
             {{-- MENU --}}
             <x-menu activate-by-route>
@@ -124,7 +124,7 @@
                     <x-menu-separator />
                 @endif
 
-                <x-menu-item title="Projet disponible" icon="o-sparkles" link="/" />
+                <x-menu-item title="Projet disponible" icon="o-sparkles" link="/"  />
             </x-menu>
         </x-slot:sidebar>
 
