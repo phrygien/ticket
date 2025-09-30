@@ -21,7 +21,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ __('Ticket Automation')}}</title>
-<script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     {{-- EasyMDE --}}
     <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
@@ -46,56 +46,59 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap" rel="stylesheet">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@stack('styles')
 
 </head>
 
 <body class="min-h-screen font-sans antialiased bg-base-200">
- <x-toast /> 
-<div class="navbar bg-base-100 shadow-sm">
-    <div class="flex-1">
-        <span class="text-xl text-gray-500 font-bold">COSM</span> <span class="text-xl text-amber-500 font-bold">IA</span>
-    </div>
-    <div class="flex-none">
-        <ul class="menu menu-horizontal px-1">
-            <li>
-                <details class="dropdown dropdown-end">
-                    <summary class="flex items-center gap-3 cursor-pointer rounded-full px-2 py-1 hover:bg-gray-100">
-                        <!-- Avatar cercle avec initiales -->
-                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
-                            {{ $initials ?? '??' }}
-                        </div>
+    <x-toast />
+    <div class="navbar bg-base-100 shadow-sm">
+        <div class="flex-1">
+            <span class="text-xl text-gray-500 font-bold">COSM</span> <span
+                class="text-xl text-amber-500 font-bold">IA</span>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li>
+                    <details class="dropdown dropdown-end">
+                        <summary
+                            class="flex items-center gap-3 cursor-pointer rounded-full px-2 py-1 hover:bg-gray-100">
+                            <!-- Avatar cercle avec initiales -->
+                            <div
+                                class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+                                {{ $initials ?? '??' }}
+                            </div>
 
-                        <!-- Nom (caché sur petits écrans si besoin) -->
-                        <span class="hidden md:inline text-sm text-gray-700">
-                            {{ $name ?? 'Invité' }}
-                        </span>
-                    </summary>
+                            <!-- Nom (caché sur petits écrans si besoin) -->
+                            <span class="hidden md:inline text-sm text-gray-700">
+                                {{ $name ?? 'Invité' }}
+                            </span>
+                        </summary>
 
-                    <!-- Menu déroulant -->
-                    <ul
-                        tabindex="0"
-                        class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-                        <li>
-                        <a class="justify-between">
-                            Profil
-                        </a>
-                        </li>
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}" class="w-full">
-                                @csrf
-                                <button type="submit" class="w-full text-pink-600 underline hover:text-pink-800 bg-transparent border-0 p-0 cursor-pointer">
-                                    {{ __('Déconnexion') }}
-                                </button>
-                            </form>
-                        </li>
+                        <!-- Menu déroulant -->
+                        <ul tabindex="0"
+                            class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+                            <li>
+                                <a class="justify-between">
+                                    Profil
+                                </a>
+                            </li>
+                            <li>
+                                <form method="POST" action="{{ route('logout') }}" class="w-full">
+                                    @csrf
+                                    <button type="submit"
+                                        class="w-full text-pink-600 underline hover:text-pink-800 bg-transparent border-0 p-0 cursor-pointer">
+                                        {{ __('Déconnexion') }}
+                                    </button>
+                                </form>
+                            </li>
 
-                    </ul>
-                </details>
-            </li>
-        </ul>
-    </div>
+                        </ul>
+                    </details>
+                </li>
+            </ul>
+        </div>
     </div>
 
     {{-- MAIN --}}
@@ -128,6 +131,7 @@
         {{-- The `$slot` goes here --}}
         <x-slot:content>
             {{ $slot }}
+            @stack('scripts')
         </x-slot:content>
     </x-main>
 

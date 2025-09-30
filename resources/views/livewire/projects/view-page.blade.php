@@ -7,35 +7,35 @@ new class extends Component {
     public bool $myModal1 = false;
     public array $selectedTicket = [];
     public array $ticketDetails = [];
-    
+
     // Tickets organisés par statut
     public array $ticketsByStatus = [
         'en attente' => [],
         'en cours' => [],
         'cloture' => []
     ];
-    
+
     // Pagination par statut
     public array $pagesByStatus = [
         'en attente' => 1,
         'en cours' => 1,
         'cloture' => 1
     ];
-    
+
     // Indique s'il y a plus de pages pour chaque statut
     public array $hasMorePages = [
         'en attente' => true,
         'en cours' => true,
         'cloture' => true
     ];
-    
+
     // Loading states pour chaque statut
     public array $loadingByStatus = [
         'en attente' => false,
         'en cours' => false,
         'cloture' => false
     ];
-    
+
     public bool $loadingDetails = false;
     public int|string $projectId = 'all';
 
@@ -61,7 +61,7 @@ new class extends Component {
     public function fetchTicketsByStatus($status, $append = false)
     {
         $this->loadingByStatus[$status] = true;
-        
+
         $token = session('token');
         if (!$token) {
             return redirect()->route('login');
@@ -83,24 +83,21 @@ new class extends Component {
         if ($response->successful()) {
             $data = $response->json();
             $newTickets = $data['data'] ?? [];
-            
+
             if ($append) {
-                // Ajouter les nouveaux tickets aux existants
                 $this->ticketsByStatus[$status] = array_merge(
-                    $this->ticketsByStatus[$status], 
+                    $this->ticketsByStatus[$status],
                     $newTickets
                 );
             } else {
-                // Remplacer les tickets existants
                 $this->ticketsByStatus[$status] = $newTickets;
             }
-            
-            // Vérifier s'il y a plus de pages
+
             $currentPage = $data['current_page'] ?? $page;
             $totalPages = $data['total_page'] ?? 1;
             $this->hasMorePages[$status] = $currentPage < $totalPages;
         }
-        
+
         $this->loadingByStatus[$status] = false;
     }
 
@@ -116,34 +113,56 @@ new class extends Component {
     }
 
     /**
+     * Met à jour le statut d'un ticket (Drag & Drop)
+     */
+    public function updateTicketStatus($ticketId, $newStatus)
+    {
+        $token = session('token');
+
+        $response = Http::withHeaders([
+            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+            'Authorization' => "Bearer {$token}",
+            'Accept' => 'application/json',
+        ])->put("https://dev-ia.astucom.com/n8n_cosmia/ticket/{$ticketId}", [
+                    'status' => $newStatus
+                ]);
+
+        if ($response->successful()) {
+            // Recharger tous les statuts pour mettre à jour l'affichage
+            $this->loadAllStatuses();
+
+            // Message de succès
+            session()->flash('success', 'Ticket déplacé avec succès');
+        } else {
+            session()->flash('error', 'Erreur lors du déplacement du ticket');
+        }
+    }
+
+    /**
      * Recharge tous les tickets quand le projet change
      */
     public function setProject($id)
     {
         $this->projectId = $id;
-        
-        // Reset pagination pour tous les statuts
+
         $this->pagesByStatus = [
             'en attente' => 1,
             'en cours' => 1,
             'cloture' => 1
         ];
-        
-        // Reset hasMorePages
+
         $this->hasMorePages = [
             'en attente' => true,
             'en cours' => true,
             'cloture' => true
         ];
-        
-        // Vider les tickets existants
+
         $this->ticketsByStatus = [
             'en attente' => [],
             'en cours' => [],
             'cloture' => []
         ];
-        
-        // Recharger
+
         $this->loadAllStatuses();
     }
 
@@ -168,7 +187,6 @@ new class extends Component {
 
     public function openTicket($ticketId)
     {
-        // Chercher le ticket dans tous les statuts
         $ticket = null;
         foreach ($this->ticketsByStatus as $tickets) {
             $found = collect($tickets)->firstWhere('id', $ticketId);
@@ -177,7 +195,7 @@ new class extends Component {
                 break;
             }
         }
-        
+
         if ($ticket) {
             $this->selectedTicket = $ticket;
             $this->myModal1 = true;
@@ -192,230 +210,327 @@ new class extends Component {
         $this->selectedTicket = [];
     }
 
-    /**
-     * Retourne le nombre total de tickets pour un statut
-     */
     public function getTicketCountForStatus($status)
     {
         return count($this->ticketsByStatus[$status]);
     }
 }; ?>
 
-<div class="max-w-9xl mx-auto px-4">
-    <x-header title="Détails du projet" subtitle="Tous les tickets" separator>
+<div class="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
+    <x-header title="Tableau Kanban" subtitle="Gestion des tickets" separator>
         <x-slot:middle class="!justify-end">
-
         </x-slot:middle>
         <x-slot:actions>
-            <div>
-                <div class="grid grid-cols-1 sm:hidden">
-                    <!-- Use an "onChange" listener to redirect the user to the selected tab URL. -->
+            <div class="flex items-center gap-3">
+                <!-- Sélecteur mobile -->
+                <div class="sm:hidden">
                     <select aria-label="Select a tab"
-                        class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600">
-                        <option wire:click="setProject(1)">COSMASHOP</option>
-                        <option wire:click="setProject(2)">COSMA PARFUMERIES</option>
-                        <option wire:click="setProject(3)">DIGIPARF</option>
+                        wire:model.live="projectId"
+                        class="block w-full rounded-lg border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600">
+                        <option value="all">Tous les projets</option>
+                        <option value="1">COSMASHOP</option>
+                        <option value="2">COSMA PARFUMERIES</option>
+                        <option value="3">DIGIPARF</option>
                     </select>
-                    <svg class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end fill-gray-500"
-                        viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-slot="icon">
-                        <path fill-rule="evenodd"
-                            d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z"
-                            clip-rule="evenodd" />
-                    </svg>
                 </div>
+                
+                <!-- Navigation desktop -->
                 <div class="hidden sm:block">
-                <nav class="flex space-x-4" aria-label="Tabs">
-                    <button wire:click="setProject('all')"
-                        class="rounded-md px-3 py-2 text-sm font-medium 
-                        {{ $projectId === 'all' ? 'bg-gray-200 text-gray-800' : 'text-gray-600 hover:text-gray-800' }}">
-                        Tous
-                    </button>
-                    <button wire:click="setProject(1)"
-                        class="rounded-md px-3 py-2 text-sm font-medium 
-                        {{ $projectId === 1 ? 'bg-gray-200 text-gray-800' : 'text-gray-600 hover:text-gray-800' }}">
-                        COSMASHOP
-                    </button>
-                    <button wire:click="setProject(2)"
-                        class="rounded-md px-3 py-2 text-sm font-medium 
-                        {{ $projectId === 2 ? 'bg-gray-200 text-gray-800' : 'text-gray-600 hover:text-gray-800' }}">
-                        COSMA PARFUMERIES
-                    </button>
-                    <button wire:click="setProject(3)"
-                        class="rounded-md px-3 py-2 text-sm font-medium 
-                        {{ $projectId === 3 ? 'bg-gray-200 text-gray-800' : 'text-gray-600 hover:text-gray-800' }}">
-                        DIGIPARF
-                    </button>
-                </nav>
-
+                    <nav class="flex gap-2 bg-white rounded-lg p-1 shadow-sm">
+                        <button wire:click="setProject('all')"
+                            class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
+                            {{ $projectId === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
+                            Tous
+                        </button>
+                        <button wire:click="setProject(1)"
+                            class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
+                            {{ $projectId === 1 ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
+                            COSMASHOP
+                        </button>
+                        <button wire:click="setProject(2)"
+                            class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
+                            {{ $projectId === 2 ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
+                            COSMA PARFUMERIES
+                        </button>
+                        <button wire:click="setProject(3)"
+                            class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
+                            {{ $projectId === 3 ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
+                            DIGIPARF
+                        </button>
+                    </nav>
                 </div>
             </div>
-
         </x-slot:actions>
     </x-header>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        <!-- En attente -->
-        <div class="flex flex-col">
-            <div class="space-y-3">
-                <div class="border-l-4 border-purple-400 bg-purple-50 p-4">
-                    <div class="flex justify-between items-center">
-                        <div class="ml-3">
-                            <p class="text-sm text-purple-700">
-                                En attente
-                            </p>
-                        </div>
-                        <span class="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
-                            {{ $this->getTicketCountForStatus('en attente') }}
-                        </span>
+    <!-- Messages flash -->
+    {{-- @if (session('success'))
+        <div class="max-w-7xl mx-auto px-4 py-2">
+            <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg">
+                <p class="text-green-700">{{ session('success') }}</p>
+            </div>
+        </div>
+    @endif --}}
+
+    <!-- Kanban Board -->
+    <div class="max-w-8xl mx-auto px-4 py-6 min-h-[900px]">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Colonne En Attente -->
+            <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-4 py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="text-white font-semibold">En Attente</h3>
                     </div>
+                    <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                        {{ $this->getTicketCountForStatus('en attente') }}
+                    </span>
                 </div>
 
+                <!-- Cards Container -->
                 <div 
                     id="status-en-attente" 
-                    class="space-y-3 max-h-[600px] overflow-y-auto"
-                    x-data="infiniteScroll('en attente')"
+                    class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
+                    x-data="kanbanColumn('en attente')"
                     x-init="init()"
                     @scroll="handleScroll"
+                    @drop.prevent="handleDrop($event)"
+                    @dragover.prevent
+                    @dragenter.prevent="$el.classList.add('ring-2', 'ring-purple-300', 'bg-purple-50')"
+                    @dragleave.prevent="$el.classList.remove('ring-2', 'ring-purple-300', 'bg-purple-50')"
                 >
                     @foreach($ticketsByStatus['en attente'] as $ticket)
-                        <div class="bg-white shadow-sm sm:rounded-lg">
-                            <div class="px-4 py-5 sm:p-6">
-                                <h3 class="text-base font-semibold text-gray-900">
-                                    {{ Str::limit($ticket['subject_ticket'], 30) }} 
-                                    @if($ticket['need_attention'] == 1)
-                                        <span class="indicator-item badge badge-primary">Le client a répondu</span>
-                                    @endif
-                                </h3>
-                                <div class="mt-2 max-w-xl text-sm text-gray-500">
-                                    <p>{{ $ticket['num_ticket'] }} - {{ Str::limit($ticket['subject_ticket'], 30) }}</p>
-                                    <p class="text-purple-500">Projet : {{ $ticket['project_name'] }}</p>
-                                    <p>Label : {{ $ticket['label'] }} </p>
+                        <div 
+                            draggable="true"
+                            data-ticket-id="{{ $ticket['id'] }}"
+                            data-status="en attente"
+                            @dragstart="handleDragStart($event)"
+                            @dragend="handleDragEnd($event)"
+                            class="group bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-move hover:scale-[1.02]"
+                        >
+                            <!-- Header avec badge -->
+                            <div class="flex items-start justify-between mb-3">
+                                <span class="text-xs font-medium text-purple-600 bg-purple-100 px-2 py-1 rounded">
+                                    {{ $ticket['num_ticket'] }}
+                                </span>
+                                @if($ticket['need_attention'] == 1)
+                                    <span class="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded animate-pulse">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        Réponse client
+                                    </span>
+                                @endif
+                            </div>
+
+                            <!-- Titre -->
+                            <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">
+                                {{ Str::limit($ticket['subject_ticket'], 60) }}
+                            </h4>
+
+                            <!-- Meta info -->
+                            <div class="space-y-1.5 mb-3">
+                                <div class="flex items-center gap-2 text-xs text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                    </svg>
+                                    <span class="font-medium">{{ $ticket['label'] }}</span>
                                 </div>
-                                <div class="mt-3 text-sm/6">
-                                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" wire:navigate
-                                        class="font-semibold text-indigo-600 hover:text-indigo-500">
-                                        voir plus
-                                        <span aria-hidden="true"> &rarr;</span>
-                                    </a>
+                                <div class="flex items-center gap-2 text-xs text-purple-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                    </svg>
+                                    <span>{{ $ticket['project_name'] }}</span>
                                 </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex items-center justify-end">
+                                <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
+                                   wire:navigate
+                                   class="text-sm font-medium text-purple-600 hover:text-purple-700 flex items-center gap-1 group-hover:gap-2 transition-all">
+                                    Voir détails
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </a>
                             </div>
                         </div>
                     @endforeach
                     
                     @if($loadingByStatus['en attente'])
-                        <div class="flex items-center justify-center py-4">
-                            <div class="loading loading-spinner loading-md"></div>
-                            <span class="ml-2 text-sm text-gray-500">Chargement...</span>
+                        <div class="flex items-center justify-center py-8">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                            <span class="ml-3 text-sm text-gray-500">Chargement...</span>
                         </div>
                     @endif
                 </div>
             </div>
-        </div>
 
-        <!-- En cours -->
-        <div class="flex flex-col">
-            <div class="space-y-3">
-                <div class="border-l-4 border-amber-400 bg-amber-50 p-4">
-                    <div class="flex justify-between items-center">
-                        <div class="ml-3">
-                            <p class="text-sm text-amber-700">
-                                En cours
-                            </p>
-                        </div>
-                        <span class="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
-                            {{ $this->getTicketCountForStatus('en cours') }}
-                        </span>
+            <!-- Colonne En Cours -->
+            <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        <h3 class="text-white font-semibold">En Cours</h3>
                     </div>
+                    <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                        {{ $this->getTicketCountForStatus('en cours') }}
+                    </span>
                 </div>
 
+                <!-- Cards Container -->
                 <div 
                     id="status-en-cours" 
-                    class="space-y-3 max-h-[600px] overflow-y-auto"
-                    x-data="infiniteScroll('en cours')"
+                    class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
+                    x-data="kanbanColumn('en cours')"
                     x-init="init()"
                     @scroll="handleScroll"
+                    @drop.prevent="handleDrop($event)"
+                    @dragover.prevent
+                    @dragenter.prevent="$el.classList.add('ring-2', 'ring-amber-300', 'bg-amber-50')"
+                    @dragleave.prevent="$el.classList.remove('ring-2', 'ring-amber-300', 'bg-amber-50')"
                 >
                     @foreach($ticketsByStatus['en cours'] as $ticket)
-                        <div class="bg-white shadow-sm sm:rounded-lg">
-                            <div class="px-4 py-5 sm:p-6">
-                                <h3 class="text-base font-semibold text-gray-900">
-                                    {{ Str::limit($ticket['subject_ticket'], 30) }}
-                                </h3>
-                                <div class="mt-2 max-w-xl text-sm text-gray-500">
-                                    <p>{{ $ticket['num_ticket'] }} - {{ Str::limit($ticket['subject_ticket'], 30) }}</p>
-                                    <p class="text-amber-500">Projet : {{ $ticket['project_name'] }}</p>
-                                    <p>Label : {{ $ticket['label'] }} </p>
+                        <div 
+                            draggable="true"
+                            data-ticket-id="{{ $ticket['id'] }}"
+                            data-status="en cours"
+                            @dragstart="handleDragStart($event)"
+                            @dragend="handleDragEnd($event)"
+                            class="group bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-move hover:scale-[1.02]"
+                        >
+                            <div class="flex items-start justify-between mb-3">
+                                <span class="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-1 rounded">
+                                    {{ $ticket['num_ticket'] }}
+                                </span>
+                            </div>
+
+                            <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">
+                                {{ Str::limit($ticket['subject_ticket'], 60) }}
+                            </h4>
+
+                            <div class="space-y-1.5 mb-3">
+                                <div class="flex items-center gap-2 text-xs text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                    </svg>
+                                    <span class="font-medium">{{ $ticket['label'] }}</span>
                                 </div>
-                                <div class="mt-3 text-sm/6">
-                                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" wire:navigate 
-                                        class="font-semibold text-amber-600 hover:text-amber-500">
-                                        voir plus
-                                        <span aria-hidden="true"> &rarr;</span>
-                                    </a>
+                                <div class="flex items-center gap-2 text-xs text-amber-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                    </svg>
+                                    <span>{{ $ticket['project_name'] }}</span>
                                 </div>
+                            </div>
+
+                            <div class="flex items-center justify-end">
+                                <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
+                                   wire:navigate
+                                   class="text-sm font-medium text-amber-600 hover:text-amber-700 flex items-center gap-1 group-hover:gap-2 transition-all">
+                                    Voir détails
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </a>
                             </div>
                         </div>
                     @endforeach
                     
                     @if($loadingByStatus['en cours'])
-                        <div class="flex items-center justify-center py-4">
-                            <div class="loading loading-spinner loading-md"></div>
-                            <span class="ml-2 text-sm text-gray-500">Chargement...</span>
+                        <div class="flex items-center justify-center py-8">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+                            <span class="ml-3 text-sm text-gray-500">Chargement...</span>
                         </div>
                     @endif
                 </div>
             </div>
-        </div>
 
-        <!-- Clôturé -->
-        <div class="flex flex-col">
-            <div class="space-y-3">
-                <div class="border-l-4 border-green-400 bg-green-50 p-4">
-                    <div class="flex justify-between items-center">
-                        <div class="ml-3">
-                            <p class="text-sm text-green-700">
-                                Clôturé 
-                            </p>
-                        </div>
-                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                            {{ $this->getTicketCountForStatus('cloture') }}
-                        </span>
+            <!-- Colonne Clôturé -->
+            <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="text-white font-semibold">Clôturé</h3>
                     </div>
+                    <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                        {{ $this->getTicketCountForStatus('cloture') }}
+                    </span>
                 </div>
 
+                <!-- Cards Container -->
                 <div 
                     id="status-cloture" 
-                    class="space-y-3 max-h-[600px] overflow-y-auto"
-                    x-data="infiniteScroll('cloture')"
+                    class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
+                    x-data="kanbanColumn('cloture')"
                     x-init="init()"
                     @scroll="handleScroll"
+                    @drop.prevent="handleDrop($event)"
+                    @dragover.prevent
+                    @dragenter.prevent="$el.classList.add('ring-2', 'ring-green-300', 'bg-green-50')"
+                    @dragleave.prevent="$el.classList.remove('ring-2', 'ring-green-300', 'bg-green-50')"
                 >
                     @foreach($ticketsByStatus['cloture'] as $ticket)
-                        <div class="bg-white shadow-sm sm:rounded-lg">
-                            <div class="px-4 py-5 sm:p-6">
-                                <h3 class="text-base font-semibold text-gray-900">
-                                    {{ Str::limit($ticket['subject_ticket'], 30) }}
-                                </h3>
-                                <div class="mt-2 max-w-xl text-sm text-gray-500">
-                                    <p>{{ $ticket['num_ticket'] }} - {{ Str::limit($ticket['subject_ticket'], 30) }}</p>
-                                    <p class="text-green-500">Projet : {{ $ticket['project_name'] }}</p>
-                                    <p>Label : {{ $ticket['label'] }} </p>
+                        <div 
+                            draggable="true"
+                            data-ticket-id="{{ $ticket['id'] }}"
+                            data-status="cloture"
+                            @dragstart="handleDragStart($event)"
+                            @dragend="handleDragEnd($event)"
+                            class="group bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-move hover:scale-[1.02] opacity-75"
+                        >
+                            <div class="flex items-start justify-between mb-3">
+                                <span class="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded">
+                                    {{ $ticket['num_ticket'] }}
+                                </span>
+                            </div>
+
+                            <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">
+                                {{ Str::limit($ticket['subject_ticket'], 60) }}
+                            </h4>
+
+                            <div class="space-y-1.5 mb-3">
+                                <div class="flex items-center gap-2 text-xs text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                    </svg>
+                                    <span class="font-medium">{{ $ticket['label'] }}</span>
                                 </div>
-                                <div class="mt-3 text-sm/6">
-                                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" wire:navigate
-                                        class="font-semibold text-green-600 hover:text-green-500">
-                                        voir plus
-                                        <span aria-hidden="true"> &rarr;</span>
-                                    </a>
+                                <div class="flex items-center gap-2 text-xs text-green-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                    </svg>
+                                    <span>{{ $ticket['project_name'] }}</span>
                                 </div>
+                            </div>
+
+                            <div class="flex items-center justify-end">
+                                <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
+                                   wire:navigate
+                                   class="text-sm font-medium text-green-600 hover:text-green-700 flex items-center gap-1 group-hover:gap-2 transition-all">
+                                    Voir détails
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </a>
                             </div>
                         </div>
                     @endforeach
                     
                     @if($loadingByStatus['cloture'])
-                        <div class="flex items-center justify-center py-4">
-                            <div class="loading loading-spinner loading-md"></div>
-                            <span class="ml-2 text-sm text-gray-500">Chargement...</span>
+                        <div class="flex items-center justify-center py-8">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                            <span class="ml-3 text-sm text-gray-500">Chargement...</span>
                         </div>
                     @endif
                 </div>
@@ -428,21 +543,16 @@ new class extends Component {
         box-class="bg-gray-200 max-w-7xl h-[90vh]">
         @if($loadingDetails)
             <div class="flex items-center justify-center py-8">
-                <div class="loading loading-spinner loading-lg"></div>
-                <span class="ml-2">Chargement des détails...</span>
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                <span class="ml-3 text-lg">Chargement des détails...</span>
             </div>
         @elseif(!empty($ticketDetails))
-
-            <x-card title="client" class="mt-2">
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Deserunt officia, amet harum, sequi natus
-                    molestias, aspernatur necessitatibus nulla nam quibusdam magni corporis. Aperiam soluta nam molestiae
-                    laboriosam minus. Optio, repudiandae.
+            <x-card title="Client" class="mt-2">
+                <p>Informations du client...</p>
             </x-card>
 
-            <x-card title="support">
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Maxime est obcaecati sunt. Officiis asperiores
-                esse voluptas? Assumenda culpa iusto aut? Inventore placeat aliquam est odio magni quos quaerat molestias
-                tempora?
+            <x-card title="Support" class="mt-2">
+                <p>Informations du support...</p>
             </x-card>
         @endif
 
@@ -451,11 +561,13 @@ new class extends Component {
         </x-slot:actions>
     </x-modal>
 
+    @push('scripts')
     <script>
-    function infiniteScroll(status) {
+    function kanbanColumn(status) {
         return {
             status: status,
             isLoading: false,
+            draggedElement: null,
             
             init() {
                 // Initialisation si nécessaire
@@ -463,7 +575,7 @@ new class extends Component {
             
             handleScroll(event) {
                 const element = event.target;
-                const threshold = 100; // Déclencher quand on est à 100px du bas
+                const threshold = 100;
                 
                 if (element.scrollTop + element.clientHeight >= element.scrollHeight - threshold) {
                     this.loadMore();
@@ -475,35 +587,241 @@ new class extends Component {
                 
                 this.isLoading = true;
                 
-                // Appeler la méthode Livewire
                 @this.call('loadMore', this.status).then(() => {
                     this.isLoading = false;
                 }).catch(() => {
                     this.isLoading = false;
                 });
+            },
+
+            handleDragStart(event) {
+                const card = event.target;
+                this.draggedElement = card;
+                
+                card.classList.add('opacity-50', 'scale-95');
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/html', card.innerHTML);
+                
+                // Stocker les infos du ticket
+                const ticketId = card.dataset.ticketId;
+                const currentStatus = card.dataset.status;
+                event.dataTransfer.setData('ticketId', ticketId);
+                event.dataTransfer.setData('currentStatus', currentStatus);
+            },
+
+            handleDragEnd(event) {
+                event.target.classList.remove('opacity-50', 'scale-95');
+                
+                // Retirer les indicateurs visuels de toutes les colonnes
+                document.querySelectorAll('[id^="status-"]').forEach(col => {
+                    col.classList.remove('ring-2', 'ring-purple-300', 'ring-amber-300', 'ring-green-300', 'bg-purple-50', 'bg-amber-50', 'bg-green-50');
+                });
+            },
+
+            handleDrop(event) {
+                event.preventDefault();
+                const column = event.currentTarget;
+                
+                // Retirer les indicateurs visuels
+                column.classList.remove('ring-2', 'ring-purple-300', 'ring-amber-300', 'ring-green-300', 'bg-purple-50', 'bg-amber-50', 'bg-green-50');
+                
+                // Récupérer les données du drag
+                const ticketId = event.dataTransfer.getData('ticketId');
+                const currentStatus = event.dataTransfer.getData('currentStatus');
+                const newStatus = this.status;
+                
+                // Ne rien faire si c'est la même colonne
+                if (currentStatus === newStatus) {
+                    return;
+                }
+                
+                // Afficher un indicateur de chargement
+                this.showLoadingIndicator(column);
+                
+                // Appeler la méthode Livewire pour mettre à jour le statut
+                @this.call('updateTicketStatus', ticketId, newStatus)
+                    .then(() => {
+                        this.hideLoadingIndicator(column);
+                        this.showSuccessAnimation(column);
+                    })
+                    .catch((error) => {
+                        this.hideLoadingIndicator(column);
+                        this.showErrorAnimation(column);
+                        console.error('Erreur lors du déplacement:', error);
+                    });
+            },
+
+            showLoadingIndicator(column) {
+                const loader = document.createElement('div');
+                loader.id = 'drop-loader';
+                loader.className = 'absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg';
+                loader.innerHTML = `
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+                        <p class="mt-2 text-sm text-gray-600">Mise à jour...</p>
+                    </div>
+                `;
+                column.parentElement.style.position = 'relative';
+                column.parentElement.appendChild(loader);
+            },
+
+            hideLoadingIndicator(column) {
+                const loader = column.parentElement.querySelector('#drop-loader');
+                if (loader) {
+                    loader.remove();
+                }
+            },
+
+            showSuccessAnimation(column) {
+                const success = document.createElement('div');
+                success.className = 'absolute inset-0 bg-green-500/20 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg animate-pulse';
+                success.innerHTML = `
+                    <div class="bg-white rounded-full p-4 shadow-lg">
+                        <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                `;
+                column.parentElement.appendChild(success);
+                
+                setTimeout(() => {
+                    success.remove();
+                }, 1000);
+            },
+
+            showErrorAnimation(column) {
+                const error = document.createElement('div');
+                error.className = 'absolute inset-0 bg-red-500/20 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg';
+                error.innerHTML = `
+                    <div class="bg-white rounded-full p-4 shadow-lg">
+                        <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                `;
+                column.parentElement.appendChild(error);
+                
+                setTimeout(() => {
+                    error.remove();
+                }, 1500);
             }
         }
     }
     </script>
+@endpush
 
+@push('styles')
     <style>
-    /* Styles pour la scrollbar */
+    /* Scrollbar personnalisée */
     .overflow-y-auto::-webkit-scrollbar {
-        width: 6px;
+        width: 8px;
     }
 
     .overflow-y-auto::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 3px;
+        background: #f1f5f9;
+        border-radius: 4px;
     }
 
     .overflow-y-auto::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 3px;
+        background: #cbd5e1;
+        border-radius: 4px;
+        transition: background 0.2s;
     }
 
     .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
+        background: #94a3b8;
+    }
+
+    /* Animations de drag */
+    @keyframes pulse-ring {
+        0% {
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+        }
+    }
+
+    /* Style pour les cartes pendant le drag */
+    [draggable="true"] {
+        transition: all 0.2s ease;
+    }
+
+    [draggable="true"]:active {
+        cursor: grabbing;
+    }
+
+    /* Hover effects */
+    .group:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Animation pour les badges */
+    @keyframes badge-pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.6;
+        }
+    }
+
+    .animate-pulse {
+        animation: badge-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Responsive improvements */
+    @media (max-width: 1024px) {
+        .max-h-\[calc\(100vh-280px\)\] {
+            max-height: calc(100vh - 320px);
+        }
+    }
+
+    /* Loading states */
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+
+    /* Success animation */
+    @keyframes checkmark {
+        0% {
+            stroke-dashoffset: 50;
+        }
+        100% {
+            stroke-dashoffset: 0;
+        }
+    }
+
+    /* Card entrance animation */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .group {
+        animation: slideIn 0.3s ease-out;
+    }
+
+    /* Drag zone highlight */
+    .ring-2 {
+        transition: all 0.3s ease;
     }
     </style>
+    @endpush
 </div>
+
