@@ -74,7 +74,7 @@ new class extends Component {
         $this->activeTab = $tab;
     }
 
-    public function openMessage($index)
+    public function openMessageOld($index)
     {
         $messages = $this->ticketDetails['conversation']['messages'] ?? [];
         $this->selectedMessage = $messages[$index] ?? null;
@@ -191,7 +191,7 @@ new class extends Component {
 
 
     // reply email
-    public function reply(): void
+    public function replyOld(): void
     {
         $token = session('token');
 
@@ -224,14 +224,13 @@ new class extends Component {
             "attachements" => $attachments,
         ];
 
-        // dd(json_encode($body, JSON_UNESCAPED_SLASHES));
+        //dd(json_encode($body, JSON_UNESCAPED_SLASHES));
         // Appel API
         $response = Http::withHeaders([
             'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
             'Authorization' => "Bearer {$token}",
             'Accept' => 'application/json',
         ])->post("https://dev-ia.astucom.com/n8n_cosmia/ticket/replymail", $body);
-
 
 
         if ($response->successful()) {
@@ -323,6 +322,149 @@ new class extends Component {
     {
         $this->translatedMessage = '';
     }
+
+
+    public function reply(): void
+    {
+        $token = session('token');
+
+        $this->validate([
+            'message_txt' => 'required|string',
+            'destinateur' => 'required',
+        ]);
+
+        $attachments = [];
+        if (!empty($this->photos)) {
+            foreach ($this->photos as $file) {
+                // Vérifier que le fichier existe
+                if (!$file->isValid()) {
+                    $this->error('Un fichier est invalide');
+                    continue;
+                }
+
+                $filePath = $file->getRealPath();
+                $fileContent = file_get_contents($filePath);
+
+                // Vérifier que le contenu n'est pas vide
+                if (empty($fileContent)) {
+                    $this->error("Le fichier {$file->getClientOriginalName()} est vide");
+                    continue;
+                }
+
+                $base64Content = base64_encode($fileContent);
+
+                // Vérifier l'encodage
+                if (empty($base64Content)) {
+                    $this->error("Erreur d'encodage pour {$file->getClientOriginalName()}");
+                    continue;
+                }
+
+                $attachments[] = [
+                    'filename' => $file->getClientOriginalName(),
+                    'mimeType' => $file->getMimeType(),
+                    'contentBase64' => $base64Content,
+                ];
+            }
+        }
+
+        // Vérifier que des attachements ont été ajoutés
+        if (!empty($this->photos) && empty($attachments)) {
+            $this->error('Aucun fichier valide n\'a pu être traité');
+            return;
+        }
+
+        $messages = $this->ticketDetails['conversation']['messages'] ?? [];
+        $firstMessage = $messages[0];
+        $firstMessageId = $firstMessage['message_id'];
+        $ticket_id = $this->ticketId;
+
+        $body = [
+            "ticket_id" => $ticket_id,
+            "first_message_id" => $firstMessageId,
+            "replyText" => $this->message_txt,
+            "attachements" => $attachments,
+        ];
+
+        // Debug : afficher le body avant l'envoi
+        \Log::info('Body envoyé:', $body);
+
+        $response = Http::withHeaders([
+            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+            'Authorization' => "Bearer {$token}",
+            'Accept' => 'application/json',
+        ])->post("https://dev-ia.astucom.com/n8n_cosmia/ticket/replymail", $body);
+
+        if ($response->successful()) {
+            $this->message_txt = '';
+            $this->photos = [];
+            $this->success('Email envoyé avec succès !');
+        } else {
+            \Log::error('Erreur API:', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            $this->error('Erreur lors de l\'envoi de l\'email : ' . $response->body());
+        }
+    }
+
+public function formatFileSize($bytes)
+{
+    if ($bytes >= 1073741824) {
+        return number_format($bytes / 1073741824, 2) . ' GB';
+    } elseif ($bytes >= 1048576) {
+        return number_format($bytes / 1048576, 2) . ' MB';
+    } elseif ($bytes >= 1024) {
+        return number_format($bytes / 1024, 2) . ' KB';
+    } else {
+        return $bytes . ' bytes';
+    }
+}
+
+
+public function downloadAttachment($messageIndex, $attachmentIndex)
+{
+    $messages = $this->ticketDetails['conversation']['messages'] ?? [];
+    
+    if (!isset($messages[$messageIndex]['attachments'][$attachmentIndex])) {
+        $this->error('Pièce jointe introuvable');
+        return;
+    }
+    
+    $attachment = $messages[$messageIndex]['attachments'][$attachmentIndex];
+    
+    // Extraire les données base64
+    if (isset($attachment['data']) && str_starts_with($attachment['data'], 'data:')) {
+        preg_match('/data:([^;]+);base64,(.+)/', $attachment['data'], $matches);
+        
+        if (count($matches) === 3) {
+            $mimeType = $matches[1];
+            $base64Data = $matches[2];
+            $fileContent = base64_decode($base64Data);
+            $filename = $attachment['filename'] ?? 'document';
+            
+            return response()->streamDownload(function() use ($fileContent) {
+                echo $fileContent;
+            }, $filename, [
+                'Content-Type' => $mimeType,
+            ]);
+        }
+    }
+    
+    $this->error('Impossible de télécharger la pièce jointe');
+}
+
+
+public ?int $selectedMessageIndex = null;
+
+public function openMessage($index)
+{
+    $messages = $this->ticketDetails['conversation']['messages'] ?? [];
+    $this->selectedMessage = $messages[$index] ?? null;
+    $this->selectedMessageIndex = $index;
+    $this->translatedMessage = '';
+}
+
+
 };
 ?>
 
@@ -599,8 +741,89 @@ new class extends Component {
                 </div>
             @endif
 
+        <!-- Pièces jointes -->
+        @if(!empty($selectedMessage['attachments']))
+            <div class="mt-4 border-t border-gray-200 pt-4">
+                <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                    <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                    </svg>
+                    Pièces jointes ({{ count($selectedMessage['attachments']) }})
+                </h4>
+                
+                <ul class="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white shadow-sm">
+                    @foreach($selectedMessage['attachments'] as $attachmentIndex => $attachment)
+                        <li class="flex items-center justify-between py-3 px-4 hover:bg-gray-50 transition-colors duration-150">
+                            <div class="flex items-center flex-1 min-w-0">
+                                @php
+                                    $filename = $attachment['filename'] ?? 'Fichier sans nom';
+                                    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                                    $mimeType = $attachment['mimeType'] ?? '';
+                                    
+                                    [$iconColor, $bgColor] = match(true) {
+                                        $extension === 'pdf' || str_contains($mimeType, 'pdf') => 
+                                            ['text-red-600', 'bg-red-50'],
+                                        in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word') => 
+                                            ['text-blue-600', 'bg-blue-50'],
+                                        in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'spreadsheet') => 
+                                            ['text-green-600', 'bg-green-50'],
+                                        in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']) || str_contains($mimeType, 'image') => 
+                                            ['text-purple-600', 'bg-purple-50'],
+                                        in_array($extension, ['zip', 'rar', '7z', 'tar']) => 
+                                            ['text-yellow-600', 'bg-yellow-50'],
+                                        default => ['text-gray-600', 'bg-gray-50']
+                                    };
+                                @endphp
+                                
+                                <div class="flex-shrink-0 {{ $bgColor }} rounded-lg p-2.5 {{ $iconColor }}">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                
+                                <div class="ml-3 flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 truncate">
+                                        {{ $filename }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-0.5">
+                                        {{ $this->formatFileSize($attachment['size'] ?? 0) }}
+                                        @if($extension)
+                                            <span class="mx-1.5">•</span>
+                                            <span class="uppercase">{{ $extension }}</span>
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="ml-4 flex-shrink-0">
+                                <button 
+                                    type="button"
+                                    wire:click="downloadAttachment({{ $selectedMessageIndex }}, {{ $attachmentIndex }})"
+                                    wire:loading.attr="disabled"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150 disabled:opacity-50">
+                                    
+                                    <svg wire:loading.remove wire:target="downloadAttachment" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    
+                                    <svg wire:loading wire:target="downloadAttachment" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    
+                                    <span wire:loading.remove wire:target="downloadAttachment">Télécharger</span>
+                                    <span wire:loading wire:target="downloadAttachment">...</span>
+                                </button>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+            
+
             <div class="mt-3 text-sm/6">
-                <x-button label="Traduire en francais" class="btn-accent btn-sm btn-soft" wire:click="translateMessage" spinner="translateMessage" />
+                <x-button label="Traduire en français" class="btn-accent btn-sm btn-soft" wire:click="translateMessage" spinner="translateMessage" />
             </div>
         </div>
     </div>
@@ -619,14 +842,26 @@ new class extends Component {
 
                         <!-- Grid stuff from Tailwind -->
                         <div class="grid gap-5 lg:grid-cols-2">
-                            <div>
+                            
                                 <x-form wire:submit="reply">
+                            <div>
                                     <x-input label="Destinateur" wire:model="destinateur" placeholder="Destinateur"
                                         icon="o-user" hint="Le client qui va recevoire l'email" readonly />
                                     <x-markdown wire:model="message_txt" label="Message" />
                                     {{-- <x-markdown wire:model="message_client" label="Message du client" /> --}}
 
-                                    <x-slot:actions>
+
+                            </div>
+                            <div>
+                                <x-file wire:model="photos" label="Documents" multiple />
+                                {{-- <fieldset class="fieldset">
+                                    <legend class="fieldset-legend">Attachements</legend>
+                                    <input wire:model="photos" type="file" class="file-input" multiple/>
+                                    <label class="label">Max size 2MB</label>
+                                </fieldset> --}}
+                            </div>
+
+                                                                <x-slot:actions>
                                         <div class="flex justify-between w-full">
                                             <x-button label="Annuler" />
 
@@ -642,15 +877,8 @@ new class extends Component {
                                     </x-slot:actions>
 
                                 </x-form>
-                            </div>
-                            <div>
-                                <x-file wire:model="photos" label="Documents" multiple />
-                                {{-- <fieldset class="fieldset">
-                                    <legend class="fieldset-legend">Attachements</legend>
-                                    <input wire:model="photos" type="file" class="file-input" multiple/>
-                                    <label class="label">Max size 2MB</label>
-                                </fieldset> --}}
-                            </div>
+
+
                         </div>
                     </div>
                 </div>
