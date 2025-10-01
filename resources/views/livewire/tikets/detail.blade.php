@@ -48,7 +48,7 @@ new class extends Component {
         $this->selectedMessage = $message;
         $this->translatedMessage = ''; // Réinitialiser la traduction
     }
-    
+
     public function fetchTicketDetails()
     {
         $token = session('token');
@@ -244,80 +244,80 @@ new class extends Component {
     }
 
 
-public function updateStatus($newStatus)
-{
-    $token = session('token');
-    if (!$token) {
-        return redirect()->route('login');
+    public function updateStatus($newStatus)
+    {
+        $token = session('token');
+        if (!$token) {
+            return redirect()->route('login');
+        }
+
+        $response = Http::withHeaders([
+            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+            'Authorization' => "Bearer {$token}",
+            'Accept' => 'application/json',
+        ])->put("https://dev-ia.astucom.com/n8n_cosmia/ticket/{$this->ticketId}", [
+                    "status" => $newStatus,
+                ]);
+
+        if ($response->successful()) {
+            $this->success("Le ticket est maintenant en statut : {$newStatus}");
+
+            // **rafraîchir les infos du ticket**
+            $this->fetchTicketDetails();
+        } else {
+            $this->error("Impossible de mettre à jour le ticket !");
+        }
     }
 
-    $response = Http::withHeaders([
-        'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
-        'Authorization' => "Bearer {$token}",
-        'Accept' => 'application/json',
-    ])->put("https://dev-ia.astucom.com/n8n_cosmia/ticket/{$this->ticketId}", [
-        "status" => $newStatus,
-    ]);
 
-    if ($response->successful()) {
-        $this->success("Le ticket est maintenant en statut : {$newStatus}");
-        
-        // **rafraîchir les infos du ticket**
-        $this->fetchTicketDetails();
-    } else {
-        $this->error("Impossible de mettre à jour le ticket !");
+
+    public function getNextStatus(): array
+    {
+        $current = $this->ticketDetails['details'][0]['status'] ?? 'en attente';
+
+        return match ($current) {
+            'en attente' => ['label' => 'Mettre en cours', 'next' => 'en cours'],
+            'en cours' => ['label' => 'Clôturer le ticket', 'next' => 'cloture'],
+            'cloture' => ['label' => 'Réouvrir (en attente)', 'next' => 'en attente'],
+            default => ['label' => 'Mettre en attente', 'next' => 'en attente'],
+        };
     }
-}
-
-
-
-public function getNextStatus(): array
-{
-    $current = $this->ticketDetails['details'][0]['status'] ?? 'en attente';
-
-    return match ($current) {
-        'en attente' => ['label' => 'Mettre en cours', 'next' => 'en cours'],
-        'en cours'   => ['label' => 'Clôturer le ticket', 'next' => 'cloture'],
-        'cloture'    => ['label' => 'Réouvrir (en attente)', 'next' => 'en attente'],
-        default      => ['label' => 'Mettre en attente', 'next' => 'en attente'],
-    };
-}
 
 
     // Bouton "Traduire en français"
 
 
-// 🔹 Traduire le message sélectionné
-        public function translateMessage()
-        {
-            $token = session('token');
-            if (!$token) {
-                return redirect()->route('login');
-            }
-
-            if (empty($this->selectedMessage['message'])) {
-                $this->translatedMessage = 'Aucun message à traduire.';
-                return;
-            }
-
-            $messageText = $this->selectedMessage['message'];
-
-            $response = Http::withHeaders([
-                'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
-                'Authorization' => "Bearer {$token}",
-                'Accept' => 'application/json',
-            ])->post("https://dev-ia.astucom.com/n8n_cosmia/openai/translateandcorrect", [
-                "text" => $messageText,
-                "target" => "fr",
-            ]);
-
-            if ($response->successful()) {
-                $translated = $response->json('translated_text') ?? 'Erreur de traduction';
-                $this->translatedMessage = $this->formatMessage($translated);
-            } else {
-                $this->translatedMessage = 'Erreur lors de l\'appel API';
-            }
+    // 🔹 Traduire le message sélectionné
+    public function translateMessage()
+    {
+        $token = session('token');
+        if (!$token) {
+            return redirect()->route('login');
         }
+
+        if (empty($this->selectedMessage['message'])) {
+            $this->translatedMessage = 'Aucun message à traduire.';
+            return;
+        }
+
+        $messageText = $this->selectedMessage['message'];
+
+        $response = Http::withHeaders([
+            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+            'Authorization' => "Bearer {$token}",
+            'Accept' => 'application/json',
+        ])->post("https://dev-ia.astucom.com/n8n_cosmia/openai/translateandcorrect", [
+                    "text" => $messageText,
+                    "target" => "fr",
+                ]);
+
+        if ($response->successful()) {
+            $translated = $response->json('translated_text') ?? 'Erreur de traduction';
+            $this->translatedMessage = $this->formatMessage($translated);
+        } else {
+            $this->translatedMessage = 'Erreur lors de l\'appel API';
+        }
+    }
 
     public function updatedSelectedMessage($value)
     {
@@ -460,8 +460,8 @@ public function getNextStatus(): array
 
                         <div class="mt-2 max-w-xl text-sm text-gray-700 max-h-[500px] overflow-y-auto pr-2">
                             @php
-                            $todos = $ticketDetails['details'][0]['to_do'] ?? '';
-                            $items = preg_split('/\r\n|\r|\n/', trim($todos));
+    $todos = $ticketDetails['details'][0]['to_do'] ?? '';
+    $items = preg_split('/\r\n|\r|\n/', trim($todos));
                             @endphp
 
                             <ul class="list-disc pl-5 space-y-1">
@@ -479,7 +479,7 @@ public function getNextStatus(): array
             @elseif($activeTab === 'conversation')
 
                         <div class="md:text-end text-start">
-                            @if( count($ticketDetails['conversation']['messages'] ?? []) > 0 )
+                            @if(count($ticketDetails['conversation']['messages'] ?? []) > 0)
                             <button wire:click="replyFirstMessage" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300
                                             font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2
                                             dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
@@ -644,7 +644,12 @@ public function getNextStatus(): array
                                 </x-form>
                             </div>
                             <div>
-                                <x-file wire:model="photos" label="Documents" multiple />
+                                {{-- <x-file wire:model="photos" label="Documents" multiple /> --}}
+                                <fieldset class="fieldset">
+                                    <legend class="fieldset-legend">Attachements</legend>
+                                    <input wire:model="photos" type="file" class="file-input" multiple/>
+                                    <label class="label">Max size 2MB</label>
+                                </fieldset>
                             </div>
                         </div>
                     </div>
