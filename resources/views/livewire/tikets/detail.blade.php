@@ -644,12 +644,12 @@ new class extends Component {
                                 </x-form>
                             </div>
                             <div>
-                                {{-- <x-file wire:model="photos" label="Documents" multiple /> --}}
-                                <fieldset class="fieldset">
+                                <x-file wire:model="photos" label="Documents" multiple />
+                                {{-- <fieldset class="fieldset">
                                     <legend class="fieldset-legend">Attachements</legend>
                                     <input wire:model="photos" type="file" class="file-input" multiple/>
                                     <label class="label">Max size 2MB</label>
-                                </fieldset>
+                                </fieldset> --}}
                             </div>
                         </div>
                     </div>
