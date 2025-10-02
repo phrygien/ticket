@@ -125,6 +125,7 @@
                 @endif
 
                 <x-menu-item title="Projet disponible" icon="o-sparkles" link="/"  />
+                <x-menu-item title="Utilisateur" icon="o-users" link="/users"  />
             </x-menu>
         </x-slot:sidebar>
 
