@@ -199,7 +199,7 @@ new class extends Component {
 
 }; ?>
 
-<div class="mx-auto max-w-5xl">
+<div class="mx-auto w-full">
     <x-header title="Utilisateurs" subtitle="Gestion d'utilisateur" separator>
         <x-slot:middle class="!justify-end">
 
@@ -209,7 +209,7 @@ new class extends Component {
         </x-slot:actions>
     </x-header>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
         @forelse($users as $user)
             <div
                 wire:click="editUser({{ $user['id'] }})"
