@@ -234,9 +234,9 @@ public function update()
     {{-- Modal de création --}}
     <x-modal wire:model="myModal1" title="Ajouter un utilisateur" class="backdrop-blur">
         <x-form wire:submit="save">
-            <fieldset class="fieldset">
+            <fieldset class="fieldset w-full">
                 <legend class="fieldset-legend">Rôle</legend>
-                <select class="select" wire:model="role">
+                <select class="select w-full" wire:model="role">
                     <option value="" disabled selected>Choisir un rôle</option>
                     <option value="super_admin">Super Admin</option>
                     <option value="admin">Admin</option>
@@ -262,7 +262,7 @@ public function update()
         <x-form wire:submit="update">
             <fieldset class="fieldset">
                 <legend class="fieldset-legend">Rôle</legend>
-                <select class="select" wire:model="role">
+                <select class="select w-full" wire:model="role">
                     <option value="" disabled>Choisir un rôle</option>
                     <option value="super_admin">Super Admin</option>
                     <option value="admin">Admin</option>
