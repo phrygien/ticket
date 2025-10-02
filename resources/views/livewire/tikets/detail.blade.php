@@ -407,70 +407,69 @@ new class extends Component {
         }
     }
 
-public function formatFileSize($bytes)
-{
-    if ($bytes >= 1073741824) {
-        return number_format($bytes / 1073741824, 2) . ' GB';
-    } elseif ($bytes >= 1048576) {
-        return number_format($bytes / 1048576, 2) . ' MB';
-    } elseif ($bytes >= 1024) {
-        return number_format($bytes / 1024, 2) . ' KB';
-    } else {
-        return $bytes . ' bytes';
-    }
-}
-
-
-public function downloadAttachment($messageIndex, $attachmentIndex)
-{
-    $messages = $this->ticketDetails['conversation']['messages'] ?? [];
-    
-    if (!isset($messages[$messageIndex]['attachments'][$attachmentIndex])) {
-        $this->error('Pièce jointe introuvable');
-        return;
-    }
-    
-    $attachment = $messages[$messageIndex]['attachments'][$attachmentIndex];
-    
-    // Extraire les données base64
-    if (isset($attachment['data']) && str_starts_with($attachment['data'], 'data:')) {
-        preg_match('/data:([^;]+);base64,(.+)/', $attachment['data'], $matches);
-        
-        if (count($matches) === 3) {
-            $mimeType = $matches[1];
-            $base64Data = $matches[2];
-            $fileContent = base64_decode($base64Data);
-            $filename = $attachment['filename'] ?? 'document';
-            
-            return response()->streamDownload(function() use ($fileContent) {
-                echo $fileContent;
-            }, $filename, [
-                'Content-Type' => $mimeType,
-            ]);
+    public function formatFileSize($bytes)
+    {
+        if ($bytes >= 1073741824) {
+            return number_format($bytes / 1073741824, 2) . ' GB';
+        } elseif ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 2) . ' MB';
+        } elseif ($bytes >= 1024) {
+            return number_format($bytes / 1024, 2) . ' KB';
+        } else {
+            return $bytes . ' bytes';
         }
     }
-    
-    $this->error('Impossible de télécharger la pièce jointe');
-}
 
 
-public ?int $selectedMessageIndex = null;
+    public function downloadAttachment($messageIndex, $attachmentIndex)
+    {
+        $messages = $this->ticketDetails['conversation']['messages'] ?? [];
 
-public function openMessage($index)
-{
-    $messages = $this->ticketDetails['conversation']['messages'] ?? [];
-    $this->selectedMessage = $messages[$index] ?? null;
-    $this->selectedMessageIndex = $index;
-    $this->translatedMessage = '';
-}
+        if (!isset($messages[$messageIndex]['attachments'][$attachmentIndex])) {
+            $this->error('Pièce jointe introuvable');
+            return;
+        }
+
+        $attachment = $messages[$messageIndex]['attachments'][$attachmentIndex];
+
+        // Extraire les données base64
+        if (isset($attachment['data']) && str_starts_with($attachment['data'], 'data:')) {
+            preg_match('/data:([^;]+);base64,(.+)/', $attachment['data'], $matches);
+
+            if (count($matches) === 3) {
+                $mimeType = $matches[1];
+                $base64Data = $matches[2];
+                $fileContent = base64_decode($base64Data);
+                $filename = $attachment['filename'] ?? 'document';
+
+                return response()->streamDownload(function () use ($fileContent) {
+                    echo $fileContent;
+                }, $filename, [
+                    'Content-Type' => $mimeType,
+                ]);
+            }
+        }
+
+        $this->error('Impossible de télécharger la pièce jointe');
+    }
+
+
+    public ?int $selectedMessageIndex = null;
+
+    public function openMessage($index)
+    {
+        $messages = $this->ticketDetails['conversation']['messages'] ?? [];
+        $this->selectedMessage = $messages[$index] ?? null;
+        $this->selectedMessageIndex = $index;
+        $this->translatedMessage = '';
+    }
 
 
 };
 ?>
 
-<div class="max-w-7xl mx-auto">
-
-    <x-header title="Détail du ticket #{{ $ticketId }}" subtitle="Informations complètes" separator>
+<div class="w-full mx-auto">
+    {{-- <x-header title="Détail du ticket #{{ $ticketId }}" subtitle="Informations complètes" separator>
         <x-slot:actions>
         <x-button 
             class="btn-primary"
@@ -478,9 +477,9 @@ public function openMessage($index)
             wire:click="updateStatus('{{ $this->getNextStatus()['next'] }}')" 
         />
         </x-slot:actions>
-    </x-header>
+    </x-header> --}}
 
-    <div class="mx-auto max-w-7xl">
+    <div class="mx-auto w-full">
 
         {{-- Onglets --}}
         <div class="border-b border-gray-200 mb-4">
@@ -618,36 +617,40 @@ public function openMessage($index)
                 </div>
             </div>
 
-            @elseif($activeTab === 'conversation')
+@elseif($activeTab === 'conversation')
 
-                        <div class="md:text-end text-start">
-                            @if(count($ticketDetails['conversation']['messages'] ?? []) > 0)
-                            <button wire:click="replyFirstMessage" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300
-                                            font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2
-                                            dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                                Répondre
-                            </button>
-                            @endif
-                        </div>
+    <div class="flex h-[calc(100vh-200px)] bg-gray-50">
+        <!-- Liste des messages (gauche) -->
+        <div class="w-1/2 bg-white border-r border-gray-200 flex flex-col">
+            <!-- Header avec bouton répondre -->
+            <div class="p-4 border-b border-gray-200 bg-white">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">Conversation</h2>
+                    @if(count($ticketDetails['conversation']['messages'] ?? []) > 0)
+                        <button wire:click="replyFirstMessage" type="button"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                            Répondre
+                        </button>
+                    @endif
+                </div>
+            </div>
 
-                        <div class="w-full">
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                                <div class="space-y-4 max-h-[820px] overflow-y-auto">
-
-                                    <ul role="list" class="divide-y divide-white divide-y-6">
-                                        @php
+            <!-- Liste scrollable des messages -->
+            <div class="flex-1 overflow-y-auto">
+                @php
     $messages = $ticketDetails['conversation']['messages'] ?? [];
     $detail = $ticketDetails['details'][0] ?? [];
     $clientEmail = strtolower($detail['original_client_mail'] ?? '');
     $supportEmail = strtolower($detail['reception_mail'] ?? '');
-                                        @endphp
+                @endphp
 
-                                        @forelse($messages as $idx => $msg)
-                                            @php
+                @forelse($messages as $idx => $msg)
+                    @php
         $fromRaw = $msg['from'] ?? '';
-        // Extraire email depuis "Nom <email>"
         if (preg_match('/<([^>]+)>/', $fromRaw, $m)) {
             $fromEmail = strtolower($m[1]);
         } elseif (preg_match('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', $fromRaw, $m2)) {
@@ -665,220 +668,299 @@ public function openMessage($index)
             $label = 'Support';
             $badgeClasses = 'bg-green-100 text-green-600';
         }
-                                            @endphp
 
-                                            <li class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 py-5 sm:flex-nowrap">
-                                                <div>
-                                                    {{-- Sujet --}}
-                                                    <p class="text-sm font-semibold text-gray-900">
-                                                        <a @click="$wire.myModal1 = true" href="#"
-                                                            wire:click.prevent="$wire.openMessage({{ $idx }})" class="hover:underline">
-                                                            {{ $msg['subject'] ?? '(Sans objet)' }}
-                                                        </a>
-                                                    </p>
+        $isSelected = $selectedMessageIndex === $idx;
+                    @endphp
 
-                                                    {{-- Expéditeur + Date --}}
-                                                    <div class="mt-1 flex items-center gap-x-2 text-xs text-gray-500">
-                                                        <p class="flex items-center gap-x-1">
-                                                            <span class="hover:underline">{{ $fromRaw }}</span>
+                    <div wire:click="openMessage({{ $idx }})"
+                        class="px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors {{ $isSelected ? 'bg-blue-50 border-l-4 border-l-blue-600' : '' }}">
 
-                                                            @if($label)
-                                                                <span
-                                                                    class="ml-1 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium {{ $badgeClasses }}">
-                                                                    {{ $label }}
-                                                                </span>
-                                                            @endif
-                                                        </p>
-                                                        <svg viewBox="0 0 2 2" class="size-0.5 fill-current">
-                                                            <circle cx="1" cy="1" r="1" />
-                                                        </svg>
-                                                        <p>
-                                                            <time>
-                                                                {{ isset($msg['date']) ? \Carbon\Carbon::parse($msg['date'])->format('d/m/Y H:i') : '' }}
-                                                            </time>
-                                                        </p>
-                                                    </div>
-
-                                                    {{-- Aperçu du message --}}
-                                                    <p class="mt-1 text-xs text-gray-600">
-                                                        {!! nl2br(e(strip_tags(\Illuminate\Support\Str::words($msg['message'] ?? '', 30, '...')))) !!}
-                                                        <a href="#" wire:click.prevent="openMessage({{ $idx }})"
-                                                            class="font-semibold text-indigo-600 hover:text-indigo-500">
-                                                            en savoir plus →
-                                                        </a>
-
-                                                    </p>
-                                                </div>
-                                            </li>
-                                        @empty
-                                            <li class="py-5 text-gray-500">Aucun message trouvé.</li>
-                                        @endforelse
-                                    </ul>
-
+                        <!-- Header du message -->
+                        <div class="flex items-start justify-between mb-1">
+                            <div class="flex items-center gap-2 flex-1 min-w-0">
+                                <!-- Avatar initial -->
+                                <div
+                                    class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                                    {{ strtoupper(substr($fromRaw, 0, 1)) }}
                                 </div>
 
-@if($selectedMessage)
-    <div class="bg-gray-50 sm:rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-base font-semibold text-gray-900">
-                {{ $selectedMessage['subject'] ?? '(Sans objet)' }}
-            </h3>
-            <p class="text-sm text-gray-500"><strong>Expéditeur :</strong> {{ $selectedMessage['from'] ?? '-' }}</p>
-            <p class="text-sm text-gray-500"><strong>Date :</strong>
-                {{ isset($selectedMessage['date']) ? \Carbon\Carbon::parse($selectedMessage['date'])->format('d/m/Y H:i') : '-' }}
-            </p>
-
-            <!-- Message original -->
-            <div class="mt-2 max-w-xl text-sm text-gray-700 prose">
-                {!! $this->formatMessage($selectedMessage['message'] ?? '') !!}
-            </div>
-
-            <!-- Message traduit -->
-            @if($translatedMessage)
-                <div class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 prose">
-                    <strong>Traduction :</strong>
-                    <div class="mt-1">{!! $translatedMessage !!}</div>
-                </div>
-            @endif
-
-        <!-- Pièces jointes -->
-        @if(!empty($selectedMessage['attachments']))
-            <div class="mt-4 border-t border-gray-200 pt-4">
-                <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                    <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                    </svg>
-                    Pièces jointes ({{ count($selectedMessage['attachments']) }})
-                </h4>
-                
-                <ul class="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white shadow-sm">
-                    @foreach($selectedMessage['attachments'] as $attachmentIndex => $attachment)
-                        <li class="flex items-center justify-between py-3 px-4 hover:bg-gray-50 transition-colors duration-150">
-                            <div class="flex items-center flex-1 min-w-0">
-                                @php
-                                    $filename = $attachment['filename'] ?? 'Fichier sans nom';
-                                    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                                    $mimeType = $attachment['mimeType'] ?? '';
-                                    
-                                    [$iconColor, $bgColor] = match(true) {
-                                        $extension === 'pdf' || str_contains($mimeType, 'pdf') => 
-                                            ['text-red-600', 'bg-red-50'],
-                                        in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word') => 
-                                            ['text-blue-600', 'bg-blue-50'],
-                                        in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'spreadsheet') => 
-                                            ['text-green-600', 'bg-green-50'],
-                                        in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']) || str_contains($mimeType, 'image') => 
-                                            ['text-purple-600', 'bg-purple-50'],
-                                        in_array($extension, ['zip', 'rar', '7z', 'tar']) => 
-                                            ['text-yellow-600', 'bg-yellow-50'],
-                                        default => ['text-gray-600', 'bg-gray-50']
-                                    };
-                                @endphp
-                                
-                                <div class="flex-shrink-0 {{ $bgColor }} rounded-lg p-2.5 {{ $iconColor }}">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                                
-                                <div class="ml-3 flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 truncate">
-                                        {{ $filename }}
-                                    </p>
-                                    <p class="text-xs text-gray-500 mt-0.5">
-                                        {{ $this->formatFileSize($attachment['size'] ?? 0) }}
-                                        @if($extension)
-                                            <span class="mx-1.5">•</span>
-                                            <span class="uppercase">{{ $extension }}</span>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-semibold text-gray-900 truncate">
+                                            {{ preg_match('/^([^<]+)/', $fromRaw, $nameMatch) ? trim($nameMatch[1]) : $fromRaw }}
+                                        </span>
+                                        @if($label)
+                                            <span
+                                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $badgeClasses }}">
+                                                {{ $label }}
+                                            </span>
                                         @endif
+                                    </div>
+                                    <p class="text-xs text-gray-500">
+                                        {{ isset($msg['date']) ? \Carbon\Carbon::parse($msg['date'])->format('d/m/Y H:i') : '' }}
                                     </p>
                                 </div>
                             </div>
-                            
-                            <div class="ml-4 flex-shrink-0">
-                                <button 
-                                    type="button"
-                                    wire:click="downloadAttachment({{ $selectedMessageIndex }}, {{ $attachmentIndex }})"
-                                    wire:loading.attr="disabled"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150 disabled:opacity-50">
-                                    
-                                    <svg wire:loading.remove wire:target="downloadAttachment" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    
-                                    <svg wire:loading wire:target="downloadAttachment" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    
-                                    <span wire:loading.remove wire:target="downloadAttachment">Télécharger</span>
-                                    <span wire:loading wire:target="downloadAttachment">...</span>
-                                </button>
-                            </div>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-            
 
-            <div class="mt-3 text-sm/6">
-                <x-button label="Traduire en français" class="btn-accent btn-sm btn-soft" wire:click="translateMessage" spinner="translateMessage" />
+                            <!-- Indicateur pièces jointes -->
+                            @if(!empty($msg['attachments']))
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                </svg>
+                            @endif
+                        </div>
+
+                        <!-- Sujet -->
+                        <h3 class="text-sm font-medium text-gray-900 mb-1 truncate">
+                            {{ $msg['subject'] ?? '(Sans objet)' }}
+                        </h3>
+
+                        <!-- Aperçu du message -->
+                        <p class="text-xs text-gray-600 line-clamp-2">
+                            {{ strip_tags($msg['message'] ?? '') }}
+                        </p>
+                    </div>
+                @empty
+                    <div class="flex flex-col items-center justify-center h-full p-8 text-center">
+                        <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <p class="text-gray-500">Aucun message trouvé</p>
+                    </div>
+                @endforelse
             </div>
         </div>
-    </div>
-@endif
 
+        <!-- Panneau de lecture (droite) -->
+        <div class="flex-1 flex flex-col bg-white">
+            @if($selectedMessage)
+                <!-- En-tête du message -->
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-start justify-between mb-3">
+                        <h1 class="text-xl font-semibold text-gray-900 flex-1">
+                            {{ $selectedMessage['subject'] ?? '(Sans objet)' }}
+                        </h1>
+                    </div>
 
-
-                            </div>
-
+                    <!-- Info expéditeur -->
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                            {{ strtoupper(substr($selectedMessage['from'] ?? '', 0, 1)) }}
                         </div>
-            @endif
-            @if($activeTab === 'sendmail')
-                <div class="mx-auto max-w-7xl">
-                    <div>
-                        <x-header title="Repondre email" separator />
-
-                        <!-- Grid stuff from Tailwind -->
-                        <div class="grid gap-5 lg:grid-cols-2">
-                            
-                                <x-form wire:submit="reply">
-                            <div>
-                                    <x-input label="Destinateur" wire:model="destinateur" placeholder="Destinateur"
-                                        icon="o-user" hint="Le client qui va recevoire l'email" readonly />
-                                    <x-markdown wire:model="message_txt" label="Message" />
-                                    {{-- <x-markdown wire:model="message_client" label="Message du client" /> --}}
-
-
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-gray-900">
+                                    {{ preg_match('/^([^<]+)/', $selectedMessage['from'] ?? '', $nameMatch) ? trim($nameMatch[1]) : ($selectedMessage['from'] ?? '-') }}
+                                </span>
+                                @if(!empty($selectedMessage['attachments']))
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                        </svg>
+                                        {{ count($selectedMessage['attachments']) }}
+                                    </span>
+                                @endif
                             </div>
-                            <div>
-                                <x-file wire:model="photos" label="Documents" multiple />
-                                {{-- <fieldset class="fieldset">
-                                    <legend class="fieldset-legend">Attachements</legend>
-                                    <input wire:model="photos" type="file" class="file-input" multiple/>
-                                    <label class="label">Max size 2MB</label>
-                                </fieldset> --}}
+                            <div class="flex items-center gap-2 text-sm text-gray-500">
+                                <span>À: test test</span>
+                                <span>•</span>
+                                <span>{{ isset($selectedMessage['date']) ? \Carbon\Carbon::parse($selectedMessage['date'])->format('d/m/Y H:i') : '-' }}</span>
                             </div>
+                        </div>
+                    </div>
+                </div>
 
-                                                                <x-slot:actions>
-                                        <div class="flex justify-between w-full">
-                                            <x-button label="Annuler" />
+                <!-- Contenu du message -->
+                <div class="flex-1 overflow-y-auto px-6 py-4">
+                    <!-- Message original -->
+                    <div class="prose max-w-none text-gray-700">
+                        {!! $this->formatMessage($selectedMessage['message'] ?? '') !!}
+                    </div>
 
-                                            <div class="flex space-x-2">
-                                                <x-button icon="o-language" class="btn-circle btn-outline"
-                                                    wire:click="detectLanguage" spinner="detectLanguage" />
-                                                <x-button icon="o-language" class="btn-circle btn-outline btn-accent"
-                                                    wire:click="translateOpenAI" spinner="translateOpenAI" />
-                                                <x-button icon="o-paper-airplane" class="btn-circle btn-outline btn-primary"
-                                                    type="submit" spinner="reply" />
+                    <!-- Message traduit -->
+                    @if($translatedMessage)
+                        <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r">
+                            <div class="flex items-start gap-2">
+                                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                                </svg>
+                                <div class="flex-1">
+                                    <strong class="text-yellow-800 text-sm font-semibold">Traduction :</strong>
+                                    <div class="mt-2 text-yellow-900 prose max-w-none">{!! $translatedMessage !!}</div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Pièces jointes -->
+                    @if(!empty($selectedMessage['attachments']))
+                        <div class="mt-6 border-t border-gray-200 pt-6">
+                            <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                                <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                </svg>
+                                Pièces jointes ({{ count($selectedMessage['attachments']) }})
+                            </h4>
+
+                            <div class="grid grid-cols-1 gap-2">
+                                @foreach($selectedMessage['attachments'] as $attachmentIndex => $attachment)
+                                    @php
+                $filename = $attachment['filename'] ?? 'Fichier sans nom';
+                $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                $mimeType = $attachment['mimeType'] ?? '';
+
+                [$iconColor, $bgColor] = match (true) {
+                    $extension === 'pdf' || str_contains($mimeType, 'pdf') =>
+                    ['text-red-600', 'bg-red-50'],
+                    in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word') =>
+                    ['text-blue-600', 'bg-blue-50'],
+                    in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'spreadsheet') =>
+                    ['text-green-600', 'bg-green-50'],
+                    in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']) || str_contains($mimeType, 'image') =>
+                    ['text-purple-600', 'bg-purple-50'],
+                    in_array($extension, ['zip', 'rar', '7z', 'tar']) =>
+                    ['text-yellow-600', 'bg-yellow-50'],
+                    default => ['text-gray-600', 'bg-gray-50']
+                };
+                                    @endphp
+
+                                    <div
+                                        class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <div class="flex items-center flex-1 min-w-0">
+                                            <div class="flex-shrink-0 {{ $bgColor }} rounded-lg p-2.5 {{ $iconColor }}">
+                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+
+                                            <div class="ml-3 flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-900 truncate">{{ $filename }}</p>
+                                                <p class="text-xs text-gray-500 mt-0.5">
+                                                    {{ $this->formatFileSize($attachment['size'] ?? 0) }}
+                                                    @if($extension)
+                                                        <span class="mx-1.5">•</span>
+                                                        <span class="uppercase">{{ $extension }}</span>
+                                                    @endif
+                                                </p>
                                             </div>
                                         </div>
+
+                                        <button type="button"
+                                            wire:click="downloadAttachment({{ $selectedMessageIndex }}, {{ $attachmentIndex }})"
+                                            wire:loading.attr="disabled"
+                                            class="ml-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors disabled:opacity-50">
+                                            <svg wire:loading.remove wire:target="downloadAttachment" class="h-4 w-4" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            <svg wire:loading wire:target="downloadAttachment" class="animate-spin h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                    stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                                </path>
+                                            </svg>
+                                            <span wire:loading.remove wire:target="downloadAttachment">Télécharger</span>
+                                            <span wire:loading wire:target="downloadAttachment">...</span>
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Footer avec actions -->
+                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                    <div class="flex items-center gap-3">
+                        <button type="button" wire:click="translateMessage" wire:loading.attr="disabled"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+                            <svg wire:loading.remove wire:target="translateMessage" class="w-4 h-4" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                            </svg>
+                            <svg wire:loading wire:target="translateMessage" class="animate-spin w-4 h-4" fill="none"
+                                viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                                </circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            <span>Traduire en français</span>
+                        </button>
+
+                        @if(count($ticketDetails['conversation']['messages'] ?? []) > 0)
+                        <button wire:click="replyFirstMessage" type="button"
+                           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                            Répondre
+                        </button>
+                    @endif
+                    </div>
+                </div>
+            @else
+                <!-- État vide -->
+                <div class="flex-1 flex items-center justify-center p-8">
+                    <div class="text-center">
+                        <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-900 mb-1">Sélectionnez un message</h3>
+                        <p class="text-sm text-gray-500">Choisissez un message dans la liste pour afficher son contenu</p>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+@endif
+            @if($activeTab === 'sendmail')
+                <div class="mx-auto w-full">
+
+
+
+                    <div>
+                        <x-header title="Repondre" separator />
+                    
+                        <!-- Grid stuff from Tailwind -->
+                        <div class="grid gap-5 lg:grid-cols-2"> 
+                            <div>
+                                <x-form wire:submit="reply">
+                                    <x-input label="Destinateur" wire:model="destinateur" placeholder="Destinateur" icon="o-user"
+                                        hint="Le client qui va recevoire l'email" readonly />
+                                    <x-markdown wire:model="message_txt" label="Message" />
+                                    <x-slot:actions>
+                                        <x-button label="Annuler" />
+                                        <x-button icon="o-language" class="btn-circle btn-outline btn-accent" wire:click="translateOpenAI"
+                                                spinner="translateOpenAI" />
+                                        <x-button icon="o-paper-airplane" class="btn-circle btn-outline btn-primary" type="submit"
+                                                spinner="reply" />
                                     </x-slot:actions>
-
                                 </x-form>
-
-
+                            </div>  
+                            <div>
+                                {{-- Get a nice picture from `StorySet` web site --}}
+                                {{-- <img src="/edit-form.png" width="300" class="mx-auto" /> --}}
+                                <x-file wire:model="photos" label="Attachements" multiple />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -887,15 +969,34 @@ public function openMessage($index)
             @if($activeTab === 'commentaire')
 
                 <div class="mx-auto max-w-5xl">
-                    @foreach ($ticketDetails['comment'] as $comment)
-                        <div class="bg-white shadow-sm rounded-md sm:rounded-lg p-4 mt-2">
-                            <h3 class="text-sm font-semibold text-gray-700">Commentaire #{{ $comment['id'] }}</h3>
-                            <p class="mt-1 text-gray-600">{{ $comment['comment'] }}</p>
-                            <p class="text-xs text-gray-400 mt-1">Publié le :
-                                {{ \Carbon\Carbon::parse($comment['created_at'])->format('d/m/Y H:i') }}</p>
-                        </div>
-                    @endforeach
+                    <ul role="list" class="divide-y divide-gray-100">
+                        @foreach ($ticketDetails['comment'] as $comment)
+                            <li class="py-4">
+                                <div class="flex items-center gap-x-3">
+                                    {{-- Avatar par défaut ou personnalisé --}}
+                                    <img src="https://ui-avatars.com/api/?name={{ urlencode($comment['user']['name'] ?? 'U') }}&background=random"
+                                        alt="avatar" class="size-6 flex-none rounded-full bg-gray-800">
+
+                                    {{-- Auteur du commentaire --}}
+                                    <h3 class="flex-auto truncate text-sm font-semibold text-gray-900">
+                                        {{ $comment['user']['name'] ?? 'Utilisateur' }}
+                                    </h3>
+
+                                    {{-- Date de publication --}}
+                                    <time datetime="{{ $comment['created_at'] }}" class="flex-none text-xs text-gray-500">
+                                        {{ \Carbon\Carbon::parse($comment['created_at'])->diffForHumans() }}
+                                    </time>
+                                </div>
+
+                                {{-- Contenu du commentaire --}}
+                                <p class="mt-3 text-sm text-gray-600">
+                                    {{ $comment['comment'] }}
+                                </p>
+                            </li>
+                        @endforeach
+                    </ul>
                 </div>
+
             @endif
 
     </div>
