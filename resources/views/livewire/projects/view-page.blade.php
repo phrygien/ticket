@@ -8,6 +8,9 @@ new class extends Component {
     public array $selectedTicket = [];
     public array $ticketDetails = [];
 
+    public string $search = '';
+    public string $searchType = 'all';
+
     // Tickets organisés par statut
     public array $ticketsByStatus = [
         'en attente' => [],
@@ -45,6 +48,25 @@ new class extends Component {
         $this->loadAllStatuses();
     }
 
+    // Méthode appelée quand le search change
+    public function updatedSearch()
+    {
+        // Réinitialiser les pages et recharger
+        $this->pagesByStatus = [
+            'en attente' => 1,
+            'en cours' => 1,
+            'cloture' => 1
+        ];
+
+        $this->ticketsByStatus = [
+            'en attente' => [],
+            'en cours' => [],
+            'cloture' => []
+        ];
+
+        $this->loadAllStatuses();
+    }
+
     /**
      * Charge les tickets pour tous les statuts
      */
@@ -58,7 +80,7 @@ new class extends Component {
     /**
      * Récupère les tickets pour un statut donné
      */
-    public function fetchTicketsByStatus($status, $append = false)
+    public function fetchTicketsByStatusOld($status, $append = false)
     {
         $this->loadingByStatus[$status] = true;
 
@@ -100,6 +122,88 @@ new class extends Component {
 
         $this->loadingByStatus[$status] = false;
     }
+
+ /**
+ * Récupère les tickets pour un statut donné (VERSION MISE À JOUR)
+ */
+    public function fetchTicketsByStatus($status, $append = false)
+    {
+        $this->loadingByStatus[$status] = true;
+
+        $token = session('token');
+        if (!$token) {
+            return redirect()->route('login');
+        }
+
+        $page = $this->pagesByStatus[$status];
+        $url = "https://dev-ia.astucom.com/n8n_cosmia/ticket?page={$page}&status=" . urlencode($status);
+
+        // Ajouter le filtre de projet
+        if ($this->projectId !== 'all') {
+            $url .= "&project_id={$this->projectId}";
+        }
+
+    // Remplacer la partie recherche par :
+if (!empty($this->search)) {
+    $searchValue = trim($this->search);
+    
+    switch($this->searchType) {
+        case 'num_ticket':
+            $url .= "&num_ticket=" . $searchValue;
+            break;
+        case 'subject':
+            $url .= "&subject_ticket=" . urlencode($searchValue);
+            break;
+        case 'email':
+            $url .= "&original_client_mail=" . urlencode($searchValue);
+            break;
+        case 'client':
+            $url .= "&nom_client=" . urlencode($searchValue);
+            break;
+        case 'commande':
+            $url .= "&num_commande=" . $searchValue;
+            break;
+        case 'all':
+        default:
+            // Recherche intelligente automatique
+            if (is_numeric($searchValue)) {
+                $url .= "&num_ticket=" . $searchValue;
+            } elseif (str_contains($searchValue, '@')) {
+                $url .= "&original_client_mail=" . urlencode($searchValue);
+            } else {
+                $url .= "&subject_ticket=" . urlencode($searchValue);
+            }
+            break;
+    }
+}
+
+        $response = Http::withHeaders([
+            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+            'Authorization' => "Bearer {$token}",
+            'Accept' => 'application/json',
+        ])->get($url);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            $newTickets = $data['data'] ?? [];
+
+            if ($append) {
+                $this->ticketsByStatus[$status] = array_merge(
+                    $this->ticketsByStatus[$status],
+                    $newTickets
+                );
+            } else {
+                $this->ticketsByStatus[$status] = $newTickets;
+            }
+
+            $currentPage = $data['current_page'] ?? $page;
+            $totalPages = $data['total_page'] ?? 1;
+            $this->hasMorePages[$status] = $currentPage < $totalPages;
+        }
+
+        $this->loadingByStatus[$status] = false;
+    }
+
 
     /**
      * Charge plus de tickets pour un statut (infinity scroll)
@@ -214,54 +318,101 @@ new class extends Component {
     {
         return count($this->ticketsByStatus[$status]);
     }
+
+ public function updatedSearchType()
+{
+    if (!empty($this->search)) {
+        $this->resetPagination();
+        $this->loadAllStatuses();
+    }
+}
+
+private function resetPagination()
+{
+    $this->pagesByStatus = [
+        'en attente' => 1,
+        'en cours' => 1,
+        'cloture' => 1
+    ];
+
+    $this->ticketsByStatus = [
+        'en attente' => [],
+        'en cours' => [],
+        'cloture' => []
+    ];
+}
+
 }; ?>
 
 <div class="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
-    <x-header title="Tableau Kanban" subtitle="Gestion des tickets" separator>
-        <x-slot:middle class="!justify-end">
-        </x-slot:middle>
-        <x-slot:actions>
-            <div class="flex items-center gap-3">
-                <!-- Sélecteur mobile -->
-                <div class="sm:hidden">
-                    <select aria-label="Select a tab"
-                        wire:model.live="projectId"
-                        class="block w-full rounded-lg border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600">
-                        <option value="all">Tous les projets</option>
-                        <option value="1">COSMASHOP</option>
-                        <option value="2">COSMA PARFUMERIES</option>
-                        <option value="3">DIGIPARF</option>
-                    </select>
-                </div>
-                
-                <!-- Navigation desktop -->
-                <div class="hidden sm:block">
-                    <nav class="flex gap-2 bg-white rounded-lg p-1 shadow-sm">
-                        <button wire:click="setProject('all')"
-                            class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
-                            {{ $projectId === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
-                            Tous
-                        </button>
-                        <button wire:click="setProject(1)"
-                            class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
-                            {{ $projectId === 1 ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
-                            COSMASHOP
-                        </button>
-                        <button wire:click="setProject(2)"
-                            class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
-                            {{ $projectId === 2 ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
-                            COSMA PARFUMERIES
-                        </button>
-                        <button wire:click="setProject(3)"
-                            class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
-                            {{ $projectId === 3 ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
-                            DIGIPARF
-                        </button>
-                    </nav>
-                </div>
+<x-header title="Tableau Kanban" subtitle="Gestion des tickets" separator>
+    <x-slot:middle class="!justify-end">
+        <div class="flex items-center gap-3">
+            <!-- Type de recherche avec fieldset stylisé -->
+            <fieldset class="fieldset hidden sm:block">
+                <select class="select" wire:model.live="searchType">
+                    <option value="all">Tout</option>
+                    <option value="num_ticket">N° Ticket</option>
+                    <option value="subject">Sujet</option>
+                    <option value="email">Email</option>
+                    <option value="client">Client</option>
+                    <option value="commande">N° Commande</option>
+                </select>
+            </fieldset>
+            
+            <!-- Champ de recherche -->
+            <x-input 
+                icon="o-magnifying-glass" 
+                placeholder="Rechercher..." 
+                wire:model.live.debounce.500ms="search"
+                clearable
+                class="w-64"
+            />
+        </div>
+    </x-slot:middle>
+    
+    <x-slot:actions>
+        <div class="flex items-center gap-3">
+            <!-- Sélecteur mobile -->
+            <div class="sm:hidden">
+                <select aria-label="Select a tab"
+                    wire:model.live="projectId"
+                    class="block w-full rounded-lg border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600">
+                    <option value="all">Tous les projets</option>
+                    <option value="1">COSMASHOP</option>
+                    <option value="2">COSMA PARFUMERIES</option>
+                    <option value="3">DIGIPARF</option>
+                </select>
             </div>
-        </x-slot:actions>
-    </x-header>
+            
+            <!-- Navigation desktop -->
+            <div class="hidden sm:block">
+                <nav class="flex gap-2 bg-white rounded-lg p-1 shadow-sm">
+                    <button wire:click="setProject('all')"
+                        class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
+                        {{ $projectId === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
+                        Tous
+                    </button>
+                    <button wire:click="setProject(1)"
+                        class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
+                        {{ $projectId === 1 ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
+                        COSMASHOP
+                    </button>
+                    <button wire:click="setProject(2)"
+                        class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
+                        {{ $projectId === 2 ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
+                        COSMA PARFUMERIES
+                    </button>
+                    <button wire:click="setProject(3)"
+                        class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
+                        {{ $projectId === 3 ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
+                        DIGIPARF
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </x-slot:actions>
+</x-header>
 
     <!-- Messages flash -->
     {{-- @if (session('success'))
