@@ -1,7 +1,9 @@
+
 <?php
 
 use Livewire\Volt\Component;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Hash;
 use Mary\Traits\Toast;
 
 new class extends Component {
@@ -87,7 +89,7 @@ new class extends Component {
                 ])->post('https://dev-ia.astucom.com/n8n_cosmia/user', [
                     'name' => $this->name,
                     'email' => $this->email,
-                    'password' => $this->password,
+                    'password' => Hash::make($this->password), // Cryptage avec bcrypt
                     'role' => $this->role,
                 ]);
 
@@ -120,74 +122,75 @@ new class extends Component {
         }
     }
 
-public function update()
-{
-    // Validation (mot de passe optionnel pour la mise à jour)
-    $rules = [
-        'name' => 'required|min:3',
-        'email' => 'required|email',
-        'role' => 'required|in:super_admin,admin,simple_user',
-    ];
+    public function update()
+    {
+        // Validation (mot de passe optionnel pour la mise à jour)
+        $rules = [
+            'name' => 'required|min:3',
+            'email' => 'required|email',
+            'role' => 'required|in:super_admin,admin,simple_user',
+        ];
 
-    $messages = [
-        'name.required' => 'Le nom est requis',
-        'name.min' => 'Le nom doit contenir au moins 3 caractères',
-        'email.required' => 'L\'email est requis',
-        'email.email' => 'L\'email doit être valide',
-        'role.required' => 'Le rôle est requis',
-    ];
+        $messages = [
+            'name.required' => 'Le nom est requis',
+            'name.min' => 'Le nom doit contenir au moins 3 caractères',
+            'email.required' => 'L\'email est requis',
+            'email.email' => 'L\'email doit être valide',
+            'role.required' => 'Le rôle est requis',
+        ];
 
-    // Si un mot de passe est fourni, on le valide
-    if (!empty($this->password) || !empty($this->confirm_password)) {
-        $rules['password'] = 'required|min:6';
-        $rules['confirm_password'] = 'required|same:password';
-        $messages['password.required'] = 'Le mot de passe est requis si vous souhaitez le changer';
-        $messages['password.min'] = 'Le mot de passe doit contenir au moins 6 caractères';
-        $messages['confirm_password.required'] = 'La confirmation du mot de passe est requise';
-        $messages['confirm_password.same'] = 'Les mots de passe ne correspondent pas';
-    }
-
-    $this->validate($rules, $messages);
-
-    try {
-        $token = session('token');
-
-        if (!$token) {
-            $token = $this->loginAndGetToken();
+        // Si un mot de passe est fourni, on le valide
+        if (!empty($this->password) || !empty($this->confirm_password)) {
+            $rules['password'] = 'required|min:6';
+            $rules['confirm_password'] = 'required|same:password';
+            $messages['password.required'] = 'Le mot de passe est requis si vous souhaitez le changer';
+            $messages['password.min'] = 'Le mot de passe doit contenir au moins 6 caractères';
+            $messages['confirm_password.required'] = 'La confirmation du mot de passe est requise';
+            $messages['confirm_password.same'] = 'Les mots de passe ne correspondent pas';
         }
 
-        if ($token) {
-            $data = [
-                'name' => $this->name,
-                'email' => $this->email,
-                'role' => $this->role,
-            ];
+        $this->validate($rules, $messages);
 
-            // Ajouter le mot de passe seulement s'il est fourni
-            if (!empty($this->password)) {
-                $data['password'] = $this->password;
+        try {
+            $token = session('token');
+
+            if (!$token) {
+                $token = $this->loginAndGetToken();
             }
 
-            $response = Http::withHeaders([
-                'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
-                'Authorization' => 'Bearer ' . $token,
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ])->put('https://dev-ia.astucom.com/n8n_cosmia/user/' . $this->selectedUserId, $data);
+            if ($token) {
+                $data = [
+                    'name' => $this->name,
+                    'email' => $this->email,
+                    'role' => $this->role,
+                ];
 
-            if ($response->successful()) {
-                $this->success('Utilisateur modifié avec succès !');
-                $this->updateModal = false;
-                $this->reset(['name', 'email', 'password', 'confirm_password', 'role', 'selectedUserId']);
-                $this->fetchUsers();
-            } else {
-                $this->error('Erreur lors de la modification: ' . $response->body());
+                // Ajouter le mot de passe crypté seulement s'il est fourni
+                if (!empty($this->password)) {
+                    $data['password'] = Hash::make($this->password); // Cryptage avec bcrypt
+                }
+
+                $response = Http::withHeaders([
+                    'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+                    'Authorization' => 'Bearer ' . $token,
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ])->put('https://dev-ia.astucom.com/n8n_cosmia/user/' . $this->selectedUserId, $data);
+
+                if ($response->successful()) {
+                    $this->success('Utilisateur modifié avec succès !');
+                    $this->updateModal = false;
+                    $this->reset(['name', 'email', 'password', 'confirm_password', 'role', 'selectedUserId']);
+                    $this->fetchUsers();
+                } else {
+                    $this->error('Erreur lors de la modification: ' . $response->body());
+                }
             }
+        } catch (\Throwable $th) {
+            $this->error('Une erreur est survenue: ' . $th->getMessage());
         }
-    } catch (\Throwable $th) {
-        $this->error('Une erreur est survenue: ' . $th->getMessage());
     }
-}
+    
     private function loginAndGetToken()
     {
         // Votre logique de login existante
