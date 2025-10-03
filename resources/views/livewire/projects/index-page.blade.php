@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Http;
 new class extends Component {
 
     public $projects = [];
-    public $chartData = [];
+    public $chartData = []; 
     public string $ticketStatus = 'all';
     public $daterange = 0;
 
@@ -23,14 +23,12 @@ new class extends Component {
 
     public function updatedDaterange()
     {
-        // Valider que daterange est un nombre positif
         if (!is_numeric($this->daterange) || $this->daterange < 1) {
             $this->daterange = 0;
         }
         $this->refreshChart();
     }
 
-    // Méthode centralisée pour rafraîchir le graphique
     private function refreshChart()
     {
         $this->loadTicketSummary();
@@ -42,7 +40,6 @@ new class extends Component {
         ]);
     }
 
-    // Liste des projets
     public function allProject()
     {
         try {
@@ -54,10 +51,10 @@ new class extends Component {
 
             if ($token) {
                 $response = Http::withHeaders([
-                    'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+                    'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->get('https://dev-ia.astucom.com/n8n_cosmia/project');
+                ])->get(env('API_REST') . '/project');
 
                 if ($response->successful()) {
                     $this->projects = $response->json();
@@ -75,10 +72,10 @@ new class extends Component {
 
             if ($token) {
                 $response = Http::withHeaders([
-                    'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+                    'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getticketsummary', [
+                ])->post(env('API_REST') .'/dash/getticketsummary', [
                     "ticket_status" => $this->ticketStatus === 'all' ? null : $this->ticketStatus,
                     "date_range" => (int) $this->daterange,
                 ]);
@@ -95,7 +92,6 @@ new class extends Component {
                         $this->chartData = ['labels' => [], 'values' => []];
                     }
                 } else {
-                    // Log de l'erreur pour debugging
                     \Log::warning('API Error: ' . $response->status() . ' - ' . $response->body());
                     $this->chartData = ['labels' => [], 'values' => []];
                 }
@@ -120,7 +116,6 @@ new class extends Component {
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        <!-- Liste des projets -->
         <div class="grid grid-cols-1 space-y-6">
             @foreach($projects as $project)
                 <div class="overflow-hidden rounded-lg bg-white shadow-sm">
@@ -156,7 +151,7 @@ new class extends Component {
             @endforeach
         </div>
 
-        <!-- Chart -->
+
         <x-card subtitle="Statistiques par période">
             <div class="mb-5 flex items-end gap-6">
                 
@@ -187,7 +182,6 @@ new class extends Component {
 
             </div>
 
-            <!-- Indicateur de chargement -->
             <div wire:loading wire:target="ticketStatus,daterange" class="flex items-center justify-center py-4">
                 <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                 <span class="ml-2 text-sm text-gray-500">Mise à jour en cours...</span>
@@ -197,7 +191,6 @@ new class extends Component {
                 <canvas id="ticketLineChart"></canvas>
             </div>
 
-            <!-- Informations sur les filtres appliqués -->
             <div class="mt-4 text-xs text-gray-500 border-t pt-3">
                 <p>
                     Filtres actifs: 
@@ -230,7 +223,6 @@ new class extends Component {
 <script>
     let chartInstance = null;
 
-    // 🔹 Mapping des périodes
     const dayLabels = {
         0: "7 jours",
         1: "15 jours",
@@ -244,18 +236,15 @@ new class extends Component {
         const ctx = document.getElementById('ticketLineChart')?.getContext('2d');
         if (!ctx) return;
 
-        // Détruire l'instance existante si elle existe
         if (chartInstance) {
             chartInstance.destroy();
         }
 
-        // Dynamiser le label selon les filtres
         let datasetLabel = 'Tickets';
         if (status !== 'all') {
             datasetLabel += ` (${status})`;
         }
 
-        // Ajouter la période
         datasetLabel += ` - ${dayLabels[days] ?? ""}`;
 
         chartInstance = new Chart(ctx, {
@@ -323,11 +312,9 @@ new class extends Component {
             }
         });
 
-        // Ajuster la hauteur du canvas
         ctx.canvas.style.height = '300px';
     }
 
-    // Fonction pour mettre à jour le graphique
     function updateChart(labels, values, status = 'all', days = 1) {
         if (chartInstance) {
             let datasetLabel = 'Tickets';
@@ -335,7 +322,6 @@ new class extends Component {
                 datasetLabel += ` (${status})`;
             }
 
-            // Utiliser le mapping
             datasetLabel += ` - ${dayLabels[days] ?? ""}`;
 
             chartInstance.data.labels = labels;
@@ -347,7 +333,6 @@ new class extends Component {
         }
     }
 
-    // 🔹 Exécuter au premier chargement
     document.addEventListener("DOMContentLoaded", () => {
         const initialLabels = @json($chartData['labels'] ?? []);
         const initialValues = @json($chartData['values'] ?? []);
@@ -357,7 +342,6 @@ new class extends Component {
         renderTicketChart(initialLabels, initialValues, initialStatus, initialDays);
     });
 
-    // 🔹 Réexécuter après navigation Livewire
     document.addEventListener("livewire:navigated", () => {
         const initialLabels = @json($chartData['labels'] ?? []);
         const initialValues = @json($chartData['values'] ?? []);
@@ -367,7 +351,6 @@ new class extends Component {
         renderTicketChart(initialLabels, initialValues, initialStatus, initialDays);
     });
 
-    // 🔹 Écouter l'événement de mise à jour du graphique
     document.addEventListener("livewire:init", () => {
         Livewire.on("chart-updated", (event) => {
             const [data] = event;

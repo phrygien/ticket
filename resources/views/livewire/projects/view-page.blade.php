@@ -11,28 +11,24 @@ new class extends Component {
     public string $search = '';
     public string $searchType = 'all';
 
-    // Tickets organisés par statut
     public array $ticketsByStatus = [
         'en attente' => [],
         'en cours' => [],
         'cloture' => []
     ];
 
-    // Pagination par statut
     public array $pagesByStatus = [
         'en attente' => 1,
         'en cours' => 1,
         'cloture' => 1
     ];
 
-    // Indique s'il y a plus de pages pour chaque statut
     public array $hasMorePages = [
         'en attente' => true,
         'en cours' => true,
         'cloture' => true
     ];
 
-    // Loading states pour chaque statut
     public array $loadingByStatus = [
         'en attente' => false,
         'en cours' => false,
@@ -48,10 +44,8 @@ new class extends Component {
         $this->loadAllStatuses();
     }
 
-    // Méthode appelée quand le search change
     public function updatedSearch()
     {
-        // Réinitialiser les pages et recharger
         $this->pagesByStatus = [
             'en attente' => 1,
             'en cours' => 1,
@@ -67,9 +61,6 @@ new class extends Component {
         $this->loadAllStatuses();
     }
 
-    /**
-     * Charge les tickets pour tous les statuts
-     */
     public function loadAllStatuses()
     {
         $this->fetchTicketsByStatus('en attente');
@@ -77,9 +68,6 @@ new class extends Component {
         $this->fetchTicketsByStatus('cloture');
     }
 
-    /**
-     * Récupère les tickets pour un statut donné
-     */
     public function fetchTicketsByStatusOld($status, $append = false)
     {
         $this->loadingByStatus[$status] = true;
@@ -90,14 +78,14 @@ new class extends Component {
         }
 
         $page = $this->pagesByStatus[$status];
-        $url = "https://dev-ia.astucom.com/n8n_cosmia/ticket?page={$page}&status=" . urlencode($status);
+        $url = env('API_REST') ."/ticket?page={$page}&status=" . urlencode($status);
 
         if ($this->projectId !== 'all') {
             $url .= "&project_id={$this->projectId}";
         }
 
         $response = Http::withHeaders([
-            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+            'x-secret-key' => env('X_SECRET_KEY'),
             'Authorization' => "Bearer {$token}",
             'Accept' => 'application/json',
         ])->get($url);
@@ -123,9 +111,6 @@ new class extends Component {
         $this->loadingByStatus[$status] = false;
     }
 
- /**
- * Récupère les tickets pour un statut donné (VERSION MISE À JOUR)
- */
     public function fetchTicketsByStatus($status, $append = false)
     {
         $this->loadingByStatus[$status] = true;
@@ -136,49 +121,46 @@ new class extends Component {
         }
 
         $page = $this->pagesByStatus[$status];
-        $url = "https://dev-ia.astucom.com/n8n_cosmia/ticket?page={$page}&status=" . urlencode($status);
+        $url = env('API_REST') ."/ticket?page={$page}&status=" . urlencode($status);
 
-        // Ajouter le filtre de projet
         if ($this->projectId !== 'all') {
             $url .= "&project_id={$this->projectId}";
         }
 
-    // Remplacer la partie recherche par :
-if (!empty($this->search)) {
-    $searchValue = trim($this->search);
-    
-    switch($this->searchType) {
-        case 'num_ticket':
-            $url .= "&num_ticket=" . $searchValue;
-            break;
-        case 'subject':
-            $url .= "&subject_ticket=" . urlencode($searchValue);
-            break;
-        case 'email':
-            $url .= "&original_client_mail=" . urlencode($searchValue);
-            break;
-        case 'client':
-            $url .= "&nom_client=" . urlencode($searchValue);
-            break;
-        case 'commande':
-            $url .= "&num_commande=" . $searchValue;
-            break;
-        case 'all':
-        default:
-            // Recherche intelligente automatique
-            if (is_numeric($searchValue)) {
-                $url .= "&num_ticket=" . $searchValue;
-            } elseif (str_contains($searchValue, '@')) {
-                $url .= "&original_client_mail=" . urlencode($searchValue);
-            } else {
-                $url .= "&subject_ticket=" . urlencode($searchValue);
+        if (!empty($this->search)) {
+            $searchValue = trim($this->search);
+
+            switch ($this->searchType) {
+                case 'num_ticket':
+                    $url .= "&num_ticket=" . $searchValue;
+                    break;
+                case 'subject':
+                    $url .= "&subject_ticket=" . urlencode($searchValue);
+                    break;
+                case 'email':
+                    $url .= "&original_client_mail=" . urlencode($searchValue);
+                    break;
+                case 'client':
+                    $url .= "&nom_client=" . urlencode($searchValue);
+                    break;
+                case 'commande':
+                    $url .= "&num_commande=" . $searchValue;
+                    break;
+                case 'all':
+                default:
+                    if (is_numeric($searchValue)) {
+                        $url .= "&num_ticket=" . $searchValue;
+                    } elseif (str_contains($searchValue, '@')) {
+                        $url .= "&original_client_mail=" . urlencode($searchValue);
+                    } else {
+                        $url .= "&subject_ticket=" . urlencode($searchValue);
+                    }
+                    break;
             }
-            break;
-    }
-}
+        }
 
         $response = Http::withHeaders([
-            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+            'x-secret-key' => env('X_SECRET_KEY'),
             'Authorization' => "Bearer {$token}",
             'Accept' => 'application/json',
         ])->get($url);
@@ -204,10 +186,6 @@ if (!empty($this->search)) {
         $this->loadingByStatus[$status] = false;
     }
 
-
-    /**
-     * Charge plus de tickets pour un statut (infinity scroll)
-     */
     public function loadMore($status)
     {
         if ($this->hasMorePages[$status] && !$this->loadingByStatus[$status]) {
@@ -216,26 +194,22 @@ if (!empty($this->search)) {
         }
     }
 
-    /**
-     * Met à jour le statut d'un ticket (Drag & Drop)
-     */
+
     public function updateTicketStatus($ticketId, $newStatus)
     {
         $token = session('token');
 
         $response = Http::withHeaders([
-            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+            'x-secret-key' => env('X_SECRET_KEY'),
             'Authorization' => "Bearer {$token}",
             'Accept' => 'application/json',
-        ])->put("https://dev-ia.astucom.com/n8n_cosmia/ticket/{$ticketId}", [
+        ])->put(env('API_REST')."/ticket/{$ticketId}", [
                     'status' => $newStatus
                 ]);
 
         if ($response->successful()) {
-            // Recharger tous les statuts pour mettre à jour l'affichage
             $this->loadAllStatuses();
 
-            // Message de succès
             session()->flash('success', 'Ticket déplacé avec succès');
         } else {
             session()->flash('error', 'Erreur lors du déplacement du ticket');
@@ -277,10 +251,10 @@ if (!empty($this->search)) {
         $token = session('token');
 
         $response = Http::withHeaders([
-            'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+            'x-secret-key' => env('X_SECRET_KEY'),
             'Authorization' => "Bearer {$token}",
             'Accept' => 'application/json',
-        ])->get("https://dev-ia.astucom.com/n8n_cosmia/ticket/{$ticketId}");
+        ])->get(env('API_REST')."/ticket/{$ticketId}");
 
         if ($response->successful()) {
             $this->ticketDetails = $response->json();
@@ -348,7 +322,6 @@ private function resetPagination()
 <x-header title="Tableau Kanban" subtitle="Gestion des tickets" separator>
     <x-slot:middle class="!justify-end">
         <div class="flex items-center gap-3">
-            <!-- Type de recherche avec fieldset stylisé -->
             <fieldset class="fieldset hidden sm:block">
                 <select class="select" wire:model.live="searchType">
                     <option value="all">Tout</option>
@@ -360,7 +333,6 @@ private function resetPagination()
                 </select>
             </fieldset>
             
-            <!-- Champ de recherche -->
             <x-input 
                 icon="o-magnifying-glass" 
                 placeholder="Rechercher..." 
@@ -373,7 +345,6 @@ private function resetPagination()
     
     <x-slot:actions>
         <div class="flex items-center gap-3">
-            <!-- Sélecteur mobile -->
             <div class="sm:hidden">
                 <select aria-label="Select a tab"
                     wire:model.live="projectId"
@@ -385,7 +356,6 @@ private function resetPagination()
                 </select>
             </div>
             
-            <!-- Navigation desktop -->
             <div class="hidden sm:block">
                 <nav class="flex gap-2 bg-white rounded-lg p-1 shadow-sm">
                     <button wire:click="setProject('all')"
@@ -414,21 +384,9 @@ private function resetPagination()
     </x-slot:actions>
 </x-header>
 
-    <!-- Messages flash -->
-    {{-- @if (session('success'))
-        <div class="max-w-7xl mx-auto px-4 py-2">
-            <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg">
-                <p class="text-green-700">{{ session('success') }}</p>
-            </div>
-        </div>
-    @endif --}}
-
-    <!-- Kanban Board -->
     <div class="mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Colonne En Attente -->
             <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <!-- Header -->
                 <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-4 py-3 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -441,7 +399,6 @@ private function resetPagination()
                     </span>
                 </div>
 
-                <!-- Cards Container -->
                 <div 
                     id="status-en-attente" 
                     class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
@@ -462,7 +419,6 @@ private function resetPagination()
                             @dragend="handleDragEnd($event)"
                             class="group bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-move hover:scale-[1.02]"
                         >
-                            <!-- Header avec badge -->
                             <div class="flex items-start justify-between mb-3">
                                 <span class="text-xs font-medium text-purple-600 bg-purple-100 px-2 py-1 rounded">
                                     {{ $ticket['num_ticket'] }}
@@ -477,12 +433,10 @@ private function resetPagination()
                                 @endif
                             </div>
 
-                            <!-- Titre -->
                             <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">
                                 {{ Str::limit($ticket['subject_ticket'], 60) }}
                             </h4>
 
-                            <!-- Meta info -->
                             <div class="space-y-1.5 mb-3">
                                 <div class="flex items-center gap-2 text-xs text-gray-600">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -498,7 +452,6 @@ private function resetPagination()
                                 </div>
                             </div>
 
-                            <!-- Actions -->
                             <div class="flex items-center justify-end">
                                 <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
                                    wire:navigate
@@ -521,9 +474,7 @@ private function resetPagination()
                 </div>
             </div>
 
-            <!-- Colonne En Cours -->
             <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <!-- Header -->
                 <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -536,7 +487,6 @@ private function resetPagination()
                     </span>
                 </div>
 
-                <!-- Cards Container -->
                 <div 
                     id="status-en-cours" 
                     class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
@@ -604,9 +554,7 @@ private function resetPagination()
                 </div>
             </div>
 
-            <!-- Colonne Clôturé -->
             <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <!-- Header -->
                 <div class="bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -619,7 +567,6 @@ private function resetPagination()
                     </span>
                 </div>
 
-                <!-- Cards Container -->
                 <div 
                     id="status-cloture" 
                     class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
@@ -689,7 +636,6 @@ private function resetPagination()
         </div>
     </div>
 
-    <!-- Modal Détails -->
     <x-modal wire:model="myModal1" title="Détails du Ticket" class="backdrop-blur"
         box-class="bg-gray-200 max-w-7xl h-[90vh]">
         @if($loadingDetails)
@@ -753,7 +699,6 @@ private function resetPagination()
                 event.dataTransfer.effectAllowed = 'move';
                 event.dataTransfer.setData('text/html', card.innerHTML);
                 
-                // Stocker les infos du ticket
                 const ticketId = card.dataset.ticketId;
                 const currentStatus = card.dataset.status;
                 event.dataTransfer.setData('ticketId', ticketId);
@@ -763,7 +708,6 @@ private function resetPagination()
             handleDragEnd(event) {
                 event.target.classList.remove('opacity-50', 'scale-95');
                 
-                // Retirer les indicateurs visuels de toutes les colonnes
                 document.querySelectorAll('[id^="status-"]').forEach(col => {
                     col.classList.remove('ring-2', 'ring-purple-300', 'ring-amber-300', 'ring-green-300', 'bg-purple-50', 'bg-amber-50', 'bg-green-50');
                 });
@@ -773,23 +717,18 @@ private function resetPagination()
                 event.preventDefault();
                 const column = event.currentTarget;
                 
-                // Retirer les indicateurs visuels
                 column.classList.remove('ring-2', 'ring-purple-300', 'ring-amber-300', 'ring-green-300', 'bg-purple-50', 'bg-amber-50', 'bg-green-50');
                 
-                // Récupérer les données du drag
                 const ticketId = event.dataTransfer.getData('ticketId');
                 const currentStatus = event.dataTransfer.getData('currentStatus');
                 const newStatus = this.status;
-                
-                // Ne rien faire si c'est la même colonne
+
                 if (currentStatus === newStatus) {
                     return;
                 }
                 
-                // Afficher un indicateur de chargement
                 this.showLoadingIndicator(column);
                 
-                // Appeler la méthode Livewire pour mettre à jour le statut
                 @this.call('updateTicketStatus', ticketId, newStatus)
                     .then(() => {
                         this.hideLoadingIndicator(column);
@@ -863,7 +802,6 @@ private function resetPagination()
 
 @push('styles')
     <style>
-    /* Scrollbar personnalisée */
     .overflow-y-auto::-webkit-scrollbar {
         width: 8px;
     }
@@ -883,7 +821,6 @@ private function resetPagination()
         background: #94a3b8;
     }
 
-    /* Animations de drag */
     @keyframes pulse-ring {
         0% {
             box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
@@ -896,7 +833,6 @@ private function resetPagination()
         }
     }
 
-    /* Style pour les cartes pendant le drag */
     [draggable="true"] {
         transition: all 0.2s ease;
     }
@@ -905,12 +841,10 @@ private function resetPagination()
         cursor: grabbing;
     }
 
-    /* Hover effects */
     .group:hover {
         transform: translateY(-2px);
     }
 
-    /* Animation pour les badges */
     @keyframes badge-pulse {
         0%, 100% {
             opacity: 1;
@@ -924,14 +858,12 @@ private function resetPagination()
         animation: badge-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 
-    /* Responsive improvements */
     @media (max-width: 1024px) {
         .max-h-\[calc\(100vh-280px\)\] {
             max-height: calc(100vh - 320px);
         }
     }
 
-    /* Loading states */
     @keyframes spin {
         to {
             transform: rotate(360deg);
@@ -942,7 +874,6 @@ private function resetPagination()
         animation: spin 1s linear infinite;
     }
 
-    /* Success animation */
     @keyframes checkmark {
         0% {
             stroke-dashoffset: 50;
@@ -952,7 +883,6 @@ private function resetPagination()
         }
     }
 
-    /* Card entrance animation */
     @keyframes slideIn {
         from {
             opacity: 0;
@@ -968,7 +898,6 @@ private function resetPagination()
         animation: slideIn 0.3s ease-out;
     }
 
-    /* Drag zone highlight */
     .ring-2 {
         transition: all 0.3s ease;
     }

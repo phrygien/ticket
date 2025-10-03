@@ -38,10 +38,10 @@ new class extends Component {
 
             if ($token) {
                 $response = Http::withHeaders([
-                    'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+                    'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->get('https://dev-ia.astucom.com/n8n_cosmia/user');
+                ])->get(env('API_REST') .'/user');
 
                 if ($response->successful()) {
                     $this->users = $response->json();
@@ -82,14 +82,14 @@ new class extends Component {
 
             if ($token) {
                 $response = Http::withHeaders([
-                    'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+                    'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
-                ])->post('https://dev-ia.astucom.com/n8n_cosmia/user', [
+                ])->post(env('API_REST') .'/user', [
                     'name' => $this->name,
                     'email' => $this->email,
-                    'password' => Hash::make($this->password), // Cryptage avec bcrypt
+                    'password' => Hash::make($this->password),
                     'role' => $this->role,
                 ]);
 
@@ -124,7 +124,6 @@ new class extends Component {
 
     public function update()
     {
-        // Validation (mot de passe optionnel pour la mise à jour)
         $rules = [
             'name' => 'required|min:3',
             'email' => 'required|email',
@@ -139,7 +138,6 @@ new class extends Component {
             'role.required' => 'Le rôle est requis',
         ];
 
-        // Si un mot de passe est fourni, on le valide
         if (!empty($this->password) || !empty($this->confirm_password)) {
             $rules['password'] = 'required|min:6';
             $rules['confirm_password'] = 'required|same:password';
@@ -165,17 +163,16 @@ new class extends Component {
                     'role' => $this->role,
                 ];
 
-                // Ajouter le mot de passe crypté seulement s'il est fourni
                 if (!empty($this->password)) {
-                    $data['password'] = Hash::make($this->password); // Cryptage avec bcrypt
+                    $data['password'] = Hash::make($this->password);
                 }
 
                 $response = Http::withHeaders([
-                    'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+                    'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
-                ])->put('https://dev-ia.astucom.com/n8n_cosmia/user/' . $this->selectedUserId, $data);
+                ])->put(env('API_REST') . "/user/{$this->selectedUserId}", $data);
 
                 if ($response->successful()) {
                     $this->success('Utilisateur modifié avec succès !');
@@ -193,8 +190,6 @@ new class extends Component {
     
     private function loginAndGetToken()
     {
-        // Votre logique de login existante
-        // Retournez le token obtenu
     }
 
 }; ?>
@@ -234,7 +229,6 @@ new class extends Component {
         @endforelse
     </div>
 
-    {{-- Modal de création --}}
     <x-modal wire:model="myModal1" title="Ajouter un utilisateur" class="backdrop-blur">
         <x-form wire:submit="save">
             <fieldset class="fieldset w-full">
@@ -260,7 +254,6 @@ new class extends Component {
         </x-form>
     </x-modal>
 
-    {{-- Modal de modification --}}
     <x-modal wire:model="updateModal" title="Modifier l'utilisateur" class="backdrop-blur">
         <x-form wire:submit="update">
             <fieldset class="fieldset">

@@ -22,25 +22,21 @@ new #[Layout('components.layouts.guest')] class extends Component {
     public array $errorList = [];
     public string $errorMessage = '';
 
-    /**
-     * Handle an incoming authentication request.
-     */
     public function login()
     {
         $this->validate();
 
         try {
             $response = Http::withHeaders([
-                'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
+                'x-secret-key' => env('X_SECRET_KEY'),
                 'Accept'       => 'application/json',
-            ])->post('https://dev-ia.astucom.com/n8n_cosmia/auth/login', [
+            ])->post(env('API_REST') .'/auth/login', [
                 'email'    => $this->email,
                 'password' => $this->password,
             ]);
 
             $data = $response->json();
 
-            // Succès => token trouvé
             if (!empty($data['token'])) {
                 session([
                 'token' => $data['token'],
@@ -51,19 +47,13 @@ new #[Layout('components.layouts.guest')] class extends Component {
                 return redirect()->route('project.index');
             }
 
-            // Erreur connue (ex: Invalid credentials)
             $this->errorMessage = $data['error'] ?? 'Identifiants incorrects.';
 
         } catch (\Throwable $e) {
-            // Erreur technique (ex: serveur injoignable)
             $this->errorMessage = 'Erreur de connexion au serveur : ' . $e->getMessage();
         }
     }
 
-
-    /**
-     * Gère les erreurs de connexion et met à jour les messages Livewire
-     */
     protected function handleErrors(array $data): void
     {
         $errors = $data['data']['error'] ?? null;
@@ -81,9 +71,6 @@ new #[Layout('components.layouts.guest')] class extends Component {
         }
     }
 
-    /**
-     * Ensure the authentication request is not rate limited.
-     */
     protected function ensureIsNotRateLimited(): void
     {
         if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
@@ -102,9 +89,6 @@ new #[Layout('components.layouts.guest')] class extends Component {
         ]);
     }
 
-    /**
-     * Get the authentication rate limiting throttle key.
-     */
     protected function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->email).'|'.request()->ip());
@@ -134,12 +118,6 @@ new #[Layout('components.layouts.guest')] class extends Component {
 
 
             <h2 class="text-center text-2xl font-bold text-gray-900">Bienvenue à nouveau</h2>
-
-            {{-- @if ($errorMessage)
-                <div class="bg-red-100 text-red-700 text-sm px-4 py-2 rounded">
-                    {{ $errorMessage }}
-                </div>
-            @endif --}}
 
             @if ($errorList)
                 <div class="bg-red-100 text-red-700 text-sm px-4 py-2 rounded space-y-1">
@@ -177,7 +155,6 @@ new #[Layout('components.layouts.guest')] class extends Component {
             </blockquote>
 
             <div class="flex items-center gap-4">
-                <!-- SVG flacon de parfum -->
                 <div class="w-14 h-14 rounded-full bg-white flex items-center justify-center">
                     <svg class="w-8 h-8 text-zinc-800" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M9 11l-3 3-1.5-1.5L3 16l3 3 5-5-2-2zm0-6l-3 3-1.5-1.5L3 10l3 3 5-5-2-2zm5 2h7v2h-7V7zm0 6h7v2h-7v-2zm0 6h7v2h-7v-2z"/>
@@ -185,7 +162,6 @@ new #[Layout('components.layouts.guest')] class extends Component {
 
                 </div>
 
-                <!-- Texte -->
                 <div>
                     <div class="text-lg font-medium">Task Management</div>
                     <div class="text-sm text-zinc-300">Astucom - Communication - LTD</div>
