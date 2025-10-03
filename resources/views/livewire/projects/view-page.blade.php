@@ -259,7 +259,7 @@ new class extends Component {
 
     public function getTotalTicketForStatus($status)
     {
-        return count($this->totalItemByStatus[$status]);
+        return $this->totalItemByStatus[$status];
     }
 
  public function updatedSearchType()
