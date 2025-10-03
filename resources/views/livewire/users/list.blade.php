@@ -312,7 +312,7 @@ new class extends Component {
             hint="Le rôle ne peut pas être modifié"
         />
 
-        <div class="divider text-xs">Mot de passe (optionnel)</div>
+        <!-- <div class="divider text-xs">Mot de passe (optionnel)</div>
 
         <x-input 
             label="Nouveau mot de passe" 
@@ -329,7 +329,7 @@ new class extends Component {
             type="password"
             placeholder="Confirmer le nouveau mot de passe"
             icon="o-lock-closed"
-        />
+        /> -->
 
         <x-slot:actions>
             <x-button label="Annuler" @click="$wire.updateModal = false" />
