@@ -22,6 +22,14 @@ new class extends Component {
     public string $role = '';
     public ?int $selectedUserId = null;
 
+
+    public string $editname = '';
+    public string $editemail = '';
+    public string $editpassword = '';
+    public string $editconfirm_password = '';
+    public string $editrole = '';
+
+
     public function mount(): void
     {
         $this->fetchUsers();
@@ -107,45 +115,30 @@ new class extends Component {
         }
     }
 
-    public function editUser($userId)
-    {
-        $user = collect($this->users)->firstWhere('id', $userId);
-        
-        if ($user) {
-            $this->selectedUserId = $user['id'];
-            $this->name = $user['name'];
-            $this->email = $user['email'];
-            $this->role = $user['role'];
-            $this->password = '';
-            $this->confirm_password = '';
-            $this->updateModal = true;
-        }
-    }
-
     public function update()
     {
         $rules = [
-            'name' => 'required|min:3',
-            'email' => 'required|email',
-            'role' => 'required|in:super_admin,admin,simple_user',
+            'editname' => 'required|min:3',
+            'editemail' => 'required|email',
+            'editrole' => 'required|in:super_admin,admin,simple_user',
         ];
 
         $messages = [
-            'name.required' => 'Le nom est requis',
-            'name.min' => 'Le nom doit contenir au moins 3 caractères',
-            'email.required' => 'L\'email est requis',
-            'email.email' => 'L\'email doit être valide',
-            'role.required' => 'Le rôle est requis',
+            'editname.required' => 'Le nom est requis',
+            'editname.min' => 'Le nom doit contenir au moins 3 caractères',
+            'editemail.required' => 'L\'email est requis',
+            'editemail.email' => 'L\'email doit être valide',
+            'editrole.required' => 'Le rôle est requis',
         ];
 
-        // if (!empty($this->password) || !empty($this->confirm_password)) {
-        //     $rules['password'] = 'required|min:6';
-        //     $rules['confirm_password'] = 'required|same:password';
-        //     $messages['password.required'] = 'Le mot de passe est requis si vous souhaitez le changer';
-        //     $messages['password.min'] = 'Le mot de passe doit contenir au moins 6 caractères';
-        //     $messages['confirm_password.required'] = 'La confirmation du mot de passe est requise';
-        //     $messages['confirm_password.same'] = 'Les mots de passe ne correspondent pas';
-        // }
+        if (!empty($this->password) || !empty($this->confirm_password)) {
+            $rules['editpassword'] = 'required|min:6';
+            $rules['editconfirm_password'] = 'required|same:password';
+            $messages['editpassword.required'] = 'Le mot de passe est requis si vous souhaitez le changer';
+            $messages['editpassword.min'] = 'Le mot de passe doit contenir au moins 6 caractères';
+            $messages['editconfirm_password.required'] = 'La confirmation du mot de passe est requise';
+            $messages['editconfirm_password.same'] = 'Les mots de passe ne correspondent pas';
+        }
 
         $this->validate($rules, $messages);
 
@@ -157,22 +150,23 @@ new class extends Component {
             }
 
             if ($token) {
+                $url = 'https://dev-ia.astucom.com/n8n_cosmia/user/' . $this->selectedUserId;
+
                 $data = [
-                    'name' => $this->name,
-                    'email' => $this->email,
-                    'role' => $this->role,
+                    'name' => $this->editname,
+                    'email' => $this->editemail,
+                    'role' => $this->editrole,
                 ];
 
-                // if (!empty($this->password)) {
-                //     $data['password'] = Hash::make($this->password);
-                // }
-
+                if (!empty($this->editpassword)) {
+                    $data['password'] = $this->editpassword;
+                }
                 $response = Http::withHeaders([
-                    'x-secret-key' => env('X_SECRET_KEY'),
+                    'x-secret-key' => 'betab0riBeM3c3Ne6MiK6JP6H4rY',
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
-                ])->put(env('API_REST') . "/user/{$this->selectedUserId}", $data);
+                ])->put($url, $data);
 
                 if ($response->successful()) {
                     $this->success('Utilisateur modifié avec succès !');
@@ -180,14 +174,44 @@ new class extends Component {
                     $this->reset(['name', 'email', 'password', 'confirm_password', 'role', 'selectedUserId']);
                     $this->fetchUsers();
                 } else {
-                    $this->error('Erreur lors de la modification: ' . $response->body());
+                    $errorMessage = 'Erreur lors de la modification';
+                    try {
+                        $errorData = $response->json();
+                        $errorMessage .= ': ' . ($errorData['message'] ?? $response->body());
+                    } catch (\Exception $e) {
+                        $errorMessage .= ': ' . $response->body();
+                    }
+
+                    $this->error($errorMessage);
                 }
             }
         } catch (\Throwable $th) {
             $this->error('Une erreur est survenue: ' . $th->getMessage());
         }
     }
-    
+
+    public function editUser($userId)
+    {
+        $user = collect($this->users)->firstWhere('id', $userId);
+
+        if ($user) {
+            $this->selectedUserId = $user['id'];
+            $this->editname = $user['name'];
+            $this->editemail = $user['email'];
+            $this->editrole = $user['role'];
+
+            $this->editpassword = '';
+            $this->editconfirm_password = '';
+
+            $this->updateModal = true;
+
+        } else {
+            $this->error('Utilisateur introuvable');
+        }
+    }
+
+
+
     private function loginAndGetToken()
     {
     }
@@ -254,28 +278,63 @@ new class extends Component {
         </x-form>
     </x-modal>
 
-    <x-modal wire:model="updateModal" title="Modifier l'utilisateur" class="backdrop-blur">
-        <x-form wire:submit="update">
-            <fieldset class="fieldset">
-                <legend class="fieldset-legend">Rôle</legend>
-                <select class="select w-full" wire:model="role">
-                    <option value="" disabled>Choisir un rôle</option>
-                    <option value="super_admin">Super Admin</option>
-                    <option value="admin">Admin</option>
-                    <option value="simple_user">Utilisateur simple</option>
-                </select>
-                @error('role') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-            </fieldset>
-            
-            <x-input label="Nom / Prénoms" wire:model="name" />
-            <x-input label="Mail" wire:model="email" type="email" />
-            {{-- <x-password label="Nouveau mot de passe" hint="Laisser vide pour ne pas changer" wire:model="password" clearable />
-            <x-password label="Confirmer mot de passe" hint="Confirmer le nouveau mot de passe" wire:model="confirm_password" clearable /> --}}
+<x-modal wire:model="updateModal" title="Modifier l'utilisateur" separator>
+    <x-form wire:submit="update">
+        <x-input 
+            label="Nom" 
+            wire:model="editname"
+            placeholder="Nom complet de l'utilisateur"
+            icon="o-user"
+            hint="Minimum 3 caractères"
+        />
 
-            <x-slot:actions>
-                <x-button label="Annuler" @click="$wire.updateModal = false" />
-                <x-button label="Mettre à jour" class="btn-primary" type="submit" spinner="update" />
-            </x-slot:actions>
-        </x-form>
-    </x-modal>
+        <x-input 
+            label="Email" 
+            wire:model="editemail"
+            type="email"
+            placeholder="email@exemple.com"
+            icon="o-envelope"
+            hint="L'email ne peut pas être modifié"
+        />
+
+        <x-select 
+            label="Rôle" 
+            wire:model="editrole"
+            :options="[
+                ['id' => 'super_admin', 'name' => 'Super Administrateur'],
+                ['id' => 'admin', 'name' => 'Administrateur'],
+                ['id' => 'simple_user', 'name' => 'Utilisateur simple']
+            ]"
+            option-value="id"
+            option-label="name"
+            placeholder="Sélectionner un rôle"
+            icon="o-shield-check"
+            hint="Le rôle ne peut pas être modifié"
+        />
+
+        <div class="divider text-xs">Mot de passe (optionnel)</div>
+
+        <x-input 
+            label="Nouveau mot de passe" 
+            wire:model="editpassword"
+            type="password"
+            placeholder="Laisser vide pour ne pas changer"
+            icon="o-lock-closed"
+            hint="Minimum 6 caractères si vous souhaitez le modifier"
+        />
+
+        <x-input 
+            label="Confirmer le mot de passe" 
+            wire:model="editconfirm_password"
+            type="password"
+            placeholder="Confirmer le nouveau mot de passe"
+            icon="o-lock-closed"
+        />
+
+        <x-slot:actions>
+            <x-button label="Annuler" @click="$wire.updateModal = false" />
+            <x-button label="Modifier" class="btn-primary" type="submit" spinner="update" />
+        </x-slot:actions>
+    </x-form>
+</x-modal>
 </div>
