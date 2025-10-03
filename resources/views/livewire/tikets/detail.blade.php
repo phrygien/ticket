@@ -568,7 +568,7 @@ new class extends Component {
 
                 <div class="bg-gray-50 sm:rounded-lg">
                     <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-base font-semibold text-gray-900">To-Do</h3>
+                        <h3 class="text-base font-semibold text-gray-900">Resume</h3>
 
                         <div class="mt-2 max-w-xl text-sm text-gray-700 max-h-[500px] overflow-y-auto pr-2">
                             @php
