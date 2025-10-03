@@ -35,6 +35,12 @@ new class extends Component {
         'cloture' => false
     ];
 
+    public array $totalItemByStatus = [
+        'en attente' => 0,
+        'en cours' => 0,
+        'cloture' => 0
+    ];
+
     public bool $loadingDetails = false;
     public int|string $projectId = 'all';
 
@@ -106,6 +112,7 @@ new class extends Component {
             $currentPage = $data['current_page'] ?? $page;
             $totalPages = $data['total_page'] ?? 1;
             $this->hasMorePages[$status] = $currentPage < $totalPages;
+            $this->totalItemByStatus[$status] = $data['total_item'];
         }
 
         $this->loadingByStatus[$status] = false;
@@ -395,7 +402,7 @@ private function resetPagination()
                         <h3 class="text-white font-semibold">En Attente</h3>
                     </div>
                     <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {{ $this->getTicketCountForStatus('en attente') }}
+                        {{ $this->getTicketCountForStatus('en attente') }} sur {{ $this->totalItemByStatus('en attente') }}
                     </span>
                 </div>
 
@@ -483,7 +490,7 @@ private function resetPagination()
                         <h3 class="text-white font-semibold">En Cours</h3>
                     </div>
                     <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {{ $this->getTicketCountForStatus('en cours') }}
+                        {{ $this->getTicketCountForStatus('en cours') }} sur {{ $this->totalItemByStatus('en cours') }}
                     </span>
                 </div>
 
@@ -563,7 +570,7 @@ private function resetPagination()
                         <h3 class="text-white font-semibold">Clôturé</h3>
                     </div>
                     <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {{ $this->getTicketCountForStatus('cloture') }}
+                        {{ $this->getTicketCountForStatus('cloture') }} sur {{ $this->totalItemByStatus('en cours') }}
                     </span>
                 </div>
 
