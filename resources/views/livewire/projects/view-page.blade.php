@@ -74,50 +74,6 @@ new class extends Component {
         $this->fetchTicketsByStatus('cloture');
     }
 
-    public function fetchTicketsByStatusOld($status, $append = false)
-    {
-        $this->loadingByStatus[$status] = true;
-
-        $token = session('token');
-        if (!$token) {
-            return redirect()->route('login');
-        }
-
-        $page = $this->pagesByStatus[$status];
-        $url = env('API_REST') ."/ticket?page={$page}&status=" . urlencode($status);
-
-        if ($this->projectId !== 'all') {
-            $url .= "&project_id={$this->projectId}";
-        }
-
-        $response = Http::withHeaders([
-            'x-secret-key' => env('X_SECRET_KEY'),
-            'Authorization' => "Bearer {$token}",
-            'Accept' => 'application/json',
-        ])->get($url);
-
-        if ($response->successful()) {
-            $data = $response->json();
-            $newTickets = $data['data'] ?? [];
-
-            if ($append) {
-                $this->ticketsByStatus[$status] = array_merge(
-                    $this->ticketsByStatus[$status],
-                    $newTickets
-                );
-            } else {
-                $this->ticketsByStatus[$status] = $newTickets;
-            }
-
-            $currentPage = $data['current_page'] ?? $page;
-            $totalPages = $data['total_page'] ?? 1;
-            $this->hasMorePages[$status] = $currentPage < $totalPages;
-            $this->totalItemByStatus[$status] = $data['total_item'];
-        }
-
-        $this->loadingByStatus[$status] = false;
-    }
-
     public function fetchTicketsByStatus($status, $append = false)
     {
         $this->loadingByStatus[$status] = true;
@@ -188,6 +144,7 @@ new class extends Component {
             $currentPage = $data['current_page'] ?? $page;
             $totalPages = $data['total_page'] ?? 1;
             $this->hasMorePages[$status] = $currentPage < $totalPages;
+            $this->totalItemByStatus[$status] = $data['total_item'];
         }
 
         $this->loadingByStatus[$status] = false;
