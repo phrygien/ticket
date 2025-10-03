@@ -257,6 +257,11 @@ new class extends Component {
         return count($this->ticketsByStatus[$status]);
     }
 
+    public function getTotalTicketForStatus($status)
+    {
+        return count($this->totalItemByStatus[$status]);
+    }
+
  public function updatedSearchType()
 {
     if (!empty($this->search)) {
@@ -359,7 +364,7 @@ private function resetPagination()
                         <h3 class="text-white font-semibold">En Attente</h3>
                     </div>
                     <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {{ $this->getTicketCountForStatus('en attente') }} sur {{ $this->totalItemByStatus('en attente') }}
+                        {{ $this->getTicketCountForStatus('en attente') }} sur {{ $this->getTotalTicketForStatus('en attente') }}
                     </span>
                 </div>
 
@@ -447,7 +452,7 @@ private function resetPagination()
                         <h3 class="text-white font-semibold">En Cours</h3>
                     </div>
                     <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {{ $this->getTicketCountForStatus('en cours') }} sur {{ $this->totalItemByStatus('en cours') }}
+                        {{ $this->getTicketCountForStatus('en cours') }} sur {{ $this->getTotalTicketForStatus('en cours') }}
                     </span>
                 </div>
 
@@ -527,7 +532,7 @@ private function resetPagination()
                         <h3 class="text-white font-semibold">Clôturé</h3>
                     </div>
                     <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {{ $this->getTicketCountForStatus('cloture') }} sur {{ $this->totalItemByStatus('en cours') }}
+                        {{ $this->getTicketCountForStatus('cloture') }} sur {{ $this->getTotalTicketForStatus('en cours') }}
                     </span>
                 </div>
 
