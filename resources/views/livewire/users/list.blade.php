@@ -138,14 +138,14 @@ new class extends Component {
             'role.required' => 'Le rôle est requis',
         ];
 
-        if (!empty($this->password) || !empty($this->confirm_password)) {
-            $rules['password'] = 'required|min:6';
-            $rules['confirm_password'] = 'required|same:password';
-            $messages['password.required'] = 'Le mot de passe est requis si vous souhaitez le changer';
-            $messages['password.min'] = 'Le mot de passe doit contenir au moins 6 caractères';
-            $messages['confirm_password.required'] = 'La confirmation du mot de passe est requise';
-            $messages['confirm_password.same'] = 'Les mots de passe ne correspondent pas';
-        }
+        // if (!empty($this->password) || !empty($this->confirm_password)) {
+        //     $rules['password'] = 'required|min:6';
+        //     $rules['confirm_password'] = 'required|same:password';
+        //     $messages['password.required'] = 'Le mot de passe est requis si vous souhaitez le changer';
+        //     $messages['password.min'] = 'Le mot de passe doit contenir au moins 6 caractères';
+        //     $messages['confirm_password.required'] = 'La confirmation du mot de passe est requise';
+        //     $messages['confirm_password.same'] = 'Les mots de passe ne correspondent pas';
+        // }
 
         $this->validate($rules, $messages);
 
@@ -163,9 +163,9 @@ new class extends Component {
                     'role' => $this->role,
                 ];
 
-                if (!empty($this->password)) {
-                    $data['password'] = Hash::make($this->password);
-                }
+                // if (!empty($this->password)) {
+                //     $data['password'] = Hash::make($this->password);
+                // }
 
                 $response = Http::withHeaders([
                     'x-secret-key' => env('X_SECRET_KEY'),
@@ -269,8 +269,8 @@ new class extends Component {
             
             <x-input label="Nom / Prénoms" wire:model="name" />
             <x-input label="Mail" wire:model="email" type="email" />
-            <x-password label="Nouveau mot de passe" hint="Laisser vide pour ne pas changer" wire:model="password" clearable />
-            <x-password label="Confirmer mot de passe" hint="Confirmer le nouveau mot de passe" wire:model="confirm_password" clearable />
+            {{-- <x-password label="Nouveau mot de passe" hint="Laisser vide pour ne pas changer" wire:model="password" clearable />
+            <x-password label="Confirmer mot de passe" hint="Confirmer le nouveau mot de passe" wire:model="confirm_password" clearable /> --}}
 
             <x-slot:actions>
                 <x-button label="Annuler" @click="$wire.updateModal = false" />

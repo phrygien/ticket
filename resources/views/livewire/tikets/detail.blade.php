@@ -138,6 +138,7 @@ new class extends Component {
         return null;
     }
 
+
     public function translateOpenAI()
     {
         $token = session('token');
@@ -145,17 +146,57 @@ new class extends Component {
             return redirect()->route('login');
         }
 
-        $detectedLang = $this->detectLanguage();
-
-        if (!$detectedLang || empty($detectedLang['langue'])) {
-            return ['error' => 'Impossible de détecter la langue'];
+        if (empty($this->message_txt)) {
+            $this->error('Veuillez écrire un message avant de le traduire');
+            return;
         }
 
-        $sourceLang = $detectedLang['langue'];
-        $targetLang = 'en';
+        $detectResponse = Http::withHeaders([
+            'x-secret-key' => env('X_SECRET_KEY'),
+            'Authorization' => "Bearer {$token}",
+            'Accept' => 'application/json',
+        ])->post(env('API_REST') . "/openai/detectlanguageiso", [
+                    "text" => $this->message_txt,
+                ]);
 
-        if ($sourceLang === $targetLang) {
-            return ['translated_text' => $this->message_txt];
+        if (!$detectResponse->successful()) {
+            $this->error('Impossible de détecter la langue du message');
+            return;
+        }
+
+        $detectedData = $detectResponse->json();
+
+        if (empty($detectedData['langue'])) {
+            $this->error('Impossible de détecter la langue');
+            return;
+        }
+
+        $currentLang = $detectedData['langue'];
+
+        if (empty($this->message_client)) {
+            $this->error('Message client introuvable');
+            return;
+        }
+
+        $detectClientResponse = Http::withHeaders([
+            'x-secret-key' => env('X_SECRET_KEY'),
+            'Authorization' => "Bearer {$token}",
+            'Accept' => 'application/json',
+        ])->post(env('API_REST') . "/openai/detectlanguageiso", [
+                    "text" => $this->message_client,
+                ]);
+
+        if (!$detectClientResponse->successful()) {
+            $this->error('Impossible de détecter la langue du client');
+            return;
+        }
+
+        $clientLangData = $detectClientResponse->json();
+        $targetLang = $clientLangData['langue'] ?? 'en';
+
+        if ($currentLang === $targetLang) {
+            $this->info('Le message est déjà dans la langue du client');
+            return;
         }
 
         $translateResponse = Http::withHeaders([
@@ -164,19 +205,23 @@ new class extends Component {
             'Accept' => 'application/json',
         ])->post(env('API_REST') . "/openai/translateandcorrect", [
                     "text" => $this->message_txt,
-                    "target" => $sourceLang,
+                    "target" => $targetLang,
                 ]);
 
         if ($translateResponse->successful()) {
             $translated = $translateResponse->json('translated_text');
 
-            $this->message_txt = $translated;
-
-            return ['translated_text' => $translated];
+            if (!empty($translated)) {
+                $this->message_txt = $translated;
+                $this->success("Message traduit de {$currentLang} vers {$targetLang}");
+            } else {
+                $this->error('La traduction a échoué');
+            }
+        } else {
+            $this->error('Erreur lors de la traduction : ' . $translateResponse->body());
         }
-
-        $this->loading = false;
     }
+
 
 
     public function updateStatus($newStatus)
@@ -389,6 +434,21 @@ new class extends Component {
         $this->translatedMessage = '';
     }
 
+    public function removePhoto($index)
+    {
+        if (isset($this->photos[$index])) {
+            $newPhotos = [];
+            foreach ($this->photos as $key => $photo) {
+                if ($key !== $index) {
+                    $newPhotos[] = $photo;
+                }
+            }
+            
+            $this->photos = $newPhotos;
+            
+            $this->success('Fichier retiré avec succès');
+        }
+    }
 
 };
 ?>
@@ -843,69 +903,327 @@ new class extends Component {
     </div>
 
 @endif
-            @if($activeTab === 'sendmail')
-                <div class="mx-auto w-full">
+@if($activeTab === 'sendmail')
+    <div class="mx-auto w-full max-w-6xl">
+        <x-header title="Répondre à l'email" separator>
+            <x-slot:subtitle>
+                Composez votre réponse et ajoutez des pièces jointes si nécessaire
+            </x-slot:subtitle>
+            <x-slot:actions>
+                <x-button 
+                    label="Retour" 
+                    @click="$wire.setTab('description')" 
+                    icon="o-arrow-left" 
+                    class="btn-ghost" 
+                />
+            </x-slot:actions>
+        </x-header>
 
-
-
-                    <div>
-                        <x-header title="Repondre" separator />
-                    
-                        <div class="grid gap-5 lg:grid-cols-2"> 
-                            <div>
-                                <x-form wire:submit="reply">
-                                    <x-input label="Destinateur" wire:model="destinateur" placeholder="Destinateur" icon="o-user"
-                                        hint="Le client qui va recevoire l'email" readonly />
-                                    <x-markdown wire:model="message_txt" label="Message" />
-                                    <x-slot:actions>
-                                        <x-button label="Annuler" />
-                                        <x-button icon="o-language" class="btn-circle btn-outline btn-accent" wire:click="translateOpenAI"
-                                                spinner="translateOpenAI" />
-                                        <x-button icon="o-paper-airplane" class="btn-circle btn-outline btn-primary" type="submit"
-                                                spinner="reply" />
-                                    </x-slot:actions>
-                                </x-form>
-                            </div>  
-                            <div>
-                                <x-file wire:model="photos" label="Attachements" multiple />
+        <div class="grid gap-6 lg:grid-cols-3">
+            <!-- Colonne principale - Composition du message -->
+            <div class="lg:col-span-2">
+                <x-card title="Composition du message" class="shadow-lg">
+                    <x-form wire:submit="reply">
+                        <!-- Informations du destinataire -->
+                        <div class="mb-6 rounded-lg bg-base-200 p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1">
+                                    <x-input 
+                                        label="Destinataire" 
+                                        wire:model="destinateur" 
+                                        placeholder="exemple@domaine.com" 
+                                        icon="o-envelope"
+                                        hint="Le destinataire de votre réponse" 
+                                        readonly 
+                                        class="font-semibold"
+                                    />
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Affichage du sujet en lecture seule -->
+                        @if(!empty($ticketDetails['conversation']['messages'][0]['subject']))
+                            <div class="mb-4">
+                                <x-input 
+                                    label="Objet" 
+                                    value="RE: {{ $ticketDetails['conversation']['messages'][0]['subject'] }}"
+                                    icon="o-chat-bubble-left-right"
+                                    readonly
+                                    class="bg-base-200"
+                                />
+                            </div>
+                        @endif
+
+                        <!-- Message du client (référence) -->
+                        @if(!empty($message_client))
+                            <div class="mb-4">
+                                <div class="rounded-lg border-l-4 border-info bg-info/10 p-4">
+                                    <div class="mb-2 flex items-center gap-2 text-sm font-semibold text-info-content">
+                                        <x-icon name="o-chat-bubble-left-ellipsis" class="h-4 w-4" />
+                                        Message original du client
+                                    </div>
+                                    <div class="max-h-32 overflow-y-auto text-sm text-base-content/70">
+                                        {{ Str::limit($message_client, 300) }}
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Éditeur de message -->
+                        <div class="mb-4">
+                            <x-markdown 
+                                wire:model="message_txt" 
+                                label="Votre réponse" 
+                                hint="Rédigez votre réponse au client"
+                                rows="12"
+                            />
+                        </div>
+
+                        <!-- Actions -->
+                        <x-slot:actions>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <x-button 
+                                    label="Annuler" 
+                                    @click="$wire.setTab('description')"
+                                    class="btn-ghost" 
+                                    icon="o-x-mark"
+                                />
+                                <x-button 
+                                    label="Traduire" 
+                                    wire:click="translateOpenAI"
+                                    class="btn-outline btn-accent" 
+                                    icon="o-language"
+                                    spinner="translateOpenAI"
+                                    tooltip="Traduire et corriger le message avec l'IA"
+                                />
+                                <x-button 
+                                    label="Envoyer la réponse" 
+                                    type="submit"
+                                    class="btn-primary" 
+                                    icon="o-paper-airplane"
+                                    spinner="reply"
+                                    tooltip="Envoyer la réponse au client"
+                                />
+                            </div>
+                        </x-slot:actions>
+                    </x-form>
+                </x-card>
+            </div>
+
+            <!-- Colonne latérale - Pièces jointes -->
+            <div class="lg:col-span-1">
+                <!-- Pièces jointes -->
+                <x-card title="Pièces jointes" subtitle="Formats acceptés: images (max 1 Mo)" class="shadow-lg">
+                    <x-file 
+                        wire:model="photos" 
+                        label="Ajouter des fichiers" 
+                        multiple 
+                        accept="image/*"
+                        hint="Images uniquement - 1 Mo max par fichier"
+                    />
+                    
+                    @if(!empty($photos))
+                        <div class="mt-4">
+                            <p class="mb-2 text-sm font-semibold">
+                                <x-icon name="o-paper-clip" class="inline h-4 w-4" />
+                                {{ count($photos) }} fichier(s) sélectionné(s)
+                            </p>
+                            <ul class="space-y-2">
+                                @foreach($photos as $index => $photo)
+                                    <li class="flex items-center justify-between rounded-lg bg-base-200 p-2 text-sm">
+                                        <span class="flex items-center gap-2 truncate">
+                                            <x-icon name="o-photo" class="h-4 w-4 flex-shrink-0 text-primary" />
+                                            <span class="truncate">{{ $photo->getClientOriginalName() }}</span>
+                                        </span>
+                                        <x-button 
+                                            icon="o-x-mark" 
+                                           wire:click="removePhoto({{ $index }})"
+                                            class="btn-ghost btn-xs ml-2 flex-shrink-0"
+                                            tooltip="Retirer"
+                                        />
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                </x-card>
+
+                <!-- Informations du ticket -->
+                <x-card title="Informations du ticket" class="mt-6 shadow-lg">
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-base-content/70">Ticket ID:</span>
+                            <span class="badge badge-primary">{{ $ticketId }}</span>
+                        </div>
+                        
+                        @if(!empty($ticketDetails['details'][0]['status']))
+                            <div class="flex items-center justify-between">
+                                <span class="text-base-content/70">Statut:</span>
+                                <span class="badge badge-outline">
+                                    {{ ucfirst($ticketDetails['details'][0]['status']) }}
+                                </span>
+                            </div>
+                        @endif
+
+                        @if(!empty($ticketDetails['conversation']['messages']))
+                            <div class="flex items-center justify-between">
+                                <span class="text-base-content/70">Messages:</span>
+                                <span class="font-semibold">
+                                    {{ count($ticketDetails['conversation']['messages']) }}
+                                </span>
+                            </div>
+                        @endif
                     </div>
+                </x-card>
+
+                <!-- Aide rapide -->
+                <x-card title="Aide rapide" class="mt-6 bg-info/10">
+                    <div class="space-y-2 text-sm">
+                        <p class="flex items-start gap-2">
+                            <x-icon name="o-information-circle" class="mt-0.5 h-4 w-4 flex-shrink-0 text-info" />
+                            <span>Le bouton <strong>Traduire</strong> détecte automatiquement la langue du client</span>
+                        </p>
+                        <p class="flex items-start gap-2">
+                            <x-icon name="o-sparkles" class="mt-0.5 h-4 w-4 flex-shrink-0 text-warning" />
+                            <span>Votre message sera traduit et corrigé avec l'IA</span>
+                        </p>
+                    </div>
+                </x-card>
+            </div>
+        </div>
+    </div>
+@endif
+@if($activeTab === 'commentaire')
+    <div class="mx-auto max-w-5xl">
+        <x-header title="Historique des commentaires" separator>
+            <x-slot:subtitle>
+                Suivez toutes les mises à jour et commentaires sur ce ticket
+            </x-slot:subtitle>
+            <x-slot:actions>
+                <div class="flex items-center gap-2">
+                    <x-icon name="o-chat-bubble-left-right" class="h-5 w-5 text-primary" />
+                    <span class="badge badge-primary badge-lg">
+                        {{ count($ticketDetails['comment'] ?? []) }} commentaire(s)
+                    </span>
                 </div>
-            @endif
+            </x-slot:actions>
+        </x-header>
 
-            @if($activeTab === 'commentaire')
+        @if(empty($ticketDetails['comment']))
+            <!-- État vide -->
+            <x-card class="shadow-lg">
+                <div class="py-12 text-center">
+                    <x-icon name="o-chat-bubble-bottom-center-text" class="mx-auto h-16 w-16 text-base-300" />
+                    <h3 class="mt-4 text-lg font-semibold text-base-content">Aucun commentaire</h3>
+                    <p class="mt-2 text-sm text-base-content/60">
+                        Ce ticket n'a pas encore de commentaires ou d'historique de mise à jour.
+                    </p>
+                </div>
+            </x-card>
+        @else
+            <!-- Timeline des commentaires -->
+            <div class="relative">
+                <!-- Ligne verticale de la timeline -->
+                <div class="absolute left-[29px] top-0 h-full w-0.5 bg-gradient-to-b from-primary via-primary/50 to-transparent"></div>
 
-                <div class="mx-auto max-w-5xl">
-                    <ul role="list" class="divide-y divide-gray-100">
-                        @foreach ($ticketDetails['comment'] as $comment)
-                            <li class="py-4">
-                                <div class="flex items-center gap-x-3">
-                                    {{-- Avatar par défaut ou personnalisé --}}
-                                    <img src="https://ui-avatars.com/api/?name={{ urlencode($comment['user']['name'] ?? 'U') }}&background=random"
-                                        alt="avatar" class="size-6 flex-none rounded-full bg-gray-800">
+                <ul role="list" class="space-y-6">
+                    @foreach ($ticketDetails['comment'] as $index => $comment)
+                        <li class="relative">
+                            <!-- Carte du commentaire -->
+                            <x-card class="ml-16 shadow-md transition-all hover:shadow-lg">
+                                <!-- En-tête du commentaire -->
+                                <div class="mb-4 flex items-start justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <!-- Badge de position sur la timeline -->
+                                        <div class="absolute -left-[42px] z-10 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-content shadow-md ring-4 ring-base-100">
+                                            {{ $index + 1 }}
+                                        </div>
 
-                                    {{-- Auteur du commentaire --}}
-                                    <h3 class="flex-auto truncate text-sm font-semibold text-gray-900">
-                                        {{ $comment['user']['name'] ?? 'Utilisateur' }}
-                                    </h3>
+                                        <!-- Informations utilisateur -->
+                                        <div>
+                                            <h3 class="text-base font-bold text-base-content">
+                                                {{ $comment['user']['name'] ?? 'Utilisateur' }}
+                                            </h3>
+                                            <p class="text-xs text-base-content/60">
+                                                @if(!empty($comment['user']['email']))
+                                                    {{ $comment['user']['email'] }}
+                                                @else
+                                                    Membre de l'équipe
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
 
-                                    {{-- Date de publication --}}
-                                    <time datetime="{{ $comment['created_at'] }}" class="flex-none text-xs text-gray-500">
-                                        {{ \Carbon\Carbon::parse($comment['created_at'])->diffForHumans() }}
-                                    </time>
+                                    <!-- Date et heure -->
+                                    <div class="flex flex-col items-end gap-1">
+                                        <time 
+                                            datetime="{{ $comment['created_at'] }}" 
+                                            class="flex items-center gap-1 text-xs font-medium text-primary"
+                                            title="{{ \Carbon\Carbon::parse($comment['created_at'])->format('d/m/Y H:i:s') }}"
+                                        >
+                                            <x-icon name="o-clock" class="h-4 w-4" />
+                                            {{ \Carbon\Carbon::parse($comment['created_at'])->diffForHumans() }}
+                                        </time>
+                                        <span class="text-xs text-base-content/50">
+                                            {{ \Carbon\Carbon::parse($comment['created_at'])->format('d/m/Y à H:i') }}
+                                        </span>
+                                    </div>
                                 </div>
 
-                                {{-- Contenu du commentaire --}}
-                                <p class="mt-3 text-sm text-gray-600">
-                                    {{ $comment['comment'] }}
-                                </p>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
+                                <!-- Contenu du commentaire -->
+                                <div class="prose prose-sm max-w-none">
+                                    <div class="rounded-lg bg-base-200 p-4">
+                                        <p class="whitespace-pre-wrap text-sm leading-relaxed text-base-content">
+                                            {{ $comment['comment'] }}
+                                        </p>
+                                    </div>
+                                </div>
 
-            @endif
+                                <!-- Type de commentaire / badge (optionnel) -->
+                                @if(!empty($comment['type']))
+                                    <div class="mt-3 flex items-center gap-2">
+                                        <span class="badge badge-sm badge-outline">
+                                            <x-icon name="o-tag" class="mr-1 h-3 w-3" />
+                                            {{ ucfirst($comment['type']) }}
+                                        </span>
+                                    </div>
+                                @endif
+                            </x-card>
+
+                            <!-- Indicateur de connexion à la timeline -->
+                            <div class="absolute left-[29px] top-8 h-0.5 w-7 bg-primary"></div>
+                        </li>
+                    @endforeach
+                </ul>
+
+                <!-- Point de fin de timeline -->
+                <div class="relative ml-16 mt-8">
+                    <div class="absolute -left-[42px] flex h-6 w-6 items-center justify-center rounded-full bg-success shadow-md">
+                        <x-icon name="o-check" class="h-4 w-4 text-success-content" />
+                    </div>
+                    <div class="rounded-lg border-2 border-dashed border-base-300 bg-base-200/50 p-4 text-center">
+                        <p class="text-sm font-medium text-base-content/60">
+                            <x-icon name="o-check-circle" class="mr-1 inline h-4 w-4 text-success" />
+                            Vous êtes à jour avec l'historique du ticket
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiques en bas (optionnel) -->
+            <x-card class="mt-8 bg-gradient-to-r from-primary/5 to-accent/5">
+                <div class="grid grid-cols-1 gap-4 text-center">
+                    <div>
+                        <div class="text-2xl font-bold text-primary">
+                            {{ count($ticketDetails['comment']) }}
+                        </div>
+                        <div class="text-xs text-base-content/60">Total commentaires</div>
+                    </div>
+                </div>
+            </x-card>
+        @endif
+    </div>
+@endif
 
     </div>
 
