@@ -532,7 +532,7 @@ private function resetPagination()
                         <h3 class="text-white font-semibold">Clôturé</h3>
                     </div>
                     <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {{ $this->getTicketCountForStatus('cloture') }} sur {{ $this->getTotalTicketForStatus('en cours') }}
+                        {{ $this->getTicketCountForStatus('cloture') }} sur {{ $this->getTotalTicketForStatus('cloture') }}
                     </span>
                 </div>
 
