@@ -281,7 +281,7 @@ new class extends Component {
             'x-secret-key' => env('X_SECRET_KEY'),
             'Authorization' => "Bearer {$token}",
             'Accept' => 'application/json',
-        ])->post(env('API_REST') . "/translateandcorrect", [
+        ])->post(env('API_REST') . "/openai/translateandcorrect", [
                     "text" => $messageText,
                     "target" => "fr",
                 ]);
