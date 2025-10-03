@@ -368,6 +368,7 @@ new class extends Component {
         if ($response->successful()) {
             $this->message_txt = '';
             $this->photos = [];
+            $this->fetchTicketDetails();
             $this->success('Email envoyé avec succès !');
         } else {
             \Log::error('Erreur API:', [
