@@ -368,6 +368,7 @@ new class extends Component {
         if ($response->successful()) {
             $this->message_txt = '';
             $this->photos = [];
+            $this->fetchTicketDetails();
             $this->success('Email envoyé avec succès !');
         } else {
             \Log::error('Erreur API:', [
@@ -443,9 +444,9 @@ new class extends Component {
                     $newPhotos[] = $photo;
                 }
             }
-            
+
             $this->photos = $newPhotos;
-            
+
             $this->success('Fichier retiré avec succès');
         }
     }
@@ -509,86 +510,92 @@ new class extends Component {
     </div>
 
     <div>
+
         @if($activeTab === 'description')
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <div class="px-4 py-6 sm:px-6">
-                        <h3 class="text-base/7 font-semibold text-gray-900">{{ __('Infos Ticket')}}</h3>
-                        <p class="mt-1 max-w-2xl text-sm/6 text-gray-500">{{ __('Tous les information sur le ticket') }}.
-                        </p>
-                    </div>
-                    <div class="border-t border-gray-100">
-                        <dl class="divide-y divide-gray-100">
-                            <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-900">Status</dt>
-                                <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                    {{ $ticketDetails['details'][0]['status'] }}
-                                </dd>
-                            </div>
-                            <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-900">Numero ticket</dt>
-                                <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                    {{ $ticketDetails['details'][0]['num_ticket'] }}
-                                </dd>
-                            </div>
-                            <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-900">Numero de commande</dt>
-                                <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                    {{ $ticketDetails['details'][0]['num_commande'] }}
-                                </dd>
-                            </div>
-                            <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-900">Application for</dt>
-                                <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                    {{ $ticketDetails['details'][0]['subject_ticket'] }}
-                                </dd>
-                            </div>
-                            <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-900">Email address</dt>
-                                <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                    {{ $ticketDetails['details'][0]['original_client_mail'] }}
-                                </dd>
-                            </div>
-                            <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-900">Email address</dt>
-                                <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                    {{ $ticketDetails['details'][0]['reception_mail'] }}
-                                </dd>
-                            </div>
-                            <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-900">Nom et prenoms du clients</dt>
-                                <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                    {{ $ticketDetails['details'][0]['nom_client'] }}
-                                </dd>
-                            </div>
-                        </dl>
-                    </div>
-                </div>
+            <x-button class="mb-3 btn-primary" label="{{ $this->getNextStatus()['label'] }}"
+                wire:click="updateStatus('{{ $this->getNextStatus()['next'] }}')" />
 
-                <div class="bg-gray-50 sm:rounded-lg">
-                    <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-base font-semibold text-gray-900">Resume</h3>
 
-                        <div class="mt-2 max-w-xl text-sm text-gray-700 max-h-[500px] overflow-y-auto pr-2">
-                            @php
-    $todos = $ticketDetails['details'][0]['to_do'] ?? '';
-    $items = preg_split('/\r\n|\r|\n/', trim($todos));
-                            @endphp
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                            <ul class="list-disc pl-5 space-y-1">
-                                @foreach($items as $item)
-                                    @if(!empty(trim($item)))
-                                        <li>{{ trim($item) }}</li>
-                                    @endif
-                                @endforeach
-                            </ul>
+                        <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                            <div class="px-4 py-6 sm:px-6">
+                                <h3 class="text-base/7 font-semibold text-gray-900">{{ __('Infos Ticket')}}</h3>
+                                <p class="mt-1 max-w-2xl text-sm/6 text-gray-500">{{ __('Tous les information sur le ticket') }}.
+                                </p>
+                            </div>
+                            <div class="border-t border-gray-100">
+                                <dl class="divide-y divide-gray-100">
+                                    <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                        <dt class="text-sm font-medium text-gray-900">Status</dt>
+                                        <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
+                                            {{ $ticketDetails['details'][0]['status'] }}
+                                        </dd>
+                                    </div>
+                                    <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                        <dt class="text-sm font-medium text-gray-900">Numero ticket</dt>
+                                        <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
+                                            {{ $ticketDetails['details'][0]['num_ticket'] }}
+                                        </dd>
+                                    </div>
+                                    <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                        <dt class="text-sm font-medium text-gray-900">Numero de commande</dt>
+                                        <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
+                                            {{ $ticketDetails['details'][0]['num_commande'] }}
+                                        </dd>
+                                    </div>
+                                    <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                        <dt class="text-sm font-medium text-gray-900">Application for</dt>
+                                        <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
+                                            {{ $ticketDetails['details'][0]['subject_ticket'] }}
+                                        </dd>
+                                    </div>
+                                    <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                        <dt class="text-sm font-medium text-gray-900">Email address</dt>
+                                        <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
+                                            {{ $ticketDetails['details'][0]['original_client_mail'] }}
+                                        </dd>
+                                    </div>
+                                    <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                        <dt class="text-sm font-medium text-gray-900">Email address</dt>
+                                        <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
+                                            {{ $ticketDetails['details'][0]['reception_mail'] }}
+                                        </dd>
+                                    </div>
+                                    <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                        <dt class="text-sm font-medium text-gray-900">Nom et prenoms du clients</dt>
+                                        <dd class="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
+                                            {{ $ticketDetails['details'][0]['nom_client'] }}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 sm:rounded-lg">
+                            <div class="px-4 py-5 sm:p-6">
+                                <h3 class="text-base font-semibold text-gray-900">Resume</h3>
+
+                                <div class="mt-2 max-w-xl text-sm text-gray-700 max-h-[500px] overflow-y-auto pr-2">
+                                    @php
+            $todos = $ticketDetails['details'][0]['to_do'] ?? '';
+            $items = preg_split('/\r\n|\r|\n/', trim($todos));
+                                    @endphp
+
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        @foreach($items as $item)
+                                            @if(!empty(trim($item)))
+                                                <li>{{ trim($item) }}</li>
+                                            @endif
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-@elseif($activeTab === 'conversation')
+        @elseif($activeTab === 'conversation')
 
     <div class="flex h-[calc(100vh-200px)] bg-gray-50">
         <div class="w-1/2 bg-white border-r border-gray-200 flex flex-col">
@@ -736,8 +743,8 @@ new class extends Component {
                                             </div>
                                             <div class="flex items-center gap-2 text-sm text-gray-500">
                                                 @php
-                                                    $toAddress = $selectedMessage['to'] ?? '';
-                                                    $toName = preg_match('/^([^<]+)/', $toAddress, $toMatch) ? trim($toMatch[1]) : $toAddress;
+        $toAddress = $selectedMessage['to'] ?? '';
+        $toName = preg_match('/^([^<]+)/', $toAddress, $toMatch) ? trim($toMatch[1]) : $toAddress;
                                                 @endphp
                                                 <span>À: {{ $toName ?: '-' }}</span>
                                                 <span>•</span>
@@ -785,23 +792,23 @@ new class extends Component {
                                             <div class="grid grid-cols-1 gap-2">
                                                 @foreach($selectedMessage['attachments'] as $attachmentIndex => $attachment)
                                                     @php
-                                $filename = $attachment['filename'] ?? 'Fichier sans nom';
-                                $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                                $mimeType = $attachment['mimeType'] ?? '';
+                $filename = $attachment['filename'] ?? 'Fichier sans nom';
+                $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                $mimeType = $attachment['mimeType'] ?? '';
 
-                                [$iconColor, $bgColor] = match (true) {
-                                    $extension === 'pdf' || str_contains($mimeType, 'pdf') =>
-                                    ['text-red-600', 'bg-red-50'],
-                                    in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word') =>
-                                    ['text-blue-600', 'bg-blue-50'],
-                                    in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'spreadsheet') =>
-                                    ['text-green-600', 'bg-green-50'],
-                                    in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']) || str_contains($mimeType, 'image') =>
-                                    ['text-purple-600', 'bg-purple-50'],
-                                    in_array($extension, ['zip', 'rar', '7z', 'tar']) =>
-                                    ['text-yellow-600', 'bg-yellow-50'],
-                                    default => ['text-gray-600', 'bg-gray-50']
-                                };
+                [$iconColor, $bgColor] = match (true) {
+                    $extension === 'pdf' || str_contains($mimeType, 'pdf') =>
+                    ['text-red-600', 'bg-red-50'],
+                    in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word') =>
+                    ['text-blue-600', 'bg-blue-50'],
+                    in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'spreadsheet') =>
+                    ['text-green-600', 'bg-green-50'],
+                    in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']) || str_contains($mimeType, 'image') =>
+                    ['text-purple-600', 'bg-purple-50'],
+                    in_array($extension, ['zip', 'rar', '7z', 'tar']) =>
+                    ['text-yellow-600', 'bg-yellow-50'],
+                    default => ['text-gray-600', 'bg-gray-50']
+                };
                                                     @endphp
 
                                                     <div
