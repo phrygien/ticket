@@ -353,275 +353,294 @@ private function resetPagination()
     </x-slot:actions>
 </x-header>
 
-    <div class="mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-4 py-3 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <h3 class="text-white font-semibold">En Attente</h3>
-                    </div>
-                    <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {{ $this->getTicketCountForStatus('en attente') }} sur {{ $this->getTotalTicketForStatus('en attente') }}
-                    </span>
+<div class="mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Colonne En Attente -->
+        <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="text-white font-semibold">En Attente</h3>
                 </div>
-
-                <div 
-                    id="status-en-attente" 
-                    class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
-                    x-data="kanbanColumn('en attente')"
-                    x-init="init()"
-                    @scroll="handleScroll"
-                    @drop.prevent="handleDrop($event)"
-                    @dragover.prevent
-                    @dragenter.prevent="$el.classList.add('ring-2', 'ring-purple-300', 'bg-purple-50')"
-                    @dragleave.prevent="$el.classList.remove('ring-2', 'ring-purple-300', 'bg-purple-50')"
-                >
-                    @foreach($ticketsByStatus['en attente'] as $ticket)
-                        <div 
-                            draggable="true"
-                            data-ticket-id="{{ $ticket['id'] }}"
-                            data-status="en attente"
-                            @dragstart="handleDragStart($event)"
-                            @dragend="handleDragEnd($event)"
-                            class="group bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-move hover:scale-[1.02]"
-                        >
-                            <div class="flex items-start justify-between mb-3">
-                                <span class="text-xs font-medium text-purple-600 bg-purple-100 px-2 py-1 rounded">
-                                    {{ $ticket['num_ticket'] }}
-                                </span>
-                                @if($ticket['need_attention'] == 1)
-                                    <span class="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded animate-pulse">
-                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                                        </svg>
-                                        Réponse client
-                                    </span>
-                                @endif
-                            </div>
-
-                            <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">
-                                {{ Str::limit($ticket['subject_ticket'], 60) }}
-                            </h4>
-
-                            <div class="space-y-1.5 mb-3">
-                                <div class="flex items-center gap-2 text-xs text-gray-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" class="size-4">
-                                        <path d="M1.75 1.002a.75.75 0 1 0 0 1.5h1.835l1.24 5.113A3.752 3.752 0 0 0 2 11.25c0 .414.336.75.75.75h10.5a.75.75 0 0 0 0-1.5H3.628A2.25 2.25 0 0 1 5.75 9h6.5a.75.75 0 0 0 .73-.578l.846-3.595a.75.75 0 0 0-.578-.906 44.118 44.118 0 0 0-7.996-.91l-.348-1.436a.75.75 0 0 0-.73-.573H1.75ZM5 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
-                                    </svg>
-                                    <span class="font-medium">N° commande: {{ $ticket['num_commande'] }}</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-xs text-gray-600">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                                    </svg>
-                                    <span class="font-medium">{{ $ticket['label'] }}</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-xs text-purple-600">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                                    </svg>
-                                    <span>{{ $ticket['project_name'] }}</span>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center justify-end">
-                                <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
-                                   wire:navigate
-                                   class="text-sm font-medium text-purple-600 hover:text-purple-700 flex items-center gap-1 group-hover:gap-2 transition-all">
-                                    Voir détails
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                    @endforeach
-                    
-                    @if($loadingByStatus['en attente'])
-                        <div class="flex items-center justify-center py-8">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                            <span class="ml-3 text-sm text-gray-500">Chargement...</span>
-                        </div>
-                    @endif
-                </div>
+                <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                    {{ $this->getTicketCountForStatus('en attente') }} sur {{ $this->getTotalTicketForStatus('en attente') }}
+                </span>
             </div>
 
-            <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                        <h3 class="text-white font-semibold">En Cours</h3>
-                    </div>
-                    <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {{ $this->getTicketCountForStatus('en cours') }} sur {{ $this->getTotalTicketForStatus('en cours') }}
-                    </span>
-                </div>
-
-                <div 
-                    id="status-en-cours" 
-                    class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
-                    x-data="kanbanColumn('en cours')"
-                    x-init="init()"
-                    @scroll="handleScroll"
-                    @drop.prevent="handleDrop($event)"
-                    @dragover.prevent
-                    @dragenter.prevent="$el.classList.add('ring-2', 'ring-amber-300', 'bg-amber-50')"
-                    @dragleave.prevent="$el.classList.remove('ring-2', 'ring-amber-300', 'bg-amber-50')"
-                >
-                    @foreach($ticketsByStatus['en cours'] as $ticket)
-                        <div 
-                            draggable="true"
-                            data-ticket-id="{{ $ticket['id'] }}"
-                            data-status="en cours"
-                            @dragstart="handleDragStart($event)"
-                            @dragend="handleDragEnd($event)"
-                            class="group bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-move hover:scale-[1.02]"
-                        >
-                            <div class="flex items-start justify-between mb-3">
-                                <span class="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-1 rounded">
-                                    {{ $ticket['num_ticket'] }}
+            <div 
+                id="status-en-attente" 
+                class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
+                x-data="kanbanColumn('en attente')"
+                x-init="init()"
+                @scroll="handleScroll"
+                @drop.prevent="handleDrop($event)"
+                @dragover.prevent
+                @dragenter.prevent="$el.classList.add('ring-2', 'ring-purple-300', 'bg-purple-50')"
+                @dragleave.prevent="$el.classList.remove('ring-2', 'ring-purple-300', 'bg-purple-50')"
+            >
+                @foreach($ticketsByStatus['en attente'] as $ticket)
+                    <div 
+                        draggable="true"
+                        data-ticket-id="{{ $ticket['id'] }}"
+                        data-status="en attente"
+                        @dragstart="handleDragStart($event)"
+                        @dragend="handleDragEnd($event)"
+                        class="group bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-move hover:scale-[1.02]"
+                    >
+                        <div class="flex items-start justify-between mb-3">
+                            <span class="text-xs font-medium text-purple-600 bg-purple-100 px-2 py-1 rounded">
+                                {{ $ticket['num_ticket'] }}
+                            </span>
+                            @if($ticket['need_attention'] == 1)
+                                <span class="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded animate-pulse">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Réponse du client
                                 </span>
+                            @endif
+                        </div>
+
+                        <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">
+                            {{ Str::limit($ticket['subject_ticket'], 60) }}
+                        </h4>
+
+                        <div class="space-y-1.5 mb-3">
+                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" class="size-4">
+                                    <path d="M1.75 1.002a.75.75 0 1 0 0 1.5h1.835l1.24 5.113A3.752 3.752 0 0 0 2 11.25c0 .414.336.75.75.75h10.5a.75.75 0 0 0 0-1.5H3.628A2.25 2.25 0 0 1 5.75 9h6.5a.75.75 0 0 0 .73-.578l.846-3.595a.75.75 0 0 0-.578-.906 44.118 44.118 0 0 0-7.996-.91l-.348-1.436a.75.75 0 0 0-.73-.573H1.75ZM5 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+                                </svg>
+                                <span class="font-medium">N° commande: {{ $ticket['num_commande'] }}</span>
                             </div>
-
-                            <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">
-                                {{ Str::limit($ticket['subject_ticket'], 60) }}
-                            </h4>
-
-                            <div class="space-y-1.5 mb-3">
-                                <div class="flex items-center gap-2 text-xs text-gray-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" class="size-4">
-                                        <path d="M1.75 1.002a.75.75 0 1 0 0 1.5h1.835l1.24 5.113A3.752 3.752 0 0 0 2 11.25c0 .414.336.75.75.75h10.5a.75.75 0 0 0 0-1.5H3.628A2.25 2.25 0 0 1 5.75 9h6.5a.75.75 0 0 0 .73-.578l.846-3.595a.75.75 0 0 0-.578-.906 44.118 44.118 0 0 0-7.996-.91l-.348-1.436a.75.75 0 0 0-.73-.573H1.75ZM5 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
-                                    </svg>
-                                    <span class="font-medium">N° commande: {{ $ticket['num_commande'] }}</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-xs text-gray-600">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                                    </svg>
-                                    <span class="font-medium">{{ $ticket['label'] }}</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-xs text-amber-600">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                                    </svg>
-                                    <span>{{ $ticket['project_name'] }}</span>
-                                </div>
+                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                </svg>
+                                <span class="font-medium">{{ $ticket['label'] }}</span>
                             </div>
-
-                            <div class="flex items-center justify-end">
-                                <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
-                                   wire:navigate
-                                   class="text-sm font-medium text-amber-600 hover:text-amber-700 flex items-center gap-1 group-hover:gap-2 transition-all">
-                                    Voir détails
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                    </svg>
-                                </a>
+                            <div class="flex items-center gap-2 text-xs text-purple-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                </svg>
+                                <span>{{ $ticket['project_name'] }}</span>
                             </div>
                         </div>
-                    @endforeach
-                    
-                    @if($loadingByStatus['en cours'])
-                        <div class="flex items-center justify-center py-8">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
-                            <span class="ml-3 text-sm text-gray-500">Chargement...</span>
+
+                        <div class="flex items-center justify-end">
+                            <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
+                               wire:navigate
+                               class="text-sm font-medium text-purple-600 hover:text-purple-700 flex items-center gap-1 group-hover:gap-2 transition-all">
+                                Voir détails
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </a>
                         </div>
-                    @endif
+                    </div>
+                @endforeach
+                
+                @if($loadingByStatus['en attente'])
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                        <span class="ml-3 text-sm text-gray-500">Chargement...</span>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Colonne En Cours -->
+        <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <h3 class="text-white font-semibold">En Cours</h3>
                 </div>
+                <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                    {{ $this->getTicketCountForStatus('en cours') }} sur {{ $this->getTotalTicketForStatus('en cours') }}
+                </span>
             </div>
 
-            <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <h3 class="text-white font-semibold">Clôturé</h3>
-                    </div>
-                    <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {{ $this->getTicketCountForStatus('cloture') }} sur {{ $this->getTotalTicketForStatus('cloture') }}
-                    </span>
-                </div>
-
-                <div 
-                    id="status-cloture" 
-                    class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
-                    x-data="kanbanColumn('cloture')"
-                    x-init="init()"
-                    @scroll="handleScroll"
-                    @drop.prevent="handleDrop($event)"
-                    @dragover.prevent
-                    @dragenter.prevent="$el.classList.add('ring-2', 'ring-green-300', 'bg-green-50')"
-                    @dragleave.prevent="$el.classList.remove('ring-2', 'ring-green-300', 'bg-green-50')"
-                >
-                    @foreach($ticketsByStatus['cloture'] as $ticket)
-                        <div 
-                            draggable="true"
-                            data-ticket-id="{{ $ticket['id'] }}"
-                            data-status="cloture"
-                            @dragstart="handleDragStart($event)"
-                            @dragend="handleDragEnd($event)"
-                            class="group bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-move hover:scale-[1.02] opacity-75"
-                        >
-                            <div class="flex items-start justify-between mb-3">
-                                <span class="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded">
-                                    {{ $ticket['num_ticket'] }}
+            <div 
+                id="status-en-cours" 
+                class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
+                x-data="kanbanColumn('en cours')"
+                x-init="init()"
+                @scroll="handleScroll"
+                @drop.prevent="handleDrop($event)"
+                @dragover.prevent
+                @dragenter.prevent="$el.classList.add('ring-2', 'ring-amber-300', 'bg-amber-50')"
+                @dragleave.prevent="$el.classList.remove('ring-2', 'ring-amber-300', 'bg-amber-50')"
+            >
+                @foreach($ticketsByStatus['en cours'] as $ticket)
+                    <div 
+                        draggable="true"
+                        data-ticket-id="{{ $ticket['id'] }}"
+                        data-status="en cours"
+                        @dragstart="handleDragStart($event)"
+                        @dragend="handleDragEnd($event)"
+                        class="group bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-move hover:scale-[1.02]"
+                    >
+                        <div class="flex items-start justify-between mb-3">
+                            <span class="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-1 rounded">
+                                {{ $ticket['num_ticket'] }}
+                            </span>
+                            @if($ticket['need_attention'] == 1)
+                                <span class="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded animate-pulse">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Réponse du client
                                 </span>
+                            @endif
+                        </div>
+
+                        <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">
+                            {{ Str::limit($ticket['subject_ticket'], 60) }}
+                        </h4>
+
+                        <div class="space-y-1.5 mb-3">
+                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" class="size-4">
+                                    <path d="M1.75 1.002a.75.75 0 1 0 0 1.5h1.835l1.24 5.113A3.752 3.752 0 0 0 2 11.25c0 .414.336.75.75.75h10.5a.75.75 0 0 0 0-1.5H3.628A2.25 2.25 0 0 1 5.75 9h6.5a.75.75 0 0 0 .73-.578l.846-3.595a.75.75 0 0 0-.578-.906 44.118 44.118 0 0 0-7.996-.91l-.348-1.436a.75.75 0 0 0-.73-.573H1.75ZM5 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+                                </svg>
+                                <span class="font-medium">N° commande: {{ $ticket['num_commande'] }}</span>
                             </div>
-
-                            <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">
-                                {{ Str::limit($ticket['subject_ticket'], 60) }}
-                            </h4>
-
-                            <div class="space-y-1.5 mb-3">
-                                <div class="flex items-center gap-2 text-xs text-gray-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" class="size-4">
-                                        <path d="M1.75 1.002a.75.75 0 1 0 0 1.5h1.835l1.24 5.113A3.752 3.752 0 0 0 2 11.25c0 .414.336.75.75.75h10.5a.75.75 0 0 0 0-1.5H3.628A2.25 2.25 0 0 1 5.75 9h6.5a.75.75 0 0 0 .73-.578l.846-3.595a.75.75 0 0 0-.578-.906 44.118 44.118 0 0 0-7.996-.91l-.348-1.436a.75.75 0 0 0-.73-.573H1.75ZM5 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
-                                    </svg>
-                                    <span class="font-medium">N° commande: {{ $ticket['num_commande'] }}</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-xs text-gray-600">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                                    </svg>
-                                    <span class="font-medium">{{ $ticket['label'] }}</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-xs text-green-600">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                                    </svg>
-                                    <span>{{ $ticket['project_name'] }}</span>
-                                </div>
+                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                </svg>
+                                <span class="font-medium">{{ $ticket['label'] }}</span>
                             </div>
-
-                            <div class="flex items-center justify-end">
-                                <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
-                                   wire:navigate
-                                   class="text-sm font-medium text-green-600 hover:text-green-700 flex items-center gap-1 group-hover:gap-2 transition-all">
-                                    Voir détails
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                    </svg>
-                                </a>
+                            <div class="flex items-center gap-2 text-xs text-amber-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                </svg>
+                                <span>{{ $ticket['project_name'] }}</span>
                             </div>
                         </div>
-                    @endforeach
-                    
-                    @if($loadingByStatus['cloture'])
-                        <div class="flex items-center justify-center py-8">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-                            <span class="ml-3 text-sm text-gray-500">Chargement...</span>
+
+                        <div class="flex items-center justify-end">
+                            <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
+                               wire:navigate
+                               class="text-sm font-medium text-amber-600 hover:text-amber-700 flex items-center gap-1 group-hover:gap-2 transition-all">
+                                Voir détails
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </a>
                         </div>
-                    @endif
+                    </div>
+                @endforeach
+                
+                @if($loadingByStatus['en cours'])
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+                        <span class="ml-3 text-sm text-gray-500">Chargement...</span>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Colonne Clôturé -->
+        <div class="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="text-white font-semibold">Clôturé</h3>
                 </div>
+                <span class="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                    {{ $this->getTicketCountForStatus('cloture') }} sur {{ $this->getTotalTicketForStatus('cloture') }}
+                </span>
+            </div>
+
+            <div 
+                id="status-cloture" 
+                class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)]"
+                x-data="kanbanColumn('cloture')"
+                x-init="init()"
+                @scroll="handleScroll"
+                @drop.prevent="handleDrop($event)"
+                @dragover.prevent
+                @dragenter.prevent="$el.classList.add('ring-2', 'ring-green-300', 'bg-green-50')"
+                @dragleave.prevent="$el.classList.remove('ring-2', 'ring-green-300', 'bg-green-50')"
+            >
+                @foreach($ticketsByStatus['cloture'] as $ticket)
+                    <div 
+                        draggable="true"
+                        data-ticket-id="{{ $ticket['id'] }}"
+                        data-status="cloture"
+                        @dragstart="handleDragStart($event)"
+                        @dragend="handleDragEnd($event)"
+                        class="group bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-move hover:scale-[1.02] opacity-75"
+                    >
+                        <div class="flex items-start justify-between mb-3">
+                            <span class="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded">
+                                {{ $ticket['num_ticket'] }}
+                            </span>
+                            @if($ticket['need_attention'] == 1)
+                                <span class="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded animate-pulse">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Réponse du client
+                                </span>
+                            @endif
+                        </div>
+
+                        <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">
+                            {{ Str::limit($ticket['subject_ticket'], 60) }}
+                        </h4>
+
+                        <div class="space-y-1.5 mb-3">
+                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" class="size-4">
+                                    <path d="M1.75 1.002a.75.75 0 1 0 0 1.5h1.835l1.24 5.113A3.752 3.752 0 0 0 2 11.25c0 .414.336.75.75.75h10.5a.75.75 0 0 0 0-1.5H3.628A2.25 2.25 0 0 1 5.75 9h6.5a.75.75 0 0 0 .73-.578l.846-3.595a.75.75 0 0 0-.578-.906 44.118 44.118 0 0 0-7.996-.91l-.348-1.436a.75.75 0 0 0-.73-.573H1.75ZM5 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+                                </svg>
+                                <span class="font-medium">N° commande: {{ $ticket['num_commande'] }}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                </svg>
+                                <span class="font-medium">{{ $ticket['label'] }}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-green-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                </svg>
+                                <span>{{ $ticket['project_name'] }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-end">
+                            <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
+                               wire:navigate
+                               class="text-sm font-medium text-green-600 hover:text-green-700 flex items-center gap-1 group-hover:gap-2 transition-all">
+                                Voir détails
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
+                
+                @if($loadingByStatus['cloture'])
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                        <span class="ml-3 text-sm text-gray-500">Chargement...</span>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
+</div>
 
     <x-modal wire:model="myModal1" title="Détails du Ticket" class="backdrop-blur"
         box-class="bg-gray-200 max-w-7xl h-[90vh]">
