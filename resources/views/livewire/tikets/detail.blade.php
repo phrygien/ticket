@@ -453,9 +453,9 @@ new class extends Component {
 
 
     public function showOriginalMessage()
-{
-    $this->translatedMessage = '';
-}
+    {
+        $this->translatedMessage = '';
+    }
 
 };
 ?>
@@ -589,7 +589,7 @@ new class extends Component {
             $items = preg_split('/\r\n|\r|\n/', trim($todos));
                                     @endphp
 
-                                    <ul class="list-disc pl-5 space-y-1">
+                                    <ul class="list-none pl-5 space-y-1">
                                         @foreach($items as $item)
                                             @if(!empty(trim($item)))
                                                 <li>{{ trim($item) }}</li>
