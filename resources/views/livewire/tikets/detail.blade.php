@@ -451,6 +451,12 @@ new class extends Component {
         }
     }
 
+
+    public function showOriginalMessage()
+{
+    $this->translatedMessage = '';
+}
+
 };
 ?>
 
@@ -709,204 +715,212 @@ new class extends Component {
         </div>
 
         <!-- Panneau de lecture (droite) -->
-        <div class="flex-1 flex flex-col bg-white">
-            @if($selectedMessage)
-                                <!-- En-tête du message -->
-                                <div class="px-6 py-4 border-b border-gray-200">
-                                    <div class="flex items-start justify-between mb-3">
-                                        <h1 class="text-xl font-semibold text-gray-900 flex-1">
-                                            {{ $selectedMessage['subject'] ?? '(Sans objet)' }}
-                                        </h1>
-                                    </div>
+<div class="flex-1 flex flex-col bg-white">
+    @if($selectedMessage)
+        <!-- En-tête du message -->
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-start justify-between mb-3">
+                <h1 class="text-xl font-semibold text-gray-900 flex-1">
+                    {{ $selectedMessage['subject'] ?? '(Sans objet)' }}
+                </h1>
+            </div>
 
-                                    <!-- Info expéditeur -->
-                                    <div class="flex items-start gap-3">
-                                        <div
-                                            class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
-                                            {{ strtoupper(substr($selectedMessage['from'] ?? '', 0, 1)) }}
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="flex items-center gap-2">
-                                                <span class="font-semibold text-gray-900">
-                                                    {{ preg_match('/^([^<]+)/', $selectedMessage['from'] ?? '', $nameMatch) ? trim($nameMatch[1]) : ($selectedMessage['from'] ?? '-') }}
-                                                </span>
-                                                @if(!empty($selectedMessage['attachments']))
-                                                    <span
-                                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                                        </svg>
-                                                        {{ count($selectedMessage['attachments']) }}
-                                                    </span>
-                                                @endif
-                                            </div>
-                                            <div class="flex items-center gap-2 text-sm text-gray-500">
-                                                @php
-        $toAddress = $selectedMessage['to'] ?? '';
-        $toName = preg_match('/^([^<]+)/', $toAddress, $toMatch) ? trim($toMatch[1]) : $toAddress;
-                                                @endphp
-                                                <span>À: {{ $toName ?: '-' }}</span>
-                                                <span>•</span>
-                                                <span>{{ isset($selectedMessage['date']) ? \Carbon\Carbon::parse($selectedMessage['date'])->format('d/m/Y H:i') : '-' }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+            <!-- Info expéditeur -->
+            <div class="flex items-start gap-3">
+                <div
+                    class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                    {{ strtoupper(substr($selectedMessage['from'] ?? '', 0, 1)) }}
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                        <span class="font-semibold text-gray-900">
+                            {{ preg_match('/^([^<]+)/', $selectedMessage['from'] ?? '', $nameMatch) ? trim($nameMatch[1]) : ($selectedMessage['from'] ?? '-') }}
+                        </span>
+                        @if(!empty($selectedMessage['attachments']))
+                            <span
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                </svg>
+                                {{ count($selectedMessage['attachments']) }}
+                            </span>
+                        @endif
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-gray-500">
+                        @php
+                            $toAddress = $selectedMessage['to'] ?? '';
+                            $toName = preg_match('/^([^<]+)/', $toAddress, $toMatch) ? trim($toMatch[1]) : $toAddress;
+                        @endphp
+                        <span>À: {{ $toName ?: '-' }}</span>
+                        <span>•</span>
+                        <span>{{ isset($selectedMessage['date']) ? \Carbon\Carbon::parse($selectedMessage['date'])->format('d/m/Y H:i') : '-' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                                <!-- Contenu du message -->
-                                <div class="flex-1 overflow-y-auto px-6 py-4">
-                                    <!-- Message original -->
-                                    <div class="prose max-w-none text-gray-700">
-                                        {!! $this->formatMessage($selectedMessage['message'] ?? '') !!}
-                                    </div>
-
-                                    <!-- Message traduit -->
-                                    @if($translatedMessage)
-                                        <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r">
-                                            <div class="flex items-start gap-2">
-                                                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                                                </svg>
-                                                <div class="flex-1">
-                                                    <strong class="text-yellow-800 text-sm font-semibold">Traduction :</strong>
-                                                    <div class="mt-2 text-yellow-900 prose max-w-none">{!! $translatedMessage !!}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endif
-
-                                    <!-- Pièces jointes -->
-                                    @if(!empty($selectedMessage['attachments']))
-                                        <div class="mt-6 border-t border-gray-200 pt-6">
-                                            <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                                                <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                                </svg>
-                                                Pièces jointes ({{ count($selectedMessage['attachments']) }})
-                                            </h4>
-
-                                            <div class="grid grid-cols-1 gap-2">
-                                                @foreach($selectedMessage['attachments'] as $attachmentIndex => $attachment)
-                                                    @php
-                $filename = $attachment['filename'] ?? 'Fichier sans nom';
-                $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                $mimeType = $attachment['mimeType'] ?? '';
-
-                [$iconColor, $bgColor] = match (true) {
-                    $extension === 'pdf' || str_contains($mimeType, 'pdf') =>
-                    ['text-red-600', 'bg-red-50'],
-                    in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word') =>
-                    ['text-blue-600', 'bg-blue-50'],
-                    in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'spreadsheet') =>
-                    ['text-green-600', 'bg-green-50'],
-                    in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']) || str_contains($mimeType, 'image') =>
-                    ['text-purple-600', 'bg-purple-50'],
-                    in_array($extension, ['zip', 'rar', '7z', 'tar']) =>
-                    ['text-yellow-600', 'bg-yellow-50'],
-                    default => ['text-gray-600', 'bg-gray-50']
-                };
-                                                    @endphp
-
-                                                    <div
-                                                        class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                                                        <div class="flex items-center flex-1 min-w-0">
-                                                            <div class="flex-shrink-0 {{ $bgColor }} rounded-lg p-2.5 {{ $iconColor }}">
-                                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                                </svg>
-                                                            </div>
-
-                                                            <div class="ml-3 flex-1 min-w-0">
-                                                                <p class="text-sm font-medium text-gray-900 truncate">{{ $filename }}</p>
-                                                                <p class="text-xs text-gray-500 mt-0.5">
-                                                                    {{ $this->formatFileSize($attachment['size'] ?? 0) }}
-                                                                    @if($extension)
-                                                                        <span class="mx-1.5">•</span>
-                                                                        <span class="uppercase">{{ $extension }}</span>
-                                                                    @endif
-                                                                </p>
-                                                            </div>
-                                                        </div>
-
-                                                        <button type="button"
-                                                            wire:click="downloadAttachment({{ $selectedMessageIndex }}, {{ $attachmentIndex }})"
-                                                            wire:loading.attr="disabled"
-                                                            class="ml-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors disabled:opacity-50">
-                                                            <svg wire:loading.remove wire:target="downloadAttachment" class="h-4 w-4" fill="none"
-                                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                            </svg>
-                                                            <svg wire:loading wire:target="downloadAttachment" class="animate-spin h-4 w-4" fill="none"
-                                                                viewBox="0 0 24 24">
-                                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                                                    stroke-width="4"></circle>
-                                                                <path class="opacity-75" fill="currentColor"
-                                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                                                </path>
-                                                            </svg>
-                                                            <span wire:loading.remove wire:target="downloadAttachment">Télécharger</span>
-                                                            <span wire:loading wire:target="downloadAttachment">...</span>
-                                                        </button>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <!-- Footer avec actions -->
-                                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                                    <div class="flex items-center gap-3">
-                                        <button type="button" wire:click="translateMessage" wire:loading.attr="disabled"
-                                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
-                                            <svg wire:loading.remove wire:target="translateMessage" class="w-4 h-4" fill="none"
-                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                                            </svg>
-                                            <svg wire:loading wire:target="translateMessage" class="animate-spin w-4 h-4" fill="none"
-                                                viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                                                </circle>
-                                                <path class="opacity-75" fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                                </path>
-                                            </svg>
-                                            <span>Traduire en français</span>
-                                        </button>
-
-                                        @if(count($ticketDetails['conversation']['messages'] ?? []) > 0)
-                                        <button wire:click="replyFirstMessage" type="button"
-                                           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                                            </svg>
-                                            Répondre
-                                        </button>
-                                    @endif
-                                    </div>
-                                </div>
-            @else
-                <!-- État vide -->
-                <div class="flex-1 flex items-center justify-center p-8">
-                    <div class="text-center">
-                        <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Contenu du message -->
+        <div class="flex-1 overflow-y-auto px-6 py-4">
+            <!-- Message (original ou traduit) -->
+            <div class="prose max-w-none text-gray-700">
+                @if($translatedMessage)
+                    <!-- Badge indiquant que c'est la traduction -->
+                    <div class="flex items-center gap-2 mb-4 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg w-fit">
+                        <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                         </svg>
-                        <h3 class="text-lg font-medium text-gray-900 mb-1">Sélectionnez un message</h3>
-                        <p class="text-sm text-gray-500">Choisissez un message dans la liste pour afficher son contenu</p>
+                        <span class="text-sm font-medium text-yellow-800">Version traduite</span>
+                    </div>
+                    {!! $translatedMessage !!}
+                @else
+                    {!! $this->formatMessage($selectedMessage['message'] ?? '') !!}
+                @endif
+            </div>
+
+            <!-- Pièces jointes -->
+            @if(!empty($selectedMessage['attachments']))
+                <div class="mt-6 border-t border-gray-200 pt-6">
+                    <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                        <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                        </svg>
+                        Pièces jointes ({{ count($selectedMessage['attachments']) }})
+                    </h4>
+
+                    <div class="grid grid-cols-1 gap-2">
+                        @foreach($selectedMessage['attachments'] as $attachmentIndex => $attachment)
+                            @php
+                                $filename = $attachment['filename'] ?? 'Fichier sans nom';
+                                $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                                $mimeType = $attachment['mimeType'] ?? '';
+
+                                [$iconColor, $bgColor] = match (true) {
+                                    $extension === 'pdf' || str_contains($mimeType, 'pdf') =>
+                                    ['text-red-600', 'bg-red-50'],
+                                    in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word') =>
+                                    ['text-blue-600', 'bg-blue-50'],
+                                    in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'spreadsheet') =>
+                                    ['text-green-600', 'bg-green-50'],
+                                    in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']) || str_contains($mimeType, 'image') =>
+                                    ['text-purple-600', 'bg-purple-50'],
+                                    in_array($extension, ['zip', 'rar', '7z', 'tar']) =>
+                                    ['text-yellow-600', 'bg-yellow-50'],
+                                    default => ['text-gray-600', 'bg-gray-50']
+                                };
+                            @endphp
+
+                            <div
+                                class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center flex-1 min-w-0">
+                                    <div class="flex-shrink-0 {{ $bgColor }} rounded-lg p-2.5 {{ $iconColor }}">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+
+                                    <div class="ml-3 flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate">{{ $filename }}</p>
+                                        <p class="text-xs text-gray-500 mt-0.5">
+                                            {{ $this->formatFileSize($attachment['size'] ?? 0) }}
+                                            @if($extension)
+                                                <span class="mx-1.5">•</span>
+                                                <span class="uppercase">{{ $extension }}</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button type="button"
+                                    wire:click="downloadAttachment({{ $selectedMessageIndex }}, {{ $attachmentIndex }})"
+                                    wire:loading.attr="disabled"
+                                    class="ml-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors disabled:opacity-50">
+                                    <svg wire:loading.remove wire:target="downloadAttachment" class="h-4 w-4" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <svg wire:loading wire:target="downloadAttachment" class="animate-spin h-4 w-4" fill="none"
+                                        viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
+                                    </svg>
+                                    <span wire:loading.remove wire:target="downloadAttachment">Télécharger</span>
+                                    <span wire:loading wire:target="downloadAttachment">...</span>
+                                </button>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             @endif
         </div>
+
+        <!-- Footer avec actions -->
+        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div class="flex items-center gap-3">
+                @if($translatedMessage)
+                    <!-- Bouton pour revenir à l'original -->
+                    <button type="button" wire:click="showOriginalMessage"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                        <span>Revenir à l'original</span>
+                    </button>
+                @else
+                    <!-- Bouton pour traduire -->
+                    <button type="button" wire:click="translateMessage" wire:loading.attr="disabled"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+                        <svg wire:loading.remove wire:target="translateMessage" class="w-4 h-4" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                        </svg>
+                        <svg wire:loading wire:target="translateMessage" class="animate-spin w-4 h-4" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        <span>Traduire en français</span>
+                    </button>
+                @endif
+
+                @if(count($ticketDetails['conversation']['messages'] ?? []) > 0)
+                    <button wire:click="replyFirstMessage" type="button"
+                       class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                        Répondre
+                    </button>
+                @endif
+            </div>
+        </div>
+    @else
+        <!-- État vide -->
+        <div class="flex-1 flex items-center justify-center p-8">
+            <div class="text-center">
+                <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-1">Sélectionnez un message</h3>
+                <p class="text-sm text-gray-500">Choisissez un message dans la liste pour afficher son contenu</p>
+            </div>
+        </div>
+    @endif
+</div>
     </div>
 
 @endif
