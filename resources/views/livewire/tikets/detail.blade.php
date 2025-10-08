@@ -464,54 +464,98 @@ new class extends Component {
 
     <div class="mx-auto w-full">
 
-        <div class="border-b border-gray-200 mb-4">
-            <nav class="-mb-px flex space-x-8">
-                <button wire:click="setTab('description')"
-                    class="px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2
-                    {{ $activeTab === 'description' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200' }}">
-                    <svg class="w-4 h-4 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m0 0l-6-6m6 6H3" />
-                    </svg>
-                    Ticket - {{ $ticketDetails['details'][0]['num_ticket'] }}
-                </button>
+<!-- Navigation des onglets avec loading -->
+<div class="border-b border-gray-200 mb-4">
+    <nav class="-mb-px flex space-x-8">
+        <button wire:click="setTab('description')"
+            class="px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 relative
+            {{ $activeTab === 'description' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200' }}">
+            <svg wire:loading.remove wire:target="setTab('description')" class="w-4 h-4 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m0 0l-6-6m6 6H3" />
+            </svg>
+            <svg wire:loading wire:target="setTab('description')" class="animate-spin w-4 h-4 inline-block mr-1" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Ticket - {{ $ticketDetails['details'][0]['num_ticket'] }}
+        </button>
 
-                <button wire:click="setTab('conversation')"
-                    class="px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2
-                    {{ $activeTab === 'conversation' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200' }}">
-                    <svg class="w-4 h-4 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    Conversation ({{ count($ticketDetails['conversation']['messages'] ?? []) }})
-                </button>
+        <button wire:click="setTab('conversation')"
+            class="px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 relative
+            {{ $activeTab === 'conversation' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200' }}">
+            <svg wire:loading.remove wire:target="setTab('conversation')" class="w-4 h-4 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <svg wire:loading wire:target="setTab('conversation')" class="animate-spin w-4 h-4 inline-block mr-1" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Conversation ({{ count($ticketDetails['conversation']['messages'] ?? []) }})
+        </button>
 
-                <button wire:click="setTab('commentaire')"
-                    class="px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2
-                    {{ $activeTab === 'commentaire' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200' }}">
-                    <svg class="w-4 h-4 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4-.86L3 20l1.86-4a9.863 9.863 0 01-.86-4c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    Commentaires
-                </button>
+        <button wire:click="setTab('commentaire')"
+            class="px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 relative
+            {{ $activeTab === 'commentaire' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200' }}">
+            <svg wire:loading.remove wire:target="setTab('commentaire')" class="w-4 h-4 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4-.86L3 20l1.86-4a9.863 9.863 0 01-.86-4c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <svg wire:loading wire:target="setTab('commentaire')" class="animate-spin w-4 h-4 inline-block mr-1" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Commentaires
+        </button>
 
-                @if($showSendmailTab)
-                    <button wire:click="setTab('sendmail')"
-                        class="px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2
-                            {{ $activeTab === 'sendmail' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200' }}">
-                        <svg class="w-4 h-4 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        Send mail
-                    </button>
-                @endif
-            </nav>
+        @if($showSendmailTab)
+            <button wire:click="setTab('sendmail')"
+                class="px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 relative
+                {{ $activeTab === 'sendmail' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200' }}">
+                <svg wire:loading.remove wire:target="setTab('sendmail')" class="w-4 h-4 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <svg wire:loading wire:target="setTab('sendmail')" class="animate-spin w-4 h-4 inline-block mr-1" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Send mail
+            </button>
+        @endif
+    </nav>
+</div>
+
+<!-- Overlay de chargement pour le contenu -->
+<div class="relative">
+    <!-- Indicateur de chargement global -->
+    {{-- <div wire:loading wire:target="setTab" class="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
+        <div class="text-center">
+            <svg class="animate-spin h-12 w-12 text-indigo-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-sm font-medium text-gray-700">Chargement en cours...</p>
         </div>
+    </div> --}}
+
+    <!-- Contenu des onglets -->
+    <div>
+        @if($activeTab === 'description')
+            <!-- Contenu description -->
+        @elseif($activeTab === 'conversation')
+            <!-- Contenu conversation -->
+        @elseif($activeTab === 'commentaire')
+            <!-- Contenu commentaire -->
+        @elseif($activeTab === 'sendmail')
+            <!-- Contenu sendmail -->
+        @endif
+    </div>
+</div>
 
     </div>
 
@@ -780,85 +824,86 @@ new class extends Component {
             </div>
 
             <!-- Pièces jointes -->
-            @if(!empty($selectedMessage['attachments']))
-                <div class="mt-6 border-t border-gray-200 pt-6">
-                    <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                        <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                        </svg>
-                        Pièces jointes ({{ count($selectedMessage['attachments']) }})
-                    </h4>
+@if(!empty($selectedMessage['attachments']))
+    <div class="mt-6 border-t border-gray-200 pt-6">
+        <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+            <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+            Pièces jointes ({{ count($selectedMessage['attachments']) }})
+        </h4>
 
-                    <div class="grid grid-cols-1 gap-2">
-                        @foreach($selectedMessage['attachments'] as $attachmentIndex => $attachment)
-                            @php
-                                $filename = $attachment['filename'] ?? 'Fichier sans nom';
-                                $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                                $mimeType = $attachment['mimeType'] ?? '';
+        <div class="grid grid-cols-1 gap-2">
+            @foreach($selectedMessage['attachments'] as $attachmentIndex => $attachment)
+                @php
+                    $filename = $attachment['filename'] ?? 'Fichier sans nom';
+                    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                    $mimeType = $attachment['mimeType'] ?? '';
+                    $attachmentUrl = $attachment['url'] ?? null;
 
-                                [$iconColor, $bgColor] = match (true) {
-                                    $extension === 'pdf' || str_contains($mimeType, 'pdf') =>
-                                    ['text-red-600', 'bg-red-50'],
-                                    in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word') =>
-                                    ['text-blue-600', 'bg-blue-50'],
-                                    in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'spreadsheet') =>
-                                    ['text-green-600', 'bg-green-50'],
-                                    in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']) || str_contains($mimeType, 'image') =>
-                                    ['text-purple-600', 'bg-purple-50'],
-                                    in_array($extension, ['zip', 'rar', '7z', 'tar']) =>
-                                    ['text-yellow-600', 'bg-yellow-50'],
-                                    default => ['text-gray-600', 'bg-gray-50']
-                                };
-                            @endphp
+                    [$iconColor, $bgColor] = match (true) {
+                        $extension === 'pdf' || str_contains($mimeType, 'pdf') =>
+                        ['text-red-600', 'bg-red-50'],
+                        in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word') =>
+                        ['text-blue-600', 'bg-blue-50'],
+                        in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'spreadsheet') =>
+                        ['text-green-600', 'bg-green-50'],
+                        in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']) || str_contains($mimeType, 'image') =>
+                        ['text-purple-600', 'bg-purple-50'],
+                        in_array($extension, ['zip', 'rar', '7z', 'tar']) =>
+                        ['text-yellow-600', 'bg-yellow-50'],
+                        default => ['text-gray-600', 'bg-gray-50']
+                    };
+                @endphp
 
-                            <div
-                                class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                                <div class="flex items-center flex-1 min-w-0">
-                                    <div class="flex-shrink-0 {{ $bgColor }} rounded-lg p-2.5 {{ $iconColor }}">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
+                <div
+                    class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center flex-1 min-w-0">
+                        <div class="flex-shrink-0 {{ $bgColor }} rounded-lg p-2.5 {{ $iconColor }}">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                        </div>
 
-                                    <div class="ml-3 flex-1 min-w-0">
-                                        <p class="text-sm font-medium text-gray-900 truncate">{{ $filename }}</p>
-                                        <p class="text-xs text-gray-500 mt-0.5">
-                                            {{ $this->formatFileSize($attachment['size'] ?? 0) }}
-                                            @if($extension)
-                                                <span class="mx-1.5">•</span>
-                                                <span class="uppercase">{{ $extension }}</span>
-                                            @endif
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <button type="button"
-                                    wire:click="downloadAttachment({{ $selectedMessageIndex }}, {{ $attachmentIndex }})"
-                                    wire:loading.attr="disabled"
-                                    class="ml-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors disabled:opacity-50">
-                                    <svg wire:loading.remove wire:target="downloadAttachment" class="h-4 w-4" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    <svg wire:loading wire:target="downloadAttachment" class="animate-spin h-4 w-4" fill="none"
-                                        viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                            stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                        </path>
-                                    </svg>
-                                    <span wire:loading.remove wire:target="downloadAttachment">Télécharger</span>
-                                    <span wire:loading wire:target="downloadAttachment">...</span>
-                                </button>
-                            </div>
-                        @endforeach
+                        <div class="ml-3 flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ $filename }}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                {{ $this->formatFileSize($attachment['size'] ?? 0) }}
+                                @if($extension)
+                                    <span class="mx-1.5">•</span>
+                                    <span class="uppercase">{{ $extension }}</span>
+                                @endif
+                            </p>
+                        </div>
                     </div>
+
+                    @if($attachmentUrl)
+                        <a href="{{ $attachmentUrl }}"
+                            target="_blank"
+                            download="{{ $filename }}"
+                            class="ml-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span>Télécharger</span>
+                        </a>
+                    @else
+                        <span class="ml-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 bg-gray-50 rounded-md cursor-not-allowed">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span>Non disponible</span>
+                        </span>
+                    @endif
                 </div>
-            @endif
+            @endforeach
+        </div>
+    </div>
+@endif
         </div>
 
         <!-- Footer avec actions -->
