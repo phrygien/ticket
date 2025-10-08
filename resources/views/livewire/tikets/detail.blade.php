@@ -824,7 +824,28 @@ new class extends Component {
             </div>
 
             <!-- Pièces jointes -->
+<!-- Pièces jointes -->
 @if(!empty($selectedMessage['attachments']))
+    @php
+        // Séparer les images des autres fichiers
+        $images = [];
+        $otherFiles = [];
+        
+        foreach($selectedMessage['attachments'] as $attachment) {
+            $extension = strtolower(pathinfo($attachment['filename'] ?? '', PATHINFO_EXTENSION));
+            $mimeType = $attachment['mimeType'] ?? '';
+            
+            if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']) || str_contains($mimeType, 'image')) {
+                $images[] = $attachment['url'] ?? '';
+            } else {
+                $otherFiles[] = $attachment;
+            }
+        }
+        
+        // Filtrer les URLs vides
+        $images = array_filter($images);
+    @endphp
+
     <div class="mt-6 border-t border-gray-200 pt-6">
         <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
             <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -834,74 +855,100 @@ new class extends Component {
             Pièces jointes ({{ count($selectedMessage['attachments']) }})
         </h4>
 
-        <div class="grid grid-cols-1 gap-2">
-            @foreach($selectedMessage['attachments'] as $attachmentIndex => $attachment)
-                @php
-                    $filename = $attachment['filename'] ?? 'Fichier sans nom';
-                    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                    $mimeType = $attachment['mimeType'] ?? '';
-                    $attachmentUrl = $attachment['url'] ?? null;
+        <!-- Galerie d'images -->
+        @if(!empty($images))
+            <div class="mb-4">
+                <h5 class="text-xs font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="h-4 w-4 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Images ({{ count($images) }})
+                </h5>
+                <x-image-gallery :images="$images" class="h-40 rounded-lg" />
+            </div>
+        @endif
 
-                    [$iconColor, $bgColor] = match (true) {
-                        $extension === 'pdf' || str_contains($mimeType, 'pdf') =>
-                        ['text-red-600', 'bg-red-50'],
-                        in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word') =>
-                        ['text-blue-600', 'bg-blue-50'],
-                        in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'spreadsheet') =>
-                        ['text-green-600', 'bg-green-50'],
-                        in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']) || str_contains($mimeType, 'image') =>
-                        ['text-purple-600', 'bg-purple-50'],
-                        in_array($extension, ['zip', 'rar', '7z', 'tar']) =>
-                        ['text-yellow-600', 'bg-yellow-50'],
-                        default => ['text-gray-600', 'bg-gray-50']
-                    };
-                @endphp
+        <!-- Autres fichiers -->
+        @if(!empty($otherFiles))
+            <div>
+                <h5 class="text-xs font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="h-4 w-4 mr-1 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Fichiers ({{ count($otherFiles) }})
+                </h5>
+                <div class="grid grid-cols-1 gap-2">
+                    @foreach($otherFiles as $attachmentIndex => $attachment)
+                        @php
+                            $filename = $attachment['filename'] ?? 'Fichier sans nom';
+                            $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                            $mimeType = $attachment['mimeType'] ?? '';
+                            $attachmentUrl = $attachment['url'] ?? null;
 
-                <div
-                    class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center flex-1 min-w-0">
-                        <div class="flex-shrink-0 {{ $bgColor }} rounded-lg p-2.5 {{ $iconColor }}">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
+                            [$iconColor, $bgColor] = match (true) {
+                                $extension === 'pdf' || str_contains($mimeType, 'pdf') =>
+                                ['text-red-600', 'bg-red-50'],
+                                in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word') =>
+                                ['text-blue-600', 'bg-blue-50'],
+                                in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'spreadsheet') =>
+                                ['text-green-600', 'bg-green-50'],
+                                in_array($extension, ['zip', 'rar', '7z', 'tar']) =>
+                                ['text-yellow-600', 'bg-yellow-50'],
+                                default => ['text-gray-600', 'bg-gray-50']
+                            };
+                        @endphp
+
+                        <div
+                            class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center flex-1 min-w-0">
+                                <div class="flex-shrink-0 {{ $bgColor }} rounded-lg p-2.5 {{ $iconColor }}">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+
+                                <div class="ml-3 flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ $filename }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">
+                                        @if(!empty($attachment['size']))
+                                            {{ $this->formatFileSize($attachment['size']) }}
+                                        @endif
+                                        @if($extension)
+                                            <span class="mx-1.5">•</span>
+                                            <span class="uppercase">{{ $extension }}</span>
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if($attachmentUrl)
+                                <a href="{{ $attachmentUrl }}"
+                                    target="_blank"
+                                    download="{{ $filename }}"
+                                    class="ml-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span>Télécharger</span>
+                                </a>
+                            @else
+                                <span class="ml-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 bg-gray-50 rounded-md cursor-not-allowed">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span>Non disponible</span>
+                                </span>
+                            @endif
                         </div>
-
-                        <div class="ml-3 flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate">{{ $filename }}</p>
-                            <p class="text-xs text-gray-500 mt-0.5">
-                                {{ $this->formatFileSize($attachment['size'] ?? 0) }}
-                                @if($extension)
-                                    <span class="mx-1.5">•</span>
-                                    <span class="uppercase">{{ $extension }}</span>
-                                @endif
-                            </p>
-                        </div>
-                    </div>
-
-                    @if($attachmentUrl)
-                        <a href="{{ $attachmentUrl }}"
-                            target="_blank"
-                            download="{{ $filename }}"
-                            class="ml-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <span>Télécharger</span>
-                        </a>
-                    @else
-                        <span class="ml-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 bg-gray-50 rounded-md cursor-not-allowed">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <span>Non disponible</span>
-                        </span>
-                    @endif
+                    @endforeach
                 </div>
-            @endforeach
-        </div>
+            </div>
+        @endif
     </div>
 @endif
         </div>
