@@ -699,7 +699,7 @@ new class extends Component {
                             <div class="flex space-x-2 ml-auto">
                                 @if($ticketDetails['details'][0]['need_attention'] == 1)
                                 <x-button 
-                                    label="Marquer tous comme lu" 
+                                    label="Marquer comme lu" 
                                     @click="$wire.myModal11 = true" 
                                     class="btn-warning btn-dash" 
                                 />
