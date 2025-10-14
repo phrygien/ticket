@@ -1185,7 +1185,7 @@ new class extends Component {
                         wire:model="photos" 
                         label="Ajouter des fichiers" 
                         multiple 
-                        accept="image/*"
+                        accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         hint="Images uniquement - 1 Mo max par fichier"
                     />
                     
