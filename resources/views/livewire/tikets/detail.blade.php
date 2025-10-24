@@ -78,16 +78,41 @@ new class extends Component {
 
     function formatMessage($message)
     {
+        // Extraire les liens HTML existants et les remplacer temporairement
+        $links = [];
+        $message = preg_replace_callback(
+            '~<a\s+href=["\']([^"\']+)["\'][^>]*>([^<]+)</a>~i',
+            function ($matches) use (&$links) {
+                $placeholder = '___LINK_' . count($links) . '___';
+                $links[] = [
+                    'url' => $matches[1],
+                    'text' => $matches[2]
+                ];
+                return $placeholder;
+            },
+            $message
+        );
+
+        // Supprimer toutes les autres balises HTML
         $message = strip_tags($message);
 
-        $pattern = '~(https?://[^\s<]+|www\.[^\s<]+)~i';
+        // Restaurer les liens avec le bon format
+        foreach ($links as $index => $link) {
+            $placeholder = '___LINK_' . $index . '___';
+            $href = preg_match('~^https?://~i', $link['url']) ? $link['url'] : "http://{$link['url']}";
+            $replacement = '<a href="' . e($href) . '" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">' . e($link['text']) . '</a>';
+            $message = str_replace($placeholder, $replacement, $message);
+        }
 
+        // Détecter et convertir les URLs brutes restantes
+        $pattern = '~(?<!href=["\'])(?<!>)(https?://[^\s<]+|www\.[^\s<]+)(?![^<]*</a>)~i';
         $message = preg_replace_callback($pattern, function ($matches) {
             $url = $matches[0];
             $href = preg_match('~^https?://~i', $url) ? $url : "http://$url";
-            return '<a href="' . e($href) . '" target="_blank" class="text-blue-600 underline">' . e($url) . '</a>';
+            return '<a href="' . e($href) . '" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">' . e($url) . '</a>';
         }, $message);
 
+        // Convertir les retours à la ligne en <br>
         $message = nl2br($message);
 
         return $message;
