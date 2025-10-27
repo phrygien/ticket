@@ -348,14 +348,14 @@ new class extends Component {
                         class="font-medium">{{ $ticketStatus === 'all' ? 'Tous les statuts' : ucfirst($ticketStatus) }}</span>
                     •
                     @php
-$labels = [
-    0 => '7 jours',
-    1 => '15 jours',
-    2 => '1 mois',
-    3 => '3 mois',
-    4 => '6 mois',
-    5 => '1 an',
-];
+                        $labels = [
+                            0 => '7 jours',
+                            1 => '15 jours',
+                            2 => '1 mois',
+                            3 => '3 mois',
+                            4 => '6 mois',
+                            5 => '1 an',
+                        ];
                     @endphp
 
                     <span class="font-medium">
@@ -533,7 +533,7 @@ $labels = [
                     <div class="flex flex-col items-center justify-center py-6">
                         <div class="text-center mb-6">
                             <div class="text-4xl font-bold text-error">{{ $totalRequests }}</div>
-                            <div class="text-sm text-gray-500">Demandes totales</div>
+                            <div class="text-sm text-gray-500">Total Demandes</div>
                         </div>
 
                         <div wire:ignore>
@@ -542,6 +542,11 @@ $labels = [
                     </div>
                 @endif
             </x-card>
+
+            <x-card subtitle="Statistiques par personne">
+
+            </x-card>
+
         </div>
 
     </div>
