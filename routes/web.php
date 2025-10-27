@@ -1,11 +1,11 @@
 <?php
 
+use App\Livewire\Stat\StatPage;
 use Livewire\Volt\Volt;
 
 // login 
 Volt::route('/login', 'auth.login')->name('login');
 //Volt::route('/', 'users.index');
-
 
 Route::middleware(['jwt-session-auth'])->group(function () {
     Route::post('logout', App\Livewire\Actions\Logout::class)
@@ -19,4 +19,7 @@ Route::middleware(['jwt-session-auth'])->group(function () {
 
     // list users
     Volt::route('/users', 'users.list')->name('users.list');
+
+    // super admin dashboard
+    Volt::route('/sa-dashboard', 'dashboard.sa-dashboard')->name('dashboard.sa-dashboard');
 });
