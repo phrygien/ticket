@@ -22,6 +22,8 @@ new class extends Component {
     public bool $loadingPartition = false;
     public string $role;
 
+    public bool $myModal1 = false;
+
 
 
     public function mount(): void
@@ -443,6 +445,7 @@ new class extends Component {
 
     <div class="mt-3 grid grid-cols-1">
         <x-card subtitle="Classification par catégorie" separator>
+            <x-button class="btn btn-soft btn-accent float-right" label="Mode Tableau" @click="$wire.myModal1 = true" />
             <div wire:loading wire:target="loadTicketPartition" class="flex justify-center items-center h-96">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                 <span class="ml-3 text-gray-500">Chargement...</span>
@@ -462,6 +465,97 @@ new class extends Component {
         </x-card>
     </div>
 
+
+<x-modal wire:model="myModal1" title="Classification par catégorie - Mode Tableau" class="backdrop-blur" box-class="max-w-7xl">
+        @if(empty($ticketPartitionData))
+            <p class="text-center text-gray-500 py-6">Aucune donnée disponible.</p>
+        @else
+            @php
+                // Extraire les dates
+                $dates = array_column($ticketPartitionData, 'date');
+                
+                // Extraire les catégories (exclure 'date')
+                $categories = array_keys(array_diff_key($ticketPartitionData[0], ['date' => '']));
+            @endphp
+
+            <div class="overflow-x-auto landscape-scrollbar">
+                <table class="min-w-full border border-gray-200 rounded-lg text-sm shadow-sm">
+                    <thead class="bg-gray-50 text-gray-700 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-4 py-3 text-left border-b border-gray-300 bg-gray-100 sticky left-0 z-20 font-semibold">
+                                Date
+                            </th>
+                            @foreach($categories as $category)
+                                <th class="px-4 py-3 text-center border-b border-gray-300 whitespace-nowrap font-semibold">
+                                    {{ ucfirst(str_replace('_', ' ', $category)) }}
+                                </th>
+                            @endforeach
+                            <th class="px-4 py-3 text-center border-b border-gray-300 bg-gray-100 font-semibold">
+                                Total
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach($ticketPartitionData as $row)
+                            <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                <td class="px-4 py-3 border-b border-gray-100 bg-white sticky left-0 z-10 font-medium text-gray-800 whitespace-nowrap">
+                                    {{ \Carbon\Carbon::parse($row['date'])->translatedFormat('d M Y') }}
+                                </td>
+                                @php
+                                    $rowTotal = 0;
+                                @endphp
+                                @foreach($categories as $category)
+                                    @php
+                                        $value = (int) ($row[$category] ?? 0);
+                                        $rowTotal += $value;
+                                    @endphp
+                                    <td class="px-4 py-3 border-b border-gray-100 text-gray-700 text-center">
+                                        <span class="inline-block min-w-[40px] px-2 py-1 rounded {{ $value > 0 ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-400' }}">
+                                            {{ $value }}
+                                        </span>
+                                    </td>
+                                @endforeach
+                                <td class="px-4 py-3 border-b border-gray-100 bg-gray-50 text-center font-bold text-gray-900">
+                                    {{ $rowTotal }}
+                                </td>
+                            </tr>
+                        @endforeach
+                        
+                        {{-- Ligne de totaux --}}
+                        <tr class="bg-gray-100 font-bold">
+                            <td class="px-4 py-3 border-t-2 border-gray-300 bg-gray-100 sticky left-0 z-10">
+                                Total
+                            </td>
+                            @php
+                                $grandTotal = 0;
+                            @endphp
+                            @foreach($categories as $category)
+                                @php
+                                    $categoryTotal = array_sum(array_column($ticketPartitionData, $category));
+                                    $grandTotal += $categoryTotal;
+                                @endphp
+                                <td class="px-4 py-3 border-t-2 border-gray-300 text-center text-blue-700">
+                                    {{ $categoryTotal }}
+                                </td>
+                            @endforeach
+                            <td class="px-4 py-3 border-t-2 border-gray-300 bg-gray-200 text-center text-gray-900">
+                                {{ $grandTotal }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 text-sm text-gray-600">
+                <p><strong>Total de tickets classifiés :</strong> {{ $partitionTotal }}</p>
+                <p><strong>Période :</strong> {{ count($ticketPartitionData) }} jours</p>
+            </div>
+        @endif
+    
+        <x-slot:actions>
+            <x-button label="Fermer" @click="$wire.myModal1 = false" class="btn-soft btn-primary" />
+        </x-slot:actions>
+    </x-modal>
 
 
         {{-- <div class="grid grid-cols-1 space-y-6">
@@ -1039,7 +1133,7 @@ function renderDonutChart(data) {
                 innerSize: '50%',
                 dataLabels: {
                     enabled: true,
-                    format: '<b> ( {point.y} )  {point.name}</b>'
+                    format: '<b> ( {point.y} )  {point.name} : {point.percentage:.1f}%</b>'
                 },
                 showInLegend: true
             }
