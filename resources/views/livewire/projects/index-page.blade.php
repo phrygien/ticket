@@ -24,6 +24,8 @@ new class extends Component {
 
     public bool $myModal1 = false;
 
+    public string $project_id = "";
+    public $projet;
 
 
     public function mount(): void
@@ -86,6 +88,7 @@ new class extends Component {
                 ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getdonutSummary', [
                             'month' => $this->selectedMonth,
                             'year' => $this->selectedYear,
+                            'project_id' => $this->projet,
                         ]);
 
                 if ($response->successful()) {
@@ -131,6 +134,21 @@ new class extends Component {
             $this->daterange = 0;
         }
         $this->refreshChart();
+    }
+
+    public function updatedProjectId(): void
+    {
+        //dd($this->project_id);
+        //$this->refreshChart();
+        $this->loadTicketPartition();
+        //$this->loadDonutData();
+        //$this->loadTicketSummary();
+        //$this->loadUserActivitySummary(); // Ajout du rafraîchissement
+    }
+
+    public function updatedProjet(): void
+    {
+        $this->loadDonutData();
     }
 
     private function refreshChart()
@@ -222,6 +240,7 @@ new class extends Component {
                 ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getTicketPartitionSummary', [
                             'month' => 'all',
                             'year' => 'all',
+                            'project_id' => $this->project_id,
                         ]);
 
                 if ($response->successful()) {
@@ -332,12 +351,15 @@ new class extends Component {
         ];
     }
 
+    public function resetFilter()
+    {
+        $this->project_id = '';
+    }
 };
 ?>
 
 <div class="mx-auto max-w-9xl">
     <x-header title="Projet" subtitle="Nos projets sur N8N" separator />
-
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             @foreach($projects as $project)
@@ -445,15 +467,34 @@ new class extends Component {
 
     <div class="mt-3 grid grid-cols-1">
         <x-card subtitle="Classification par catégorie" separator>
+            <form class="filter flex flex-wrap items-center gap-2">
+                <input class="btn btn-square" type="reset" value="×" wire:click="resetFilter()" />
+            
+                <input value="all" wire:model.live="project_id" class="btn" type="radio" name="project_filter"
+                    aria-label="Tous les projets" checked />
+            
+                @foreach($projects as $project)
+                    <input value="{{ $project['id'] }}" wire:model.live="project_id" class="btn" type="radio" name="project_filter"
+                        aria-label="{{ $project['name'] }}" />
+                @endforeach
+            
+                <!-- Loader pendant le changement de projet -->
+                <div wire:loading wire:target="project_id" class="flex items-center ml-3">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                </div>
+            </form>
             <x-button class="btn btn-soft btn-accent float-right" label="Mode Tableau" @click="$wire.myModal1 = true" />
-            <div wire:loading wire:target="loadTicketPartition" class="flex justify-center items-center h-96">
+ 
+
+            {{-- <div wire:loading wire:target="project_id" class="flex justify-center items-center h-96">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                 <span class="ml-3 text-gray-500">Chargement...</span>
+            </div> --}}
+
+            <div wire:ignore wire:loading.remove wire:target="project_id" class="w-full">
+                <div id="ticketPartitionChart" class="w-full h-[400px]"></div>
             </div>
 
-            <div wire:ignore>
-                <div id="ticketPartitionChart" style="height: 400px;"></div>
-            </div>
 
             @if(!empty($ticketPartitionData))
                 <div class="mt-4 text-xs text-gray-500 border-t pt-3">
@@ -466,16 +507,16 @@ new class extends Component {
     </div>
 
 
-<x-modal wire:model="myModal1" title="Classification par catégorie - Mode Tableau" class="backdrop-blur" box-class="max-w-7xl">
+    <x-modal wire:model="myModal1" title="Classification par catégorie - Mode Tableau" class="backdrop-blur" box-class="max-w-7xl">
         @if(empty($ticketPartitionData))
             <p class="text-center text-gray-500 py-6">Aucune donnée disponible.</p>
         @else
             @php
-                // Extraire les dates
-                $dates = array_column($ticketPartitionData, 'date');
-                
-                // Extraire les catégories (exclure 'date')
-                $categories = array_keys(array_diff_key($ticketPartitionData[0], ['date' => '']));
+    // Extraire les dates
+    $dates = array_column($ticketPartitionData, 'date');
+
+    // Extraire les catégories (exclure 'date')
+    $categories = array_keys(array_diff_key($ticketPartitionData[0], ['date' => '']));
             @endphp
 
             <div class="overflow-x-auto landscape-scrollbar">
@@ -502,12 +543,12 @@ new class extends Component {
                                     {{ \Carbon\Carbon::parse($row['date'])->translatedFormat('d M Y') }}
                                 </td>
                                 @php
-                                    $rowTotal = 0;
+        $rowTotal = 0;
                                 @endphp
                                 @foreach($categories as $category)
                                     @php
-                                        $value = (int) ($row[$category] ?? 0);
-                                        $rowTotal += $value;
+            $value = (int) ($row[$category] ?? 0);
+            $rowTotal += $value;
                                     @endphp
                                     <td class="px-4 py-3 border-b border-gray-100 text-gray-700 text-center">
                                         <span class="inline-block min-w-[40px] px-2 py-1 rounded {{ $value > 0 ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-400' }}">
@@ -527,12 +568,12 @@ new class extends Component {
                                 Total
                             </td>
                             @php
-                                $grandTotal = 0;
+    $grandTotal = 0;
                             @endphp
                             @foreach($categories as $category)
                                 @php
-                                    $categoryTotal = array_sum(array_column($ticketPartitionData, $category));
-                                    $grandTotal += $categoryTotal;
+        $categoryTotal = array_sum(array_column($ticketPartitionData, $category));
+        $grandTotal += $categoryTotal;
                                 @endphp
                                 <td class="px-4 py-3 border-t-2 border-gray-300 text-center text-blue-700">
                                     {{ $categoryTotal }}
@@ -689,15 +730,22 @@ new class extends Component {
                         <x-select label="Mois" icon="o-calendar" :options="$months" wire:model.live="selectedMonth" />
                         <x-select label="Année" icon="o-calendar-days" :options="$years" wire:model.live="selectedYear" />
                         <div class="flex items-end">
-                            <x-button icon="o-arrow-path" wire:click="loadDonutData" spinner="loadDonutData"
-                                class="btn-soft btn-error w-full" />
+                            <fieldset class="fieldset">
+                                <legend class="fieldset-legend">Par projet</legend>
+                                <select class="select w-full" wire:model.live="projet">
+                                    <option disabled>Tous</option>
+                                    @foreach($projects as $project)
+                                        <option value="{{ $project['id'] }}">{{ $project['name'] }}</option>
+                                    @endforeach
+                                </select>
+                            </fieldset>
                         </div>
                     </div>
-                
+
                     @if($loadingDonut)
                         <div class="flex justify-center items-center h-64">
                             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                            <span class="ml-3 text-gray-500">Chargement...</span>
+                            {{-- <span class="ml-3 text-gray-500">Chargement...</span> --}}
                         </div>
                     @else
                         <div class="flex flex-col items-center justify-center py-6">
@@ -706,9 +754,17 @@ new class extends Component {
                                 <div class="text-sm text-gray-500">Total Demandes</div>
                             </div>
 
-                            <div wire:ignore>
+                            <!-- Indicateur de chargement -->
+                            <div wire:loading wire:target="projet" class="flex items-center justify-center py-4">
+                                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                                <span class="ml-2 text-sm text-gray-500 text-center">Mise à jour en cours...</span>
+                            </div>
+
+                            <!-- Chart masqué pendant le chargement -->
+                            <div wire:ignore wire:loading.remove wire:target="projet">
                                 <div id="donutChart" style="height: 400px; width: 100%;"></div>
                             </div>
+
                         </div>
                     @endif
                 </x-card>
@@ -719,14 +775,14 @@ new class extends Component {
                         <h3 class="text-sm font-semibold text-gray-600">
                             Activité par jour (du 1er au {{ now()->translatedFormat('d M Y') }}, hors week-ends)
                         </h3>
-                        <x-button icon="o-arrow-path" wire:click="loadUserActivitySummary" spinner="loadUserActivitySummary"
-                            label="Rafraîchir" class="btn-soft btn-primary" />
+                        {{-- <x-button icon="o-arrow-path" wire:click="loadUserActivitySummary" spinner="loadUserActivitySummary"
+                            label="Rafraîchir" class="btn-soft btn-primary" /> --}}
                     </div>
 
                     @if($loadingUserActivity)
                         <div class="flex justify-center items-center h-64">
                             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                            <span class="ml-3 text-gray-500">Chargement des données...</span>
+                            {{-- <span class="ml-3 text-gray-500">Chargement des données...</span> --}}
                         </div>
                     @elseif(empty($userActivityData))
                         <p class="text-center text-gray-500 py-6">Aucune donnée disponible.</p>
@@ -735,14 +791,14 @@ new class extends Component {
                             // Transformer les données : dates en colonnes, users en lignes
                             $dates = [];
                             $userStats = [];
-                            
-                            foreach($userActivityData as $row) {
+
+                            foreach ($userActivityData as $row) {
                                 $date = $row['date'];
                                 if (!in_array($date, $dates)) {
                                     $dates[] = $date;
                                 }
-                                
-                                foreach($row as $key => $value) {
+
+                                foreach ($row as $key => $value) {
                                     if ($key !== 'date') {
                                         if (!isset($userStats[$key])) {
                                             $userStats[$key] = [];
@@ -1179,7 +1235,8 @@ function renderDonutChart(data) {
         const initialValues = @json($chartData['values'] ?? []);
         const initialStatus = @json($ticketStatus);
         const initialDays = @json($daterange);
-        renderTicketChart(initialLabels, initialValues, initialStatus, initialDays);
+        const initialProject = @json($project_id);
+        renderTicketChart(initialLabels, initialValues, initialStatus, initialDays, initialProject);
 
         initDonutChart();
         initStackedBarChart();
@@ -1190,7 +1247,8 @@ function renderDonutChart(data) {
         const initialValues = @json($chartData['values'] ?? []);
         const initialStatus = @json($ticketStatus);
         const initialDays = @json($daterange);
-        renderTicketChart(initialLabels, initialValues, initialStatus, initialDays);
+        const initialProject = @json($project_id);
+        renderTicketChart(initialLabels, initialValues, initialStatus, initialDays, initialProject);
 
         initDonutChart();
         initStackedBarChart();
