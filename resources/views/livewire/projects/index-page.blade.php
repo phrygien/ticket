@@ -620,79 +620,79 @@ new class extends Component {
                 </x-card>
 
 
-<x-card subtitle="Statistiques par personne">
-    <div class="flex justify-between items-center mb-4">
-        <h3 class="text-sm font-semibold text-gray-600">
-            Activité par jour (du 1er au {{ now()->translatedFormat('d M Y') }}, hors week-ends)
-        </h3>
-        <x-button icon="o-arrow-path" wire:click="loadUserActivitySummary" spinner="loadUserActivitySummary"
-            label="Rafraîchir" class="btn-soft btn-primary" />
-    </div>
+                <x-card subtitle="Statistiques par personne">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-semibold text-gray-600">
+                            Activité par jour (du 1er au {{ now()->translatedFormat('d M Y') }}, hors week-ends)
+                        </h3>
+                        <x-button icon="o-arrow-path" wire:click="loadUserActivitySummary" spinner="loadUserActivitySummary"
+                            label="Rafraîchir" class="btn-soft btn-primary" />
+                    </div>
 
-    @if($loadingUserActivity)
-        <div class="flex justify-center items-center h-64">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            <span class="ml-3 text-gray-500">Chargement des données...</span>
-        </div>
-    @elseif(empty($userActivityData))
-        <p class="text-center text-gray-500 py-6">Aucune donnée disponible.</p>
-    @else
-        @php
-            // Transformer les données : dates en colonnes, users en lignes
-            $dates = [];
-            $userStats = [];
-            
-            foreach($userActivityData as $row) {
-                $date = $row['date'];
-                if (!in_array($date, $dates)) {
-                    $dates[] = $date;
-                }
-                
-                foreach($row as $key => $value) {
-                    if ($key !== 'date') {
-                        if (!isset($userStats[$key])) {
-                            $userStats[$key] = [];
-                        }
-                        $userStats[$key][$date] = $value;
-                    }
-                }
-            }
-        @endphp
+                    @if($loadingUserActivity)
+                        <div class="flex justify-center items-center h-64">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                            <span class="ml-3 text-gray-500">Chargement des données...</span>
+                        </div>
+                    @elseif(empty($userActivityData))
+                        <p class="text-center text-gray-500 py-6">Aucune donnée disponible.</p>
+                    @else
+                        @php
+                            // Transformer les données : dates en colonnes, users en lignes
+                            $dates = [];
+                            $userStats = [];
+                            
+                            foreach($userActivityData as $row) {
+                                $date = $row['date'];
+                                if (!in_array($date, $dates)) {
+                                    $dates[] = $date;
+                                }
+                                
+                                foreach($row as $key => $value) {
+                                    if ($key !== 'date') {
+                                        if (!isset($userStats[$key])) {
+                                            $userStats[$key] = [];
+                                        }
+                                        $userStats[$key][$date] = $value;
+                                    }
+                                }
+                            }
+                        @endphp
 
-        <div class="overflow-x-auto landscape-scrollbar">
-            <table class="min-w-max border border-gray-200 rounded-lg text-sm shadow-sm">
-                <thead class="bg-gray-50 text-gray-700 sticky top-0 z-10">
-                    <tr>
-                        <th class="px-4 py-2 text-left border-b border-gray-300 bg-gray-50 sticky left-0 z-20 whitespace-nowrap">
-                            Utilisateur
-                        </th>
-                        @foreach($dates as $date)
-                            <th class="px-4 py-2 text-center border-b border-gray-300 whitespace-nowrap">
-                                {{ \Carbon\Carbon::parse($date)->translatedFormat('d M') }}
-                            </th>
-                        @endforeach
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @foreach($userStats as $userName => $stats)
-                        <tr class="hover:bg-gray-50 transition-colors duration-150">
-                            <td class="px-4 py-2 border-b border-gray-100 bg-white sticky left-0 z-10 font-medium text-gray-800 whitespace-nowrap">
-                                {{ ucfirst($userName) }}
-                            </td>
-                            @foreach($dates as $date)
-                                <td class="px-4 py-2 border-b border-gray-100 text-gray-700 text-center">
-                                    <span class="block min-w-[60px]">
-                                        {{ $stats[$date] ?? '0' }}
-                                    </span>
-                                </td>
-                            @endforeach
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @endif
-</x-card>
+                        <div class="overflow-x-auto landscape-scrollbar">
+                            <table class="min-w-max border border-gray-200 rounded-lg text-sm shadow-sm">
+                                <thead class="bg-gray-50 text-gray-700 sticky top-0 z-10">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left border-b border-gray-300 bg-gray-50 sticky left-0 z-20 whitespace-nowrap">
+                                            Utilisateur
+                                        </th>
+                                        @foreach($dates as $date)
+                                            <th class="px-4 py-2 text-center border-b border-gray-300 whitespace-nowrap">
+                                                {{ \Carbon\Carbon::parse($date)->translatedFormat('d M') }}
+                                            </th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach($userStats as $userName => $stats)
+                                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                            <td class="px-4 py-2 border-b border-gray-100 bg-white sticky left-0 z-10 font-medium text-gray-800 whitespace-nowrap">
+                                                {{ ucfirst($userName) }}
+                                            </td>
+                                            @foreach($dates as $date)
+                                                <td class="px-4 py-2 border-b border-gray-100 text-gray-700 text-center">
+                                                    <span class="block min-w-[60px]">
+                                                        {{ $stats[$date] ?? '0' }}
+                                                    </span>
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </x-card>
 
             </div>
         @endif
@@ -1009,57 +1009,57 @@ new class extends Component {
         });
     }
 
-    // ===== DONUT CHART =====
-    function renderDonutChart(data) {
-        const container = document.getElementById('donutChart');
-        if (!container) {
-            console.log('Container donutChart not found');
-            return;
-        }
-
-        if (donutChart) {
-            donutChart.destroy();
-        }
-
-        const chartData = data.map((item, index) => ({
-            name: item.label_name,
-            y: parseInt(item.nb),
-            color: highchartsColors[index % highchartsColors.length]
-        }));
-
-        donutChart = Highcharts.chart('donutChart', {
-            chart: {
-                type: 'pie'
-            },
-            title: {
-                text: 'Répartition des demandes par type'
-            },
-            plotOptions: {
-                pie: {
-                    innerSize: '50%',
-                    dataLabels: {
-                        enabled: true,
-                        format: '<b>{point.name}</b>: {point.percentage:.1f}%'
-                    },
-                    showInLegend: true
-                }
-            },
-            series: [{
-                name: 'Demandes',
-                data: chartData
-            }],
-            credits: {
-                enabled: false
-            },
-            tooltip: {
-                pointFormat: '<b>{point.y}</b> ({point.percentage:.1f}%)'
-            },
-            exporting: {
-                ...exportingConfig,
-                filename: 'repartition-demandes-par-type'
-            }
-        });
+// ===== DONUT CHART =====
+function renderDonutChart(data) {
+    const container = document.getElementById('donutChart');
+    if (!container) {
+        console.log('Container donutChart not found');
+        return;
     }
+
+    if (donutChart) {
+        donutChart.destroy();
+    }
+
+    const chartData = data.map((item, index) => ({
+        name: item.label_name,
+        y: parseInt(item.nb),
+        color: highchartsColors[index % highchartsColors.length]
+    }));
+
+    donutChart = Highcharts.chart('donutChart', {
+        chart: {
+            type: 'pie'
+        },
+        title: {
+            text: 'Répartition des demandes par type'
+        },
+        plotOptions: {
+            pie: {
+                innerSize: '50%',
+                dataLabels: {
+                    enabled: true,
+                    format: '<b> ( {point.y} )  {point.name}</b>'
+                },
+                showInLegend: true
+            }
+        },
+        series: [{
+            name: 'Demandes',
+            data: chartData
+        }],
+        credits: {
+            enabled: false
+        },
+        tooltip: {
+            pointFormat: '<b>{point.y}</b> ({point.percentage:.1f}%)'
+        },
+        exporting: {
+            ...exportingConfig,
+            filename: 'repartition-demandes-par-type'
+        }
+    });
+}
 
     function initDonutChart() {
         setTimeout(() => {
