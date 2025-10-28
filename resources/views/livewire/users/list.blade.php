@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\Hash;
 use Mary\Traits\Toast;
 
 new class extends Component {
-    
+
     use Toast;
 
     public array $users = [];
     public bool $myModal1 = false;
     public bool $updateModal = false;
-    
+
     // Form fields
     public string $name = '';
     public string $email = '';
@@ -33,6 +33,8 @@ new class extends Component {
     public function mount(): void
     {
         $this->fetchUsers();
+
+        $this->role = session('role');
     }
 
     public function fetchUsers()
@@ -49,7 +51,7 @@ new class extends Component {
                     'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->get(env('API_REST') .'/user');
+                ])->get(env('API_REST') . '/user');
 
                 if ($response->successful()) {
                     $this->users = $response->json();
@@ -94,12 +96,12 @@ new class extends Component {
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
-                ])->post(env('API_REST') .'/user', [
-                    'name' => $this->name,
-                    'email' => $this->email,
-                    'password' => Hash::make($this->password),
-                    'role' => $this->role,
-                ]);
+                ])->post(env('API_REST') . '/user', [
+                            'name' => $this->name,
+                            'email' => $this->email,
+                            'password' => Hash::make($this->password),
+                            'role' => $this->role,
+                        ]);
 
                 if ($response->successful()) {
                     $this->success('Utilisateur créé avec succès !');
@@ -259,7 +261,9 @@ new class extends Component {
                 <legend class="fieldset-legend">Rôle</legend>
                 <select class="select w-full" wire:model="role">
                     <option value="" disabled selected>Choisir un rôle</option>
+                    @if($role == 'super_admin')
                     <option value="super_admin">Super Admin</option>
+                    @endif
                     <option value="admin">Admin</option>
                     <option value="simple_user">Utilisateur simple</option>
                 </select>
@@ -297,20 +301,12 @@ new class extends Component {
             hint="L'email ne peut pas être modifié"
         />
 
-        <x-select 
-            label="Rôle" 
-            wire:model="editrole"
-            :options="[
-                ['id' => 'super_admin', 'name' => 'Super Administrateur'],
+        <x-select label="Rôle" wire:model="editrole" :options="array_filter([
+                $role == 'super_admin' ? ['id' => 'super_admin', 'name' => 'Super Administrateur'] : null,
                 ['id' => 'admin', 'name' => 'Administrateur'],
                 ['id' => 'simple_user', 'name' => 'Utilisateur simple']
-            ]"
-            option-value="id"
-            option-label="name"
-            placeholder="Sélectionner un rôle"
-            icon="o-shield-check"
-            hint="Le rôle ne peut pas être modifié"
-        />
+            ])" option-value="id" option-label="name" placeholder="Sélectionner un rôle"
+            icon="o-shield-check" hint="Le rôle ne peut pas être modifié" />
 
         <x-slot:actions>
             <x-button label="Annuler" @click="$wire.updateModal = false" />

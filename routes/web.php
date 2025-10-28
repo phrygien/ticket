@@ -17,9 +17,9 @@ Route::middleware(['jwt-session-auth'])->group(function () {
     // detail ticket
     Volt::route('/ticket/{ticket}/detail', 'tikets.detail')->name('ticket.detail');
 
-    // list users
-    Volt::route('/users', 'users.list')->name('users.list');
+        // Routes réservées aux super admin
 
-    // super admin dashboard
-    Volt::route('/sa-dashboard', 'dashboard.sa-dashboard')->name('dashboard.sa-dashboard');
+        Volt::route('/users', 'users.list')->name('users.list');
+        Volt::route('/sa-dashboard', 'dashboard.sa-dashboard')->name('dashboard.sa-dashboard');
+
 });

@@ -1,7 +1,7 @@
 @php
     $token = session('token');
     $name = $token ? session('name') : null;
-
+    $role = $token ? session('role') : null;
     // Calculer les initiales (2 lettres max), en respectant les caractères accentués
     $initials = null;
     if (!empty($name)) {
@@ -125,7 +125,9 @@
                 @endif
                 {{-- <x-menu-item title="Tableau de bord principal" icon="o-sparkles" link="/sa-dashboard" /> --}}
                 <x-menu-item title="Projet disponible" icon="o-sparkles" link="/"  />
-                <x-menu-item title="Utilisateur" icon="o-users" link="/users"  />
+                @if($role  == 'super_admin')
+                    <x-menu-item title="Utilisateur" icon="o-users" link="/users"  />
+                @endif
             </x-menu>
         </x-slot:sidebar>
 

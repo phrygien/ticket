@@ -277,7 +277,7 @@ new class extends Component {
 
                 $apiData = $response->successful() ? $response->json()['details'] ?? [] : [];
 
-                // 🗓️ Génération de tous les jours du mois en cours
+                // Génération de tous les jours du mois en cours
                 $start = Carbon::now()->startOfMonth();
                 $today = Carbon::now()->startOfDay();
                 $days = [];
@@ -291,7 +291,7 @@ new class extends Component {
                     $days[$date->format('Y-m-d')] = ['date' => $date->format('Y-m-d')];
                 }
 
-                // 🔄 Fusion avec les données API
+                // Fusion avec les données API
                 foreach ($apiData as $row) {
                     $date = Carbon::parse($row['date'])->format('Y-m-d');
                     if (isset($days[$date])) {
@@ -299,7 +299,7 @@ new class extends Component {
                     }
                 }
 
-                // 🔢 Normalisation (remplir les valeurs manquantes à 0)
+                // Normalisation (remplir les valeurs manquantes à 0)
                 $allKeys = collect($apiData)->flatMap(fn($r) => array_keys($r))->unique()->toArray();
 
                 $this->userActivityData = collect($days)
@@ -678,7 +678,12 @@ new class extends Component {
 
 </div>
 
+{{-- Dans la section <script>, remplacez le code existant par celui-ci --}}
+
 <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
 
 <script>
     let lineChart = null;
@@ -723,6 +728,38 @@ new class extends Component {
         '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'
     ];
 
+    // Configuration commune pour les exports
+    const exportingConfig = {
+        enabled: true,
+        buttons: {
+            contextButton: {
+                menuItems: [
+                    'viewFullscreen',
+                    'separator',
+                    'downloadPNG',
+                    'downloadJPEG',
+                    'downloadPDF',
+                    'downloadSVG',
+                    'separator',
+                    'downloadCSV',
+                    'downloadXLS'
+                ],
+                symbolStroke: '#3b82f6',
+                theme: {
+                    fill: 'transparent'
+                }
+            }
+        },
+        filename: 'graphique-export',
+        chartOptions: {
+            title: {
+                style: {
+                    fontSize: '16px'
+                }
+            }
+        }
+    };
+
     // ===== LINE CHART =====
     function renderTicketChart(labels, values, status = 'all', days = 0) {
         let seriesName = 'Tickets';
@@ -743,7 +780,10 @@ new class extends Component {
                 type: 'area'
             },
             title: {
-                text: null
+                text: 'Statistiques des tickets par période'
+            },
+            subtitle: {
+                text: `Filtré par: ${status !== 'all' ? status : 'Tous les statuts'} • ${dayLabels[days] ?? ""}`
             },
             xAxis: {
                 categories: labels,
@@ -797,6 +837,10 @@ new class extends Component {
             tooltip: {
                 shared: true,
                 valueSuffix: ' tickets'
+            },
+            exporting: {
+                ...exportingConfig,
+                filename: `tickets-${status}-${dayLabels[days]?.replace(/\s/g, '-')}`
             }
         });
     }
@@ -810,20 +854,29 @@ new class extends Component {
             seriesName += ` - ${dayLabels[days] ?? ""}`;
 
             lineChart.update({
+                title: {
+                    text: 'Statistiques des tickets par période'
+                },
+                subtitle: {
+                    text: `Filtré par: ${status !== 'all' ? status : 'Tous les statuts'} • ${dayLabels[days] ?? ""}`
+                },
                 xAxis: {
                     categories: labels
                 },
                 series: [{
                     name: seriesName,
                     data: values
-                }]
+                }],
+                exporting: {
+                    filename: `tickets-${status}-${dayLabels[days]?.replace(/\s/g, '-')}`
+                }
             });
         } else {
             renderTicketChart(labels, values, status, days);
         }
     }
 
-    // ===== LINE CHART (Classification) =====
+    // ===== BAR CHART (Classification) =====
     function renderStackedBarChart(rawData) {
         const container = document.getElementById('ticketPartitionChart');
         if (!container) {
@@ -861,7 +914,10 @@ new class extends Component {
                 type: 'line'
             },
             title: {
-                text: null
+                text: 'Classification des tickets par catégorie'
+            },
+            subtitle: {
+                text: 'Évolution temporelle des différentes catégories'
             },
             yAxis: {
                 title: {
@@ -910,6 +966,10 @@ new class extends Component {
                     return s;
                 }
             },
+            exporting: {
+                ...exportingConfig,
+                filename: 'classification-tickets-par-categorie'
+            },
             responsive: {
                 rules: [{
                     condition: {
@@ -950,7 +1010,7 @@ new class extends Component {
                 type: 'pie'
             },
             title: {
-                text: null
+                text: 'Répartition des demandes par type'
             },
             plotOptions: {
                 pie: {
@@ -962,11 +1022,6 @@ new class extends Component {
                     showInLegend: true
                 }
             },
-            // legend: {
-            //     align: 'right',
-            //     verticalAlign: 'middle',
-            //     layout: 'vertical'
-            // },
             series: [{
                 name: 'Demandes',
                 data: chartData
@@ -976,6 +1031,10 @@ new class extends Component {
             },
             tooltip: {
                 pointFormat: '<b>{point.y}</b> ({point.percentage:.1f}%)'
+            },
+            exporting: {
+                ...exportingConfig,
+                filename: 'repartition-demandes-par-type'
             }
         });
     }
