@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Livewire\Volt\Component;
 use Illuminate\Support\Facades\Http;
 
@@ -19,6 +20,9 @@ new class extends Component {
     public array $years = [];
     public $ticketPartitionData = [];
     public bool $loadingPartition = false;
+    public string $role;
+
+
 
     public function mount(): void
     {
@@ -30,6 +34,9 @@ new class extends Component {
         $this->loadTicketSummary();
         $this->loadDonutData();
         $this->loadTicketPartition();
+        $this->loadUserActivitySummary();
+
+        $this->role = session('role');
     }
 
     public function initializeFilters(): void
@@ -247,6 +254,73 @@ new class extends Component {
         return $total;
     }
 
+
+    public $userActivityData = [];
+    public bool $loadingUserActivity = false;
+
+    public function loadUserActivitySummary(): void
+    {
+        $this->loadingUserActivity = true;
+
+        try {
+            $token = session('token') ?: $this->loginAndGetToken();
+
+            if ($token) {
+                $response = Http::withHeaders([
+                    'x-secret-key' => env('X_SECRET_KEY'),
+                    'Authorization' => 'Bearer ' . $token,
+                    'Accept' => 'application/json',
+                ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getuseractivitysummary', [
+                            'month' => now()->format('m'),
+                            'year' => now()->format('Y'),
+                        ]);
+
+                $apiData = $response->successful() ? $response->json()['details'] ?? [] : [];
+
+                // 🗓️ Génération de tous les jours du mois en cours
+                $start = Carbon::now()->startOfMonth();
+                $today = Carbon::now()->startOfDay();
+                $days = [];
+
+                for ($date = $start->copy(); $date <= $today; $date->addDay()) {
+                    // Exclure samedi (6) et dimanche (0)
+                    if (in_array($date->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY])) {
+                        continue;
+                    }
+
+                    $days[$date->format('Y-m-d')] = ['date' => $date->format('Y-m-d')];
+                }
+
+                // 🔄 Fusion avec les données API
+                foreach ($apiData as $row) {
+                    $date = Carbon::parse($row['date'])->format('Y-m-d');
+                    if (isset($days[$date])) {
+                        $days[$date] = array_merge($days[$date], $row);
+                    }
+                }
+
+                // 🔢 Normalisation (remplir les valeurs manquantes à 0)
+                $allKeys = collect($apiData)->flatMap(fn($r) => array_keys($r))->unique()->toArray();
+
+                $this->userActivityData = collect($days)
+                    ->map(function ($day) use ($allKeys) {
+                        foreach ($allKeys as $key) {
+                            if (!isset($day[$key])) {
+                                $day[$key] = $key === 'date' ? $day['date'] : 0;
+                            }
+                        }
+                        return $day;
+                    })
+                    ->values()
+                    ->toArray();
+            }
+        } catch (\Exception $e) {
+            \Log::error('Erreur chargement activité par personne : ' . $e->getMessage());
+            $this->userActivityData = [];
+        } finally {
+            $this->loadingUserActivity = false;
+        }
+    }
     public function with(): array
     {
         return [
@@ -388,7 +462,7 @@ new class extends Component {
         </x-card>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
 
         {{-- <div class="grid grid-cols-1 space-y-6">
             @foreach($projects as $project)
@@ -512,44 +586,96 @@ new class extends Component {
             @endif
         </x-card> --}}
 
-        <div class="mt-3 grid-cols-1 md:grid-cols-2 gap-6">
-            <x-card subtitle="Répartition selon le type de demande">
-                {{-- Filtres --}}
-                <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-base-200 rounded-lg">
-                    <x-select label="Mois" icon="o-calendar" :options="$months" wire:model.live="selectedMonth" />
-                    <x-select label="Année" icon="o-calendar-days" :options="$years" wire:model.live="selectedYear" />
-                    <div class="flex items-end">
-                        <x-button icon="o-arrow-path" wire:click="loadDonutData" spinner="loadDonutData"
-                            class="btn-soft btn-error w-full" />
-                    </div>
-                </div>
-            
-                @if($loadingDonut)
-                    <div class="flex justify-center items-center h-64">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                        <span class="ml-3 text-gray-500">Chargement...</span>
-                    </div>
-                @else
-                    <div class="flex flex-col items-center justify-center py-6">
-                        <div class="text-center mb-6">
-                            <div class="text-4xl font-bold text-error">{{ $totalRequests }}</div>
-                            <div class="text-sm text-gray-500">Total Demandes</div>
-                        </div>
+        @if($role == 'super_admin')
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                        <div wire:ignore>
-                            <div id="donutChart" style="height: 400px; width: 100%;"></div>
+                <x-card subtitle="Répartition selon le type de demande">
+                    {{-- Filtres --}}
+                    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-base-200 rounded-lg">
+                        <x-select label="Mois" icon="o-calendar" :options="$months" wire:model.live="selectedMonth" />
+                        <x-select label="Année" icon="o-calendar-days" :options="$years" wire:model.live="selectedYear" />
+                        <div class="flex items-end">
+                            <x-button icon="o-arrow-path" wire:click="loadDonutData" spinner="loadDonutData"
+                                class="btn-soft btn-error w-full" />
                         </div>
                     </div>
-                @endif
-            </x-card>
+                
+                    @if($loadingDonut)
+                        <div class="flex justify-center items-center h-64">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                            <span class="ml-3 text-gray-500">Chargement...</span>
+                        </div>
+                    @else
+                        <div class="flex flex-col items-center justify-center py-6">
+                            <div class="text-center mb-6">
+                                <div class="text-4xl font-bold text-error">{{ $totalRequests }}</div>
+                                <div class="text-sm text-gray-500">Total Demandes</div>
+                            </div>
 
-            <x-card subtitle="Statistiques par personne">
+                            <div wire:ignore>
+                                <div id="donutChart" style="height: 400px; width: 100%;"></div>
+                            </div>
+                        </div>
+                    @endif
+                </x-card>
 
-            </x-card>
 
-        </div>
+                <x-card subtitle="Statistiques par personne">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-semibold text-gray-600">
+                            Activité par jour (du 1er au {{ now()->translatedFormat('d M Y') }}, hors week-ends)
+                        </h3>
+                        <x-button icon="o-arrow-path" wire:click="loadUserActivitySummary" spinner="loadUserActivitySummary"
+                            label="Rafraîchir" class="btn-soft btn-primary" />
+                    </div>
 
-    </div>
+                    @if($loadingUserActivity)
+                        <div class="flex justify-center items-center h-64">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                            <span class="ml-3 text-gray-500">Chargement des données...</span>
+                        </div>
+                    @elseif(empty($userActivityData))
+                        <p class="text-center text-gray-500 py-6">Aucune donnée disponible.</p>
+                    @else
+                        <div class="overflow-x-auto landscape-scrollbar">
+                            <table class="min-w-max border border-gray-200 rounded-lg text-sm shadow-sm">
+                                <thead class="bg-gray-50 text-gray-700 sticky top-0 z-10">
+                                    <tr>
+                                        @foreach(array_keys($userActivityData[0]) as $header)
+                                            <th class="px-4 py-2 text-left border-b border-gray-300 whitespace-nowrap">
+                                                {{ ucfirst($header) }}
+                                            </th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach($userActivityData as $row)
+                                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                            @foreach($row as $key => $value)
+                                                <td class="px-4 py-2 border-b border-gray-100 text-gray-700 whitespace-nowrap">
+                                                    @if($key === 'date')
+                                                        <span class="font-medium text-gray-800">
+                                                            {{ \Carbon\Carbon::parse($value)->translatedFormat('d M Y') }}
+                                                        </span>
+                                                    @else
+                                                        <span class="block text-center min-w-[60px]">
+                                                            {{ $value }}
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </x-card>
+
+            </div>
+        @endif
+
+
 </div>
 
 <script src="https://code.highcharts.com/highcharts.js"></script>
