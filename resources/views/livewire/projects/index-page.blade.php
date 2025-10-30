@@ -733,7 +733,7 @@ new class extends Component {
                             <fieldset class="fieldset">
                                 <legend class="fieldset-legend">Par projet</legend>
                                 <select class="select w-full" wire:model.live="projet">
-                                    <option disabled>Tous</option>
+                                    <option selected>Tous</option>
                                     @foreach($projects as $project)
                                         <option value="{{ $project['id'] }}">{{ $project['name'] }}</option>
                                     @endforeach
