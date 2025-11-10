@@ -61,7 +61,9 @@ new class extends Component {
             'x-secret-key' => env('X_SECRET_KEY'),
             'Authorization' => "Bearer {$token}",
             'Accept' => 'application/json',
-        ])->get(env('API_REST') . "/ticket/{$this->ticketId}");
+        ])
+        ->timeout(200)
+        ->get(env('API_REST') . "/ticket/{$this->ticketId}");
 
         if ($response->successful()) {
             $this->ticketDetails = $response->json();
