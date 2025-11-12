@@ -39,6 +39,7 @@ new class extends Component {
         $this->loadDonutData();
         $this->loadTicketPartition();
         $this->loadUserActivitySummary();
+        $this->loadRedundantData();
 
         $this->role = session('role');
     }
@@ -355,6 +356,45 @@ new class extends Component {
     {
         $this->project_id = '';
     }
+
+    public $redundantCount = 0;
+    public $totalEmails = 0;
+
+    public function loadRedundantData(): void
+    {
+        $this->loadingRedundant = true;
+
+        try {
+            $token = session('token') ?: $this->loginAndGetToken();
+
+            if ($token) {
+                $response = Http::withHeaders([
+                    'x-secret-key' => env('X_SECRET_KEY'),
+                    'Authorization' => 'Bearer ' . $token,
+                    'Accept' => 'application/json',
+                ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getRedudantRequest', [
+                    'ticket_status' => 'all',
+                    'date_range' => 1,
+                ]);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    
+                    // Récupérer les valeurs depuis details[0]
+                    $details = $data['details'][0] ?? [];
+                    $this->redundantCount = $details['nb_reccurent'] ?? 0;
+                    $this->totalEmails = $details['total_mail_trigered'] ?? 0;
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error loading redundant data: ' . $e->getMessage());
+            $this->redundantCount = 0;
+            $this->totalEmails = 0;
+        } finally {
+            $this->loadingRedundant = false;
+        }
+    }
+
 };
 ?>
 
@@ -446,16 +486,15 @@ new class extends Component {
                         class="font-medium">{{ $ticketStatus === 'all' ? 'Tous les statuts' : ucfirst($ticketStatus) }}</span>
                     •
                     @php
-                        $labels = [
-                            0 => '7 jours',
-                            1 => '15 jours',
-                            2 => '1 mois',
-                            3 => '3 mois',
-                            4 => '6 mois',
-                            5 => '1 an',
-                        ];
+                    $labels = [
+                        0 => '7 jours',
+                        1 => '15 jours',
+                        2 => '1 mois',
+                        3 => '3 mois',
+                        4 => '6 mois',
+                        5 => '1 an',
+                    ];
                     @endphp
-
                     <span class="font-medium">
                         {{ $labels[$daterange] ?? '' }}
                     </span>
@@ -465,7 +504,26 @@ new class extends Component {
         </x-card>
     </div>
 
-    <div class="mt-3 grid grid-cols-1">
+
+
+    <!-- Stats Mail avec Meme Probleme !-->
+    <div class="mt-5 grid grid-cols-2 gap-6">
+        <x-stat 
+            title="Nombre d'envois récurrents" 
+            value="{{ number_format($this->redundantCount ?? 0) }}" 
+            icon="o-envelope" 
+            color="text-primary" 
+        />
+
+        <x-stat 
+            title="Total des mails envoyés automatiquement" 
+            value="{{ number_format($this->totalEmails ?? 0) }}" 
+            icon="o-envelope" 
+            color="text-pink-500"
+        />
+    </div>
+
+    <div class="mt-5 grid grid-cols-1">
         <x-card subtitle="Classification par catégorie" separator>
             <form class="filter flex flex-wrap items-center gap-2">
                 <input class="btn btn-square" type="reset" value="×" wire:click="resetFilter()" />
@@ -543,12 +601,12 @@ new class extends Component {
                                     {{ \Carbon\Carbon::parse($row['date'])->translatedFormat('d M Y') }}
                                 </td>
                                 @php
-        $rowTotal = 0;
+                                $rowTotal = 0;
                                 @endphp
                                 @foreach($categories as $category)
                                     @php
-            $value = (int) ($row[$category] ?? 0);
-            $rowTotal += $value;
+                                    $value = (int) ($row[$category] ?? 0);
+                                    $rowTotal += $value;
                                     @endphp
                                     <td class="px-4 py-3 border-b border-gray-100 text-gray-700 text-center">
                                         <span class="inline-block min-w-[40px] px-2 py-1 rounded {{ $value > 0 ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-400' }}">
@@ -568,17 +626,17 @@ new class extends Component {
                                 Total
                             </td>
                             @php
-    $grandTotal = 0;
+                                $grandTotal = 0;
                             @endphp
                             @foreach($categories as $category)
                                 @php
-        $categoryTotal = array_sum(array_column($ticketPartitionData, $category));
-        $grandTotal += $categoryTotal;
-                                @endphp
-                                <td class="px-4 py-3 border-t-2 border-gray-300 text-center text-blue-700">
-                                    {{ $categoryTotal }}
-                                </td>
-                            @endforeach
+                                $categoryTotal = array_sum(array_column($ticketPartitionData, $category));
+                                $grandTotal += $categoryTotal;
+                                                        @endphp
+                                                        <td class="px-4 py-3 border-t-2 border-gray-300 text-center text-blue-700">
+                                                            {{ $categoryTotal }}
+                                                        </td>
+                                                    @endforeach
                             <td class="px-4 py-3 border-t-2 border-gray-300 bg-gray-200 text-center text-gray-900">
                                 {{ $grandTotal }}
                             </td>
@@ -788,25 +846,25 @@ new class extends Component {
                         <p class="text-center text-gray-500 py-6">Aucune donnée disponible.</p>
                     @else
                         @php
-                            // Transformer les données : dates en colonnes, users en lignes
-                            $dates = [];
-                            $userStats = [];
+                        // Transformer les données : dates en colonnes, users en lignes
+                        $dates = [];
+                        $userStats = [];
 
-                            foreach ($userActivityData as $row) {
-                                $date = $row['date'];
-                                if (!in_array($date, $dates)) {
-                                    $dates[] = $date;
-                                }
+                        foreach ($userActivityData as $row) {
+                            $date = $row['date'];
+                            if (!in_array($date, $dates)) {
+                                $dates[] = $date;
+                            }
 
-                                foreach ($row as $key => $value) {
-                                    if ($key !== 'date') {
-                                        if (!isset($userStats[$key])) {
-                                            $userStats[$key] = [];
-                                        }
-                                        $userStats[$key][$date] = $value;
+                            foreach ($row as $key => $value) {
+                                if ($key !== 'date') {
+                                    if (!isset($userStats[$key])) {
+                                        $userStats[$key] = [];
                                     }
+                                    $userStats[$key][$date] = $value;
                                 }
                             }
+                        }
                         @endphp
 
                         <div class="overflow-x-auto landscape-scrollbar">

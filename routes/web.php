@@ -17,9 +17,13 @@ Route::middleware(['jwt-session-auth'])->group(function () {
     // detail ticket
     Volt::route('/ticket/{ticket}/detail', 'tikets.detail')->name('ticket.detail');
 
-        // Routes réservées aux super admin
+    // Routes réservées aux super admin
 
-        Volt::route('/users', 'users.list')->name('users.list');
-        Volt::route('/sa-dashboard', 'dashboard.sa-dashboard')->name('dashboard.sa-dashboard');
+    Volt::route('/users', 'users.list')->name('users.list');
+    Volt::route('/sa-dashboard', 'dashboard.sa-dashboard')->name('dashboard.sa-dashboard');
 
+
+    // Stats redondant
+    Volt::route('/stat', 'stats.redudent')->name('stats.redudent');
+    Volt::route('/redondant', 'stats.view-redodant')->name('redondant.view');
 });
