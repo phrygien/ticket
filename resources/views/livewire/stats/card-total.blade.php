@@ -53,6 +53,6 @@ new class extends Component {
     <x-stat title="Nombre d'envois récurrents" value="{{ number_format($this->redundantCount ?? 0) }}" icon="o-envelope"
         color="text-primary" />
     
-    <x-stat title="Total des mails envoyés automatiquement" value="{{ number_format($this->totalEmails ?? 0) }}"
+    <x-stat title="Mail reçus" value="{{ number_format($this->totalEmails ?? 0) }}"
         icon="o-envelope" color="text-pink-500" />
 </div>
