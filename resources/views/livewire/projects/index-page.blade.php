@@ -507,7 +507,7 @@ new class extends Component {
 
 
     <!-- Stats Mail avec Meme Probleme !-->
-    <div class="mt-5 grid grid-cols-2 gap-6">
+    {{-- <div class="mt-5 grid grid-cols-2 gap-6">
         <x-stat 
             title="Nombre d'envois récurrents" 
             value="{{ number_format($this->redundantCount ?? 0) }}" 
@@ -521,7 +521,7 @@ new class extends Component {
             icon="o-envelope" 
             color="text-pink-500"
         />
-    </div>
+    </div> --}}
 
     <div class="mt-5 grid grid-cols-1">
         <x-card subtitle="Classification par catégorie" separator>
