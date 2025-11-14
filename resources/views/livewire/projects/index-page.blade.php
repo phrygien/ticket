@@ -373,13 +373,13 @@ new class extends Component {
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
                 ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getRedudantRequest', [
-                    'ticket_status' => 'all',
-                    'date_range' => 1,
-                ]);
+                            'ticket_status' => 'all',
+                            'date_range' => 1,
+                        ]);
 
                 if ($response->successful()) {
                     $data = $response->json();
-                    
+
                     // Récupérer les valeurs depuis details[0]
                     $details = $data['details'][0] ?? [];
                     $this->redundantCount = $details['nb_reccurent'] ?? 0;
@@ -486,14 +486,14 @@ new class extends Component {
                         class="font-medium">{{ $ticketStatus === 'all' ? 'Tous les statuts' : ucfirst($ticketStatus) }}</span>
                     •
                     @php
-                    $labels = [
-                        0 => '7 jours',
-                        1 => '15 jours',
-                        2 => '1 mois',
-                        3 => '3 mois',
-                        4 => '6 mois',
-                        5 => '1 an',
-                    ];
+$labels = [
+    0 => '7 jours',
+    1 => '15 jours',
+    2 => '1 mois',
+    3 => '3 mois',
+    4 => '6 mois',
+    5 => '1 an',
+];
                     @endphp
                     <span class="font-medium">
                         {{ $labels[$daterange] ?? '' }}
@@ -601,12 +601,12 @@ new class extends Component {
                                     {{ \Carbon\Carbon::parse($row['date'])->translatedFormat('d M Y') }}
                                 </td>
                                 @php
-                                $rowTotal = 0;
+        $rowTotal = 0;
                                 @endphp
                                 @foreach($categories as $category)
                                     @php
-                                    $value = (int) ($row[$category] ?? 0);
-                                    $rowTotal += $value;
+            $value = (int) ($row[$category] ?? 0);
+            $rowTotal += $value;
                                     @endphp
                                     <td class="px-4 py-3 border-b border-gray-100 text-gray-700 text-center">
                                         <span class="inline-block min-w-[40px] px-2 py-1 rounded {{ $value > 0 ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-400' }}">
@@ -626,12 +626,12 @@ new class extends Component {
                                 Total
                             </td>
                             @php
-                                $grandTotal = 0;
+    $grandTotal = 0;
                             @endphp
                             @foreach($categories as $category)
                                 @php
-                                $categoryTotal = array_sum(array_column($ticketPartitionData, $category));
-                                $grandTotal += $categoryTotal;
+        $categoryTotal = array_sum(array_column($ticketPartitionData, $category));
+        $grandTotal += $categoryTotal;
                                                         @endphp
                                                         <td class="px-4 py-3 border-t-2 border-gray-300 text-center text-blue-700">
                                                             {{ $categoryTotal }}
@@ -846,25 +846,25 @@ new class extends Component {
                         <p class="text-center text-gray-500 py-6">Aucune donnée disponible.</p>
                     @else
                         @php
-                        // Transformer les données : dates en colonnes, users en lignes
-                        $dates = [];
-                        $userStats = [];
+        // Transformer les données : dates en colonnes, users en lignes
+        $dates = [];
+        $userStats = [];
 
-                        foreach ($userActivityData as $row) {
-                            $date = $row['date'];
-                            if (!in_array($date, $dates)) {
-                                $dates[] = $date;
-                            }
+        foreach ($userActivityData as $row) {
+            $date = $row['date'];
+            if (!in_array($date, $dates)) {
+                $dates[] = $date;
+            }
 
-                            foreach ($row as $key => $value) {
-                                if ($key !== 'date') {
-                                    if (!isset($userStats[$key])) {
-                                        $userStats[$key] = [];
-                                    }
-                                    $userStats[$key][$date] = $value;
-                                }
-                            }
-                        }
+            foreach ($row as $key => $value) {
+                if ($key !== 'date') {
+                    if (!isset($userStats[$key])) {
+                        $userStats[$key] = [];
+                    }
+                    $userStats[$key][$date] = $value;
+                }
+            }
+        }
                         @endphp
 
                         <div class="overflow-x-auto landscape-scrollbar">
@@ -929,7 +929,7 @@ new class extends Component {
         5: "1 an"
     };
 
-    // Noms lisibles pour les catégories
+// Noms lisibles pour les catégories
     const categoryLabels = {
         'suivi_commande': 'Suivi commande',
         'colis_non_recu': 'Colis non reçu',
@@ -938,7 +938,8 @@ new class extends Component {
         'produit_defectueux': 'Produit défectueux',
         'retour_retractation': 'Retour/Rétractation',
         'demande_specifique': 'Demande spécifique',
-        'colis_vide': 'Colis vide'
+        'colis_vide': 'Colis vide',
+        'spam': 'Spam'
     };
 
     // Couleurs pour chaque catégorie
@@ -950,12 +951,14 @@ new class extends Component {
         'produit_defectueux': '#8b5cf6',
         'retour_retractation': '#ec4899',
         'demande_specifique': '#06b6d4',
-        'colis_vide': '#f97316'
+        'colis_vide': '#f97316',
+        'spam': '#b8c925ff'
     };
 
     const highchartsColors = [
         '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
-        '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'
+        '#8b5cf6', '#ec4899', '#06b6d4', '#f97316',
+        '#b8c925ff'
     ];
 
     // Configuration commune pour les exports
@@ -1217,57 +1220,57 @@ new class extends Component {
         });
     }
 
-// ===== DONUT CHART =====
-function renderDonutChart(data) {
-    const container = document.getElementById('donutChart');
-    if (!container) {
-        console.log('Container donutChart not found');
+    // ===== DONUT CHART =====
+    function renderDonutChart(data) {
+        const container = document.getElementById('donutChart');
+        if (!container) {
+            console.log('Container donutChart not found');
         return;
-    }
+        }
 
-    if (donutChart) {
-        donutChart.destroy();
-    }
+        if (donutChart) {
+            donutChart.destroy();
+        }
 
-    const chartData = data.map((item, index) => ({
-        name: item.label_name,
+        const chartData = data.map((item, index) => ({
+            name: item.label_name,
         y: parseInt(item.nb),
         color: highchartsColors[index % highchartsColors.length]
-    }));
+        }));
 
-    donutChart = Highcharts.chart('donutChart', {
-        chart: {
+        donutChart = Highcharts.chart('donutChart', {
+            chart: {
             type: 'pie'
-        },
+            },
         title: {
             text: 'Répartition des demandes par type'
-        },
+            },
         plotOptions: {
             pie: {
-                innerSize: '50%',
-                dataLabels: {
-                    enabled: true,
-                    format: '<b> ( {point.y} )  {point.name} : {point.percentage:.1f}%</b>'
-                },
-                showInLegend: true
-            }
-        },
+            innerSize: '50%',
+        dataLabels: {
+            enabled: true,
+        format: '<b> ( {point.y} )  {point.name} : {point.percentage:.1f}%</b>'
+                    },
+        showInLegend: true
+                }
+            },
         series: [{
             name: 'Demandes',
-            data: chartData
-        }],
+        data: chartData
+            }],
         credits: {
             enabled: false
-        },
+            },
         tooltip: {
             pointFormat: '<b>{point.y}</b> ({point.percentage:.1f}%)'
-        },
+            },
         exporting: {
             ...exportingConfig,
             filename: 'repartition-demandes-par-type'
-        }
-    });
-}
+            }
+        });
+    }
 
     function initDonutChart() {
         setTimeout(() => {
