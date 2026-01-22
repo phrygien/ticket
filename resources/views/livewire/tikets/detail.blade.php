@@ -12,7 +12,7 @@ new class extends Component {
 
     use Toast;
 
-    public string $timezone;
+    // public string $timezone;
 
     public int $ticketId;
     public array $ticketDetails = [];
@@ -43,7 +43,7 @@ new class extends Component {
 
     public function mount($ticket)
     {
-        $this->timezone = $this->getTimezone(); // timezone navigateur
+        // $this->timezone = $this->getTimezone(); // timezone navigateur
         $this->ticketId = $ticket;
         $this->fetchTicketDetails();
     }
@@ -808,11 +808,11 @@ new class extends Component {
                                                                                     <p class="text-xs text-gray-500">
                                                                                        <p class="text-xs text-gray-500">
 
-                                                                                            <!-- {{ isset($msg['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))->format('d/m/Y H:i') : '' }} -->
+                                                                                            {{ isset($msg['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))->format('d/m/Y H:i') : '' }}
 
-                                                                                            {{ 
+                                                                                            <!-- {{ 
                                                                                                 isset($msg['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))->setTimezone($timezone)->format('d/m/Y H:i') : ''
-                                                                                            }}
+                                                                                            }} -->
 
                                                                                             </p>
                                                                                     </p>
