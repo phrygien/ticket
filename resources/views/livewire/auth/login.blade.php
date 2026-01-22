@@ -170,3 +170,16 @@ new #[Layout('components.layouts.guest')] class extends Component {
         </div>
     </div>
 </div>
+
+
+@push('script')
+
+<script>
+    (function () {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        // Option 1 : Cookie (simple et efficace)
+        document.cookie = "timezone=" + tz + "; path=/";
+    })();
+</script>
+
+@endpush
