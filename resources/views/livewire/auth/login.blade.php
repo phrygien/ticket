@@ -172,7 +172,7 @@ new #[Layout('components.layouts.guest')] class extends Component {
 </div>
 
 
-@push('script')
+<!-- @push('script') -->
 
 <script>
     (function () {
@@ -182,4 +182,4 @@ new #[Layout('components.layouts.guest')] class extends Component {
     })();
 </script>
 
-@endpush
+<!-- @endpush -->
