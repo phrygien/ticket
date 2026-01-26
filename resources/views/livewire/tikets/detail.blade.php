@@ -889,7 +889,15 @@ new class extends Component {
                                             @endphp
                                             <span>À: {{ $toName ?: '-' }}</span>
                                             <span>•</span>
-                                            <span><span>{{ isset($selectedMessage['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $selectedMessage['date']))->format('d/m/Y H:i') : '-' }}</span></span>
+                                            <!-- <span><span>{{ isset($selectedMessage['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $selectedMessage['date']))->format('d/m/Y H:i') : '-' }}</span></span> -->
+
+                                            <span><span>{{ isset($msg['date']) 
+                                                ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))
+                                                    ->setTimezone('Europe/Paris')
+                                                    ->format('d/m/Y H:i')
+                                                : '' }}
+                                            </span></span>
+
                                         </div>
                                     </div>
                                 </div>
