@@ -810,7 +810,7 @@ new class extends Component {
                                                                                     <p class="text-xs text-gray-500">
                                                                                         <time class="js-local-time"
                                                                                             datetime="{{ isset($msg['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))->utc()->toISOString() : '' }}">
-                                                                                            <!-- Fallback sans JS : on montre en UTC pour éviter confusion -->
+                                                                                            <!-- Fallback visible sans JS : montre UTC pour transparence -->
                                                                                             {{ isset($msg['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))->utc()->format('d/m/Y H:i') . ' UTC' : '' }}
                                                                                         </time>
                                                                                     </p>
@@ -1486,18 +1486,19 @@ document.querySelectorAll('.js-local-time').forEach(el => {
     const iso = el.getAttribute('datetime');
     if (!iso) return;
 
-    const date = new Date(iso); // navigateur → convertit auto en heure locale
+    const date = new Date(iso);  // ← Le navigateur convertit AUTO en heure locale !
 
-    // Format jour/mois/année heure:minute (style français, mais adapté locale)
-    const formatter = new Intl.DateTimeFormat(navigator.language || 'fr-FR', {
+    // Format jour/mois/année 24h (style proche du français)
+    const options = {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
         hour12: false
-    });
+    };
 
-    el.textContent = formatter.format(date);
+    el.textContent = date.toLocaleString('fr-FR', options);  // ou navigator.language pour full adapt
+    // Alternative full auto : date.toLocaleString() sans options
 });
 </script>
