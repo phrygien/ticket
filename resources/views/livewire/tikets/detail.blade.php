@@ -807,6 +807,13 @@ new class extends Component {
                                                                                             {{ isset($msg['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))->format('d/m/Y H:i') : '' }}
                                                                                             </p>
                                                                                     </p> -->
+                                                                                    <p class="text-xs text-gray-500">
+                                                                                        <time class="js-local-time"
+                                                                                            datetime="{{ isset($msg['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))->utc()->toISOString() : '' }}">
+                                                                                            <!-- Fallback sans JS : on montre en UTC pour éviter confusion -->
+                                                                                            {{ isset($msg['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))->utc()->format('d/m/Y H:i') . ' UTC' : '' }}
+                                                                                        </time>
+                                                                                    </p>
                                                                                 </div>
                                                                             </div>
 
@@ -1473,3 +1480,24 @@ new class extends Component {
 
 
 </div>
+
+<script>
+document.querySelectorAll('.js-local-time').forEach(el => {
+    const iso = el.getAttribute('datetime');
+    if (!iso) return;
+
+    const date = new Date(iso); // navigateur → convertit auto en heure locale
+
+    // Format jour/mois/année heure:minute (style français, mais adapté locale)
+    const formatter = new Intl.DateTimeFormat(navigator.language || 'fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    el.textContent = formatter.format(date);
+});
+</script>
