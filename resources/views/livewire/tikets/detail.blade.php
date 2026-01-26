@@ -808,11 +808,11 @@ new class extends Component {
                                                                                             </p>
                                                                                     </p> -->
                                                                                     <p class="text-xs text-gray-500">
-                                                                                        <time class="js-local-time"
-                                                                                            datetime="{{ isset($msg['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))->utc()->toISOString() : '' }}">
-                                                                                            <!-- Fallback visible sans JS : montre UTC pour transparence -->
-                                                                                            {{ isset($msg['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))->utc()->format('d/m/Y H:i') . ' UTC' : '' }}
-                                                                                        </time>
+                                                                                        {{ isset($msg['date']) 
+                                                                                            ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))
+                                                                                                ->setTimezone('Europe/Paris')
+                                                                                                ->format('d/m/Y H:i')
+                                                                                            : '' }}
                                                                                     </p>
                                                                                 </div>
                                                                             </div>
@@ -1480,28 +1480,3 @@ new class extends Component {
 
 
 </div>
-
-<script>
-document.querySelectorAll('.js-local-time').forEach(el => {
-    const iso = el.getAttribute('datetime');
-    if (!iso) return;
-
-    const date = new Date(iso);  // ← Le navigateur convertit AUTO en heure locale !
-
-    console.log(iso)
-    console.log(date)
-
-    // Format jour/mois/année 24h (style proche du français)
-    const options = {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    };
-
-    el.textContent = date.toLocaleString('fr-FR', options);  // ou navigator.language pour full adapt
-    // Alternative full auto : date.toLocaleString() sans options
-});
-</script>
