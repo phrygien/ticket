@@ -802,11 +802,11 @@ new class extends Component {
                                                                                             </span>
                                                                                         @endif
                                                                                     </div>
-                                                                                    <p class="text-xs text-gray-500">
+                                                                                    <!-- <p class="text-xs text-gray-500">
                                                                                        <p class="text-xs text-gray-500">
                                                                                             {{ isset($msg['date']) ? \Carbon\Carbon::parse(preg_replace('/\s*\([^)]+\)\s*$/', '', $msg['date']))->format('d/m/Y H:i') : '' }}
                                                                                             </p>
-                                                                                    </p>
+                                                                                    </p> -->
                                                                                 </div>
                                                                             </div>
 
