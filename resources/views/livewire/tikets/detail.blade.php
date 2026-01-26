@@ -1488,6 +1488,9 @@ document.querySelectorAll('.js-local-time').forEach(el => {
 
     const date = new Date(iso);  // ← Le navigateur convertit AUTO en heure locale !
 
+    console.log(iso)
+    console.log(date)
+
     // Format jour/mois/année 24h (style proche du français)
     const options = {
         day: '2-digit',
