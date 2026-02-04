@@ -29,4 +29,5 @@ Route::middleware(['jwt-session-auth'])->group(function () {
 
     //Retour et retractation seulement
     Volt::route('/demande-rt', 'tikets.demande-rt')->name('demande-rt');
+    Volt::route('/changement-adresse', 'tikets.changement-adresse')->name('changement-adresse');
 });

@@ -84,7 +84,7 @@ new class extends Component {
         }
 
         $page = $this->pagesByStatus[$status];
-        $url = env('API_REST') ."/ticket?page={$page}&status=" . urlencode($status) . "&label_id=6";
+        $url = env('API_REST') ."/ticket?page={$page}&status=" . urlencode($status) . "&label_id=10";
 
         if ($this->projectId !== 'all') {
             $url .= "&project_id={$this->projectId}";
@@ -288,7 +288,12 @@ private function resetPagination()
 }; ?>
 
 <div class="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
-<x-header title="Demande Retour & Retractation" subtitle="Ticket demande de retour et retractation" separator>
+<x-header 
+    title="Demande de changement d'adresse" 
+    subtitle="Tous les tickets de demande de changement d'adresse" 
+    separator
+>
+
     <x-slot:middle class="!justify-end">
         <div class="flex items-center gap-3">
             <fieldset class="fieldset hidden sm:block">
