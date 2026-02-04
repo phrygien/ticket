@@ -26,4 +26,7 @@ Route::middleware(['jwt-session-auth'])->group(function () {
     // Stats redondant
     Volt::route('/stat', 'stats.redudent')->name('stats.redudent');
     Volt::route('/redondant', 'stats.view-redodant')->name('redondant.view');
+
+    //Retour et retractation seulement
+    Volt::route('/demande-rt', 'tikets.demande-rt')->name('demande-rt');
 });

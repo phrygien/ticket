@@ -129,6 +129,7 @@
                 @endif
                 {{-- <x-menu-item title="Tableau de bord principal" icon="o-sparkles" link="/sa-dashboard" /> --}}
                 <x-menu-item title="Projet disponible" icon="o-sparkles" link="/"  />
+                <x-menu-item title="Retour & Retractation" icon="o-bolt" link="/demande-rt"  />
                 <x-menu-item title="Tickets redondants" icon="o-rectangle-stack" link="/stat" />
                 @if($role  == 'super_admin')
                     <x-menu-item title="Utilisateur" icon="o-users" link="/users"  />
