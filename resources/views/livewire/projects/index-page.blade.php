@@ -940,7 +940,8 @@ $labels = [
         'demande_specifique': 'Demande spécifique',
         'colis_vide': 'Colis vide',
         'spam': 'Spam',
-        'changement_adresse_livraison': 'Changement Adresse'
+        'changement_adresse_livraison': 'Changement Adresse',
+        'inversion_colis': 'Inversion Colis'
     };
 
     // Couleurs pour chaque catégorie
