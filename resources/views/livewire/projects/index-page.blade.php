@@ -940,6 +940,7 @@ $labels = [
         'demande_specifique': 'Demande spécifique',
         'colis_vide': 'Colis vide',
         'spam': 'Spam',
+        'changement_adresse_livraison': 'Changement Adresse'
     };
 
     // Couleurs pour chaque catégorie
@@ -953,12 +954,14 @@ $labels = [
         'demande_specifique': '#06b6d4',
         'colis_vide': '#f97316',
         'spam': '#b8c925ff'
+        'changement_adresse_livraison': 'rgb(9, 10, 1)',
+        'inversion_colis': 'rgba(99, 100, 3, 0.5)',
     };
 
     const highchartsColors = [
         '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
         '#8b5cf6', '#ec4899', '#06b6d4', '#f97316',
-        '#b8c925ff'
+        '#b8c925ff', 'rgb(9, 10, 1)', 'rgba(99, 100, 3, 0.5)'
     ];
 
     // Configuration commune pour les exports
