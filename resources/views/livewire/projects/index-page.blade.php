@@ -939,7 +939,8 @@ $labels = [
         'retour_retractation': 'Retour/Rétractation',
         'demande_specifique': 'Demande spécifique',
         'colis_vide': 'Colis vide',
-        'spam': 'Spam'
+        'spam': 'Spam',
+        'inversion_de_colis': 'Inversion de colis'
     };
 
     // Couleurs pour chaque catégorie
@@ -953,12 +954,13 @@ $labels = [
         'demande_specifique': '#06b6d4',
         'colis_vide': '#f97316',
         'spam': '#b8c925ff'
+        'spam': 'rgb(32, 2, 27)'
     };
 
     const highchartsColors = [
         '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
         '#8b5cf6', '#ec4899', '#06b6d4', '#f97316',
-        '#b8c925ff'
+        '#b8c925ff', 'rgb(32, 2, 27)'
     ];
 
     // Configuration commune pour les exports
