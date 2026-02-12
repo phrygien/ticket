@@ -135,6 +135,11 @@
                     icon="o-map-pin" 
                     link="/changement-adresse"  
                 />
+                <x-menu-item 
+                    title="Inversion de Colis" 
+                    icon="o-cube" 
+                    link="/inversion-colis"  
+                />
                 <x-menu-item title="Tickets redondants" icon="o-rectangle-stack" link="/stat" />
                 @if($role  == 'super_admin')
                     <x-menu-item title="Utilisateur" icon="o-users" link="/users"  />
