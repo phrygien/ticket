@@ -954,7 +954,7 @@ $labels = [
         'retour_retractation': '#ec4899',
         'demande_specifique': '#06b6d4',
         'colis_vide': '#f97316',
-        'spam': '#b8c925ff'
+        'spam': '#b8c925ff',
         'changement_adresse_livraison': 'rgb(9, 10, 1)',
         'inversion_colis': 'rgba(99, 100, 3, 0.5)',
     };
