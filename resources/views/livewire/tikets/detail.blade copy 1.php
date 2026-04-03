@@ -38,16 +38,6 @@ new class extends Component {
 
     public $translatedMessage = "";
 
-
-    public bool $editDestinataire = false;
-    public string $destinateurOriginal = '';
-
-    public array $cc = [];
-
-    public bool $editSubject = false;
-    public string $subject = '';
-    public string $subjectOriginal = '';
-
     public function mount($ticket)
     {
         $this->ticketId = $ticket;
@@ -79,26 +69,9 @@ new class extends Component {
             $this->ticketDetails = $response->json();
             $this->destinateur =
                 $response["details"][0]["original_client_mail"];
-            $this->destinateurOriginal = $this->destinateur;
-
-            $firstSubject = $this->ticketDetails['conversation']['messages'][0]['subject'] ?? '';
-            $this->subject = 'RE: ' . $firstSubject;
-            $this->subjectOriginal = $this->subject;
         }
 
         $this->loading = false;
-    }
-
-    public function resetDestinataire(): void
-    {
-        $this->destinateur = $this->destinateurOriginal;
-        $this->editDestinataire = false;
-    }
-
-    public function resetSubject(): void
-    {
-        $this->subject = $this->subjectOriginal;
-        $this->editSubject = false;
     }
 
     public function setTab($tab)
@@ -463,16 +436,15 @@ new class extends Component {
             "first_message_id" => $firstMessageId,
             "replyText" => $this->message_txt,
             "attachements" => $attachments,
-            "destinataire"      => $this->destinateur,
-            "cc"               => $this->cc,
-            "subject"          => $this->subject
         ];
+
+        \Log::info("Body envoyé:", $body);
 
         $response = Http::withHeaders([
             "x-secret-key" => env("X_SECRET_KEY"),
             "Authorization" => "Bearer {$token}",
             "Accept" => "application/json",
-        ])->post(env("API_REST") . "/ticket/replymail2", $body);
+        ])->post(env("API_REST") . "/ticket/replymail", $body);
 
         if ($response->successful()) {
             $this->myModal12 = false;
@@ -602,34 +574,6 @@ new class extends Component {
             );
         }
     }
-
-    public function addCC(string $email): void
-    {
-        $email = trim($email);
-
-        if (empty($email)) {
-            return;
-        }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->error("Adresse email invalide : {$email}");
-            return;
-        }
-
-        if (in_array($email, $this->cc)) {
-            $this->warning("Cette adresse est déjà dans la liste CC");
-            return;
-        }
-
-        $this->cc[] = $email;
-    }
-
-    public function removeCC(int $index): void
-    {
-        if (isset($this->cc[$index])) {
-            array_splice($this->cc, $index, 1);
-        }
-    }
 };
 ?>
 
@@ -637,23 +581,8 @@ new class extends Component {
 
     <div class="mx-auto w-full">
 
-    <div class="grid grid-cols-4 gap-4 mb-5 hidden">
-        <x-card subtitle="Ticket 02">
-        </x-card>
-
-        <x-card>
-        </x-card>
-
-        <x-card>
-        </x-card>
-
-        <x-card>
-        </x-card>
-    </div>
-
-
 <!-- Navigation des onglets avec loading -->
-<div class="border-b border-gray-200 mb-5 mt-5">
+<div class="border-b border-gray-200 mb-4">
     <nav class="-mb-px flex space-x-8">
         <button wire:click="setTab('description')"
             class="px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 relative
@@ -1263,132 +1192,26 @@ new class extends Component {
                                         placeholder="exemple@domaine.com"
                                         icon="o-envelope"
                                         hint="Le destinataire de votre réponse"
-                                        :readonly="!$editDestinataire"
-                                        class="font-semibold {{ !$editDestinataire ? 'bg-base-200' : '' }}"
+                                        readonly
+                                        class="font-semibold"
                                     />
                                 </div>
-                                <div class="mt-1 flex gap-2">
-                                    @if(!$editDestinataire)
-                                        <x-button
-                                            label="Modifier"
-                                            wire:click="$set('editDestinataire', true)"
-                                            class="btn-sm btn-outline btn-warning"
-                                            icon="o-pencil"
-                                            tooltip="Modifier le destinataire"
-                                        />
-                                    @else
-                                        <x-button
-                                            label="Valider"
-                                            wire:click="$set('editDestinataire', false)"
-                                            class="btn-sm btn-success"
-                                            icon="o-check"
-                                            tooltip="Confirmer le destinataire"
-                                        />
-                                        <x-button
-                                            label="Annuler"
-                                            wire:click="resetDestinataire"
-                                            class="btn-sm btn-ghost"
-                                            icon="o-x-mark"
-                                            tooltip="Annuler la modification"
-                                        />
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div class="mt-3">
-                                <label class="block text-sm font-medium mb-1">
-                                    <x-icon name="o-user-plus" class="inline h-4 w-4 mr-1" />
-                                    CC
-                                </label>
-
-                                <div class="flex flex-wrap gap-2 rounded-lg border border-base-300 bg-base-100 p-2 min-h-[42px] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary"
-                                     x-data="{ inputVal: '' }"
-                                >
-                                    <!-- Tags existants -->
-                                    @foreach($cc as $index => $email)
-                                        <span class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                <x-icon name="o-envelope" class="h-3 w-3" />
-                {{ $email }}
-                <button
-                    type="button"
-                    wire:click="removeCC({{ $index }})"
-                    class="ml-1 rounded-full hover:bg-primary/20 p-0.5"
-                >
-                    <x-icon name="o-x-mark" class="h-3 w-3" />
-                </button>
-            </span>
-                                    @endforeach
-
-                                    <!-- Input -->
-                                    <input
-                                        type="email"
-                                        x-model="inputVal"
-                                        @blur="
-                if (inputVal.trim() !== '') {
-                    $wire.addCC(inputVal.trim());
-                    inputVal = '';
-                }
-            "
-                                        @keydown.enter.prevent="
-                if (inputVal.trim() !== '') {
-                    $wire.addCC(inputVal.trim());
-                    inputVal = '';
-                }
-            "
-                                        placeholder="ajouter@exemple.com"
-                                        class="flex-1 min-w-[180px] border-none bg-transparent outline-none text-sm placeholder-base-content/40 p-1"
-                                    />
-                                </div>
-                                <p class="mt-1 text-xs text-base-content/50">
-                                    Quittez le champ ou appuyez sur Entrée pour ajouter une adresse
-                                </p>
                             </div>
                         </div>
 
                         <!-- Affichage du sujet en lecture seule -->
-                        {{-- APRÈS --}}
                         @if(!empty($ticketDetails['conversation']['messages'][0]['subject']))
-                            <div class="mb-4 rounded-lg bg-base-200 p-4">
-                                <div class="flex items-end gap-3">
-                                    <div class="flex-1">
-                                        <x-input
-                                            label="Objet"
-                                            wire:model="subject"
-                                            icon="o-chat-bubble-left-right"
-                                            hint="Objet de votre réponse"
-                                            :readonly="!$editSubject"
-                                            class="font-semibold {{ !$editSubject ? 'opacity-75' : '' }}"
-                                        />
-                                    </div>
-                                    <div class="mb-5 flex gap-2">
-                                        @if(!$editSubject)
-                                            <x-button
-                                                label="Modifier"
-                                                wire:click="$set('editSubject', true)"
-                                                class="btn-sm btn-outline btn-warning"
-                                                icon="o-pencil"
-                                                tooltip="Modifier l'objet"
-                                            />
-                                        @else
-                                            <x-button
-                                                label="Valider"
-                                                wire:click="$set('editSubject', false)"
-                                                class="btn-sm btn-success"
-                                                icon="o-check"
-                                                tooltip="Confirmer"
-                                            />
-                                            <x-button
-                                                label="Annuler"
-                                                wire:click="resetSubject"
-                                                class="btn-sm btn-ghost"
-                                                icon="o-x-mark"
-                                                tooltip="Annuler la modification"
-                                            />
-                                        @endif
-                                    </div>
-                                </div>
+                            <div class="mb-4">
+                                <x-input
+                                    label="Objet"
+                                    value="RE: {{ $ticketDetails['conversation']['messages'][0]['subject'] }}"
+                                    icon="o-chat-bubble-left-right"
+                                    readonly
+                                    class="bg-base-200"
+                                />
                             </div>
                         @endif
+
                         <!-- Message du client (référence) -->
                         @if(!empty($message_client))
                             <div class="mb-4">
