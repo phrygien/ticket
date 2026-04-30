@@ -39,6 +39,7 @@ new class extends Component {
         $this->loadDonutData();
         $this->loadTicketPartition();
         $this->loadUserActivitySummary();
+        $this->loadUserActivitySummary2();
         $this->loadRedundantData();
 
         $this->role = session('role');
@@ -86,7 +87,7 @@ new class extends Component {
                     'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getdonutSummary', [
+                ])->post(env('API_REST') . '/dash/getdonutSummary', [
                             'month' => $this->selectedMonth,
                             'year' => $this->selectedYear,
                             'project_id' => $this->projet,
@@ -276,6 +277,9 @@ new class extends Component {
         return $total;
     }
 
+    // ------------------------------------ //
+    //           USER SUMMARY               //
+    // ------------------------------------ //
 
     public $userActivityData = [];
     public bool $loadingUserActivity = false;
@@ -292,7 +296,7 @@ new class extends Component {
                     'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getuseractivitysummary', [
+                ])->post(env('API_REST') . '/dash/getuseractivitysummary', [
                             'month' => now()->format('m'),
                             'year' => now()->format('Y'),
                         ]);
@@ -343,6 +347,43 @@ new class extends Component {
             $this->loadingUserActivity = false;
         }
     }
+
+    public $userActivityData2 = [];
+    public string $dateStartActivity = '2026-04-01';
+    public string $dateEndActivity   = '2026-04-30';
+    public function loadUserActivitySummary2(): void {
+        $this->loadingUserActivity = true;
+        try{
+            $token = session('token') ?: $this->loginAndGetToken();
+
+            $response = Http::withHeaders([
+                'x-secret-key' => env('X_SECRET_KEY'),
+                'Authorization' => 'Bearer ' . $token,
+                'Accept' => 'application/json',
+            ])->post(env('API_REST') . '/dash/getuseractivitysummary2', [
+                        'date_start' => $this->dateStartActivity,
+                        'date_end' => $this->dateEndActivity,
+                    ]);
+
+            $this->userActivityData2 = $response->successful() ? $response->json()['details'] ?? [] : [];
+
+
+        } catch (\Exception $e) {
+            dd($e);
+            \Log::error('Erreur chargement activité par personne : ' . $e->getMessage());
+            $this->userActivityData2 = [];
+        } finally {
+            $this->loadingUserActivity = false;
+        }
+    }
+
+    public function updatedDateStartActivity(): void { $this->loadUserActivitySummary2(); }
+    public function updatedDateEndActivity(): void   { $this->loadUserActivitySummary2(); }
+
+    // ------------------------------------ //
+    //        END USER SUMMARY              //
+    // ------------------------------------ //
+
     public function with(): array
     {
         return [
@@ -372,7 +413,7 @@ new class extends Component {
                     'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getRedudantRequest', [
+                ])->post(env('API_REST') . '/dash/getRedudantRequest', [
                             'ticket_status' => 'all',
                             'date_range' => 1,
                         ]);
@@ -486,14 +527,14 @@ new class extends Component {
                         class="font-medium">{{ $ticketStatus === 'all' ? 'Tous les statuts' : ucfirst($ticketStatus) }}</span>
                     •
                     @php
-$labels = [
-    0 => '7 jours',
-    1 => '15 jours',
-    2 => '1 mois',
-    3 => '3 mois',
-    4 => '6 mois',
-    5 => '1 an',
-];
+                        $labels = [
+                            0 => '7 jours',
+                            1 => '15 jours',
+                            2 => '1 mois',
+                            3 => '3 mois',
+                            4 => '6 mois',
+                            5 => '1 an',
+                        ];
                     @endphp
                     <span class="font-medium">
                         {{ $labels[$daterange] ?? '' }}
@@ -504,45 +545,26 @@ $labels = [
         </x-card>
     </div>
 
-
-
-    <!-- Stats Mail avec Meme Probleme !-->
-    {{-- <div class="mt-5 grid grid-cols-2 gap-6">
-        <x-stat 
-            title="Nombre d'envois récurrents" 
-            value="{{ number_format($this->redundantCount ?? 0) }}" 
-            icon="o-envelope" 
-            color="text-primary" 
-        />
-
-        <x-stat 
-            title="Total des mails envoyés automatiquement" 
-            value="{{ number_format($this->totalEmails ?? 0) }}" 
-            icon="o-envelope" 
-            color="text-pink-500"
-        />
-    </div> --}}
-
     <div class="mt-5 grid grid-cols-1">
         <x-card subtitle="Classification par catégorie" separator>
             <form class="filter flex flex-wrap items-center gap-2">
                 <input class="btn btn-square" type="reset" value="×" wire:click="resetFilter()" />
-            
+
                 <input value="all" wire:model.live="project_id" class="btn" type="radio" name="project_filter"
                     aria-label="Tous les projets" checked />
-            
+
                 @foreach($projects as $project)
                     <input value="{{ $project['id'] }}" wire:model.live="project_id" class="btn" type="radio" name="project_filter"
                         aria-label="{{ $project['name'] }}" />
                 @endforeach
-            
+
                 <!-- Loader pendant le changement de projet -->
                 <div wire:loading wire:target="project_id" class="flex items-center ml-3">
                     <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
                 </div>
             </form>
             <x-button class="btn btn-soft btn-accent float-right" label="Mode Tableau" @click="$wire.myModal1 = true" />
- 
+
 
             {{-- <div wire:loading wire:target="project_id" class="flex justify-center items-center h-96">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -570,11 +592,11 @@ $labels = [
             <p class="text-center text-gray-500 py-6">Aucune donnée disponible.</p>
         @else
             @php
-    // Extraire les dates
-    $dates = array_column($ticketPartitionData, 'date');
+                // Extraire les dates
+                $dates = array_column($ticketPartitionData, 'date');
 
-    // Extraire les catégories (exclure 'date')
-    $categories = array_keys(array_diff_key($ticketPartitionData[0], ['date' => '']));
+                // Extraire les catégories (exclure 'date')
+                $categories = array_keys(array_diff_key($ticketPartitionData[0], ['date' => '']));
             @endphp
 
             <div class="overflow-x-auto landscape-scrollbar">
@@ -601,12 +623,12 @@ $labels = [
                                     {{ \Carbon\Carbon::parse($row['date'])->translatedFormat('d M Y') }}
                                 </td>
                                 @php
-        $rowTotal = 0;
+                                    $rowTotal = 0;
                                 @endphp
                                 @foreach($categories as $category)
                                     @php
-            $value = (int) ($row[$category] ?? 0);
-            $rowTotal += $value;
+                                        $value = (int) ($row[$category] ?? 0);
+                                        $rowTotal += $value;
                                     @endphp
                                     <td class="px-4 py-3 border-b border-gray-100 text-gray-700 text-center">
                                         <span class="inline-block min-w-[40px] px-2 py-1 rounded {{ $value > 0 ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-400' }}">
@@ -619,24 +641,24 @@ $labels = [
                                 </td>
                             </tr>
                         @endforeach
-                        
+
                         {{-- Ligne de totaux --}}
                         <tr class="bg-gray-100 font-bold">
                             <td class="px-4 py-3 border-t-2 border-gray-300 bg-gray-100 sticky left-0 z-10">
                                 Total
                             </td>
                             @php
-    $grandTotal = 0;
+                                $grandTotal = 0;
                             @endphp
                             @foreach($categories as $category)
                                 @php
-        $categoryTotal = array_sum(array_column($ticketPartitionData, $category));
-        $grandTotal += $categoryTotal;
-                                                        @endphp
-                                                        <td class="px-4 py-3 border-t-2 border-gray-300 text-center text-blue-700">
-                                                            {{ $categoryTotal }}
-                                                        </td>
-                                                    @endforeach
+                                    $categoryTotal = array_sum(array_column($ticketPartitionData, $category));
+                                    $grandTotal += $categoryTotal;
+                                    @endphp
+                                        <td class="px-4 py-3 border-t-2 border-gray-300 text-center text-blue-700">
+                                            {{ $categoryTotal }}
+                                        </td>
+                                    @endforeach
                             <td class="px-4 py-3 border-t-2 border-gray-300 bg-gray-200 text-center text-gray-900">
                                 {{ $grandTotal }}
                             </td>
@@ -650,136 +672,14 @@ $labels = [
                 <p><strong>Période :</strong> {{ count($ticketPartitionData) }} jours</p>
             </div>
         @endif
-    
+
         <x-slot:actions>
             <x-button label="Fermer" @click="$wire.myModal1 = false" class="btn-soft btn-primary" />
         </x-slot:actions>
     </x-modal>
 
-
-        {{-- <div class="grid grid-cols-1 space-y-6">
-            @foreach($projects as $project)
-                <div class="overflow-hidden rounded-lg bg-white shadow-sm">
-                    <h2 class="sr-only" id="profile-overview-title">Profile Overview</h2>
-                    <div class="bg-white p-6">
-                        <div class="sm:flex sm:items-center sm:justify-between">
-                            <div class="sm:flex sm:space-x-5">
-                                <div class="mt-4 text-center sm:mt-0 sm:pt-1 sm:text-left">
-                                    <p class="text-sm font-medium text-gray-600">{{ $project['name'] }}</p>
-                                    <p class="text-xl font-bold text-gray-900 sm:text-2xl">{{ $project['code'] }}</p>
-                                </div>
-                            </div>
-                            <div class="mt-5 flex justify-center sm:mt-0">
-                                <x-button icon-right="o-arrow-long-right"
-                                    href="{{ route('project.view', ['id' => $project['id']]) }}" wire:navigate
-                                    label="en savoir plus" class="btn-primary btn-outline" />
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        class="grid grid-cols-1 divide-y divide-gray-200 border-t border-gray-200 bg-gray-50 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-                        <div class="px-6 py-5 text-center text-sm font-medium">
-                            <span class="text-gray-900">{{ $project['pending_ticket'] }}</span>
-                            <span class="text-gray-600">ticket en attente</span>
-                        </div>
-                        <div class="px-6 py-5 text-center text-sm font-medium">
-                            <span class="text-gray-900">{{ $project['in_progress_ticket'] }}</span>
-                            <span class="text-gray-600">ticket en cours</span>
-                        </div>
-                        <div class="px-6 py-5 text-center text-sm font-medium">
-                            <span class="text-gray-900">{{ $project['closed_ticket'] }}</span>
-                            <span class="text-gray-600">ticket fermé</span>
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div> --}}
-
-
-        {{-- <x-card subtitle="Statistiques par période" separator>
-            <div class="mb-5 flex items-end gap-6">
-
-                <fieldset class="fieldset flex-1">
-                    <legend class="fieldset-legend">Filtrer par statut</legend>
-                    <select class="select w-full" wire:model.live="ticketStatus">
-                        <option value="all">Tous les statuts</option>
-                        <option value="en attente">En attente</option>
-                        <option value="en cours">En cours</option>
-                        <option value="cloture">Clôturé</option>
-                    </select>
-                    <span class="label">Optionnel</span>
-                </fieldset>
-
-
-                <fieldset class="fieldset flex-1">
-                    <legend class="fieldset-legend">Période (jours)</legend>
-                    <select class="select w-full" wire:model.live.debounce.500ms="daterange">
-                        <option value="0">7 Jours</option>
-                        <option value="1">15 Jours</option>
-                        <option value="2">1 Mois</option>
-                        <option value="3">3 Mois</option>
-                        <option value="4">6 Mois</option>
-                        <option value="5">1 Ans</option>
-                    </select>
-                    <span class="label">Optionnel</span>
-                </fieldset>
-
-            </div>
-
-            <div wire:loading wire:target="ticketStatus,daterange" class="flex items-center justify-center py-4">
-                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                <span class="ml-2 text-sm text-gray-500">Mise à jour en cours...</span>
-            </div>
-
-            <div wire:ignore>
-                <div id="ticketLineChart" style="height: 300px;"></div>
-            </div>
-
-            <div class="mt-4 text-xs text-gray-500 border-t pt-3">
-                <p>
-                    Filtres actifs:
-                    <span
-                        class="font-medium">{{ $ticketStatus === 'all' ? 'Tous les statuts' : ucfirst($ticketStatus) }}</span>
-                    •
-                    @php
-                        $labels = [
-                            0 => '7 jours',
-                            1 => '15 jours',
-                            2 => '1 mois',
-                            3 => '3 mois',
-                            4 => '6 mois',
-                            5 => '1 an',
-                        ];
-                    @endphp
-
-                    <span class="font-medium">
-                        {{ $labels[$daterange] ?? '' }}
-                    </span>
-
-                </p>
-            </div>
-        </x-card>
-
-        <x-card subtitle="Classification par catégorie" separator>
-            <div wire:loading wire:target="loadTicketPartition" class="flex justify-center items-center h-96">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                <span class="ml-3 text-gray-500">Chargement...</span>
-            </div>
-
-            <div wire:ignore>
-                <div id="ticketPartitionChart" style="height: 400px;"></div>
-            </div>
-
-            @if(!empty($ticketPartitionData))
-                <div class="mt-4 text-xs text-gray-500 border-t pt-3">
-                    <p class="font-medium">
-                        Total: {{ $partitionTotal }} tickets classifiés
-                    </p>
-                </div>
-            @endif
-        </x-card> --}}
-
         @if($role == 'super_admin')
+
             <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 <x-card subtitle="Répartition selon le type de demande">
@@ -829,6 +729,7 @@ $labels = [
 
 
                 <x-card subtitle="Statistiques par personne">
+
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-sm font-semibold text-gray-600">
                             Activité par jour (du 1er au {{ now()->translatedFormat('d M Y') }}, hors week-ends)
@@ -846,27 +747,26 @@ $labels = [
                         <p class="text-center text-gray-500 py-6">Aucune donnée disponible.</p>
                     @else
                         @php
-        // Transformer les données : dates en colonnes, users en lignes
-        $dates = [];
-        $userStats = [];
+                            // Transformer les données : dates en colonnes, users en lignes
+                            $dates = [];
+                            $userStats = [];
 
-        foreach ($userActivityData as $row) {
-            $date = $row['date'];
-            if (!in_array($date, $dates)) {
-                $dates[] = $date;
-            }
+                            foreach ($userActivityData as $row) {
+                                $date = $row['date'];
+                                if (!in_array($date, $dates)) {
+                                    $dates[] = $date;
+                                }
 
-            foreach ($row as $key => $value) {
-                if ($key !== 'date') {
-                    if (!isset($userStats[$key])) {
-                        $userStats[$key] = [];
-                    }
-                    $userStats[$key][$date] = $value;
-                }
-            }
-        }
+                                foreach ($row as $key => $value) {
+                                    if ($key !== 'date') {
+                                        if (!isset($userStats[$key])) {
+                                            $userStats[$key] = [];
+                                        }
+                                        $userStats[$key][$date] = $value;
+                                    }
+                                }
+                            }
                         @endphp
-
                         <div class="overflow-x-auto landscape-scrollbar">
                             <table class="min-w-max border border-gray-200 rounded-lg text-sm shadow-sm">
                                 <thead class="bg-gray-50 text-gray-700 sticky top-0 z-10">
@@ -903,8 +803,202 @@ $labels = [
                 </x-card>
 
             </div>
-        @endif
 
+            <div class="mt-5 grid grid-cols-1">
+
+                {{-- User Activity Summary — Tailwind v4 — Fixed height, scroll to bottom on init --}}
+
+                @php
+                    $metrics = [
+                        'total_action'       => ['label' => 'Total',  'color' => 'text-slate-100'],
+                        'answer_mail'        => ['label' => 'Mail',   'color' => 'text-info'],
+                        'mark_as_read'       => ['label' => 'Marq.',   'color' => 'text-violet-400'],
+                        'pending_ticket'     => ['label' => 'Atte.',  'color' => 'text-amber-400'],
+                        'in_progress_ticket' => ['label' => 'Prog.',  'color' => 'text-emerald-400'],
+                        'closed_ticket'      => ['label' => 'clot.',   'color' => 'text-green-400'],
+                    ];
+                    $scrollId = 'ua-scroll-' . uniqid();
+                @endphp
+
+                <div class="bg-white rounded-lg p-6 text-slate-200 overflow-hidden text-gray-700">
+
+                    {{-- ── Header ── --}}
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                        <div class="flex items-center gap-3">
+                            <div>
+                                <h2 class="text-base font-bold tracking-wide text-slate-100 m-0">Resumé Activité Utilisateur</h2>
+                                <p class="text-xs text-slate-500 mt-0.5">Resumé de chaque action utilisateur</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <x-datetime label="Date de debut" wire:model.live="dateStartActivity" />
+                            <x-datetime label="Date de fin" wire:model.live="dateEndActivity" />
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Mail : <tags class="text-sm font-normal text-slate-500 mt-0.5" >Envoyer un mail au client</tags></span>
+                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Marq. : <tags class="text-sm font-normal text-slate-500 mt-0.5">Marquer comme lu un mail</tags></span>
+                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Atte. : <tags class="text-sm font-normal text-slate-500 mt-0.5">Remettre en attente un ticket</tags></span>
+                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Prog. : <tags class="text-sm font-normal text-slate-500 mt-0.5">Mettre en cours un ticket</tags></span>
+                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Clot. : <tags class="text-sm font-normal text-slate-500 mt-0.5">Clôturer un ticket</tags></span>
+                    </div>
+
+                    {{-- ── Loading ── --}}
+                    @if($loadingUserActivity)
+                        <div class="flex items-center justify-center gap-3 py-12 text-slate-500">
+                            <div class="w-5 h-5 rounded-full border-2 border-[#252a38] border-t-blue-500 animate-spin"></div>
+                            <span class="text-sm">Loading activity data…</span>
+                        </div>
+
+                    {{-- ── Empty ── --}}
+                    @elseif(empty($userActivityData2))
+                        <div class="flex flex-col items-center justify-center py-16 text-slate-500">
+                            <span class="text-4xl mb-3">📭</span>
+                            <p class="text-sm">No activity data available for this period.</p>
+                        </div>
+
+                    {{-- ── Table ── --}}
+                    @else
+                        @php
+                            $firstRow = $userActivityData2[0] ?? [];
+                            $agents   = collect($firstRow)->keys()->filter(fn($k) => $k !== 'date')->values();
+                        @endphp
+
+                        {{-- Scroll container: fixed height, overflow-y, scrollbar always visible --}}
+                        <div
+                            id="{{ $scrollId }}"
+                            class="overflow-x-auto overflow-y-auto"
+                            style="
+                                height: 625px;
+                                scrollbar-width: thin;
+                                scrollbar-color: #c3c3c3 #ffffff;
+                            "
+                        >
+                            <table class="w-full border-collapse text-xs">
+
+                                {{-- Sticky thead --}}
+                                <thead class="sticky top-0 z-30 bg-white">
+                                    {{-- Agent row --}}
+                                    <tr class="bg-[#181c27]">
+                                        <th rowspan="2"
+                                            class="sticky left-0 z-40 bg-[#0f1117] text-left text-[10px] uppercase tracking-widest text-slate-500 px-4 py-2.5 border-b border-r-2 border-[#252a38] whitespace-nowrap min-w-[52px]">
+                                            Date
+                                        </th>
+                                        @foreach($agents as $agent)
+                                            <th colspan="{{ count($metrics) }}"
+                                                class="text-center px-2 pt-2.5 pb-1.5 border-b border-l-2 border-[#252a38] text-slate-100 text-[13px] font-bold whitespace-nowrap">
+                                                {{ $agent }}
+                                            </th>
+                                        @endforeach
+                                    </tr>
+                                    {{-- Metric sub-headers --}}
+                                    <tr class="bg-[#181c27]">
+                                        @foreach($agents as $agent)
+                                            @foreach($metrics as $key => $meta)
+                                                <th class="text-center px-1.5 pb-2 pt-1 text-[10px] uppercase tracking-[.07em] font-semibold border-b-2 border-[#252a38]
+                                                    {{ $loop->first ? 'border-l-2' : 'border-l' }} {{ $meta['color'] }}">
+                                                    {{ $meta['label'] }}
+                                                </th>
+                                            @endforeach
+                                        @endforeach
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach($userActivityData2 as $row)
+                                        @php
+                                            $hasActivity = collect($agents)->contains(
+                                                fn($a) => (int)($row[$a]['total_action'] ?? 0) > 0
+                                            );
+                                        @endphp
+                                        <tr class="border-b border-[#252a38] transition-colors hover:bg-[#1e2436] {{ !$hasActivity ? 'opacity-60' : '' }}">
+
+                                            {{-- Date cell --}}
+                                            <td class="sticky left-0 z-10 bg-[#0f1117] text-center px-4 py-2 border-r-2 border-[#252a38] whitespace-nowrap bg-white">
+                                                <span class="block text-base font-bold text-slate-100 leading-none">
+                                                    {{ \Carbon\Carbon::parse($row['date'])->format('d') }}
+                                                </span>
+                                                <span class="block text-[9px] uppercase tracking-widest text-slate-500 mt-0.5">
+                                                    {{ \Carbon\Carbon::parse($row['date'])->format('M') }}
+                                                </span>
+                                            </td>
+
+                                            {{-- Agent metric cells --}}
+                                            @foreach($agents as $agent)
+                                                @php $agentData = $row[$agent] ?? []; @endphp
+                                                @foreach($metrics as $key => $meta)
+                                                    @php $val = (int)($agentData[$key] ?? 0); @endphp
+                                                    <td class="text-center px-1.5 py-2 tabular-nums
+                                                        {{ $loop->first ? 'border-l-2 border-[#252a38]' : 'border-l border-[#252a38]' }}
+                                                        {{ $val > 0 ? 'font-bold ' . $meta['color'] : 'text-[#2d3347]' }}">
+                                                        {{ $val > 0 ? $val : '—' }}
+                                                    </td>
+                                                @endforeach
+                                            @endforeach
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+
+                                {{-- Sticky footer totals --}}
+                                <tfoot class="bottom-0 z-30">
+                                    <tr class="bg-[#1a1f2e]">
+                                        <td class="sticky left-0 z-40 bg-[#1a1f2e] text-center px-4 py-2.5 border-r-2 border-t-2 border-[#252a38] text-[10px] uppercase tracking-widest text-slate-500 font-extrabold">
+                                            Total
+                                        </td>
+                                        @foreach($agents as $agent)
+                                            @foreach($metrics as $key => $meta)
+                                                @php
+                                                    $sum = collect($userActivityData2)->sum(fn($r) => (int)($r[$agent][$key] ?? 0));
+                                                @endphp
+                                                <td class="text-center px-1.5 py-2.5 tabular-nums border-t-2
+                                                    {{ $loop->first ? 'border-l-2 border-[#252a38]' : 'border-l border-[#252a38]' }}
+                                                    {{ $sum > 0 ? 'font-bold text-sm ' . $meta['color'] : 'text-[#2d3347]' }}">
+                                                    {{ $sum > 0 ? $sum : '—' }}
+                                                </td>
+                                            @endforeach
+                                        @endforeach
+                                    </tr>
+                                </tfoot>
+
+                            </table>
+                        </div>
+
+                        {{-- Webkit scrollbar styling --}}
+                        <style>
+                            #{{ $scrollId }}::-webkit-scrollbar        { width: 5px; height: 5px; }
+                            #{{ $scrollId }}::-webkit-scrollbar-track  { background: #1e293b; border-radius: 99px; }
+                            #{{ $scrollId }}::-webkit-scrollbar-thumb  { background: #334155; border-radius: 99px; }
+                            #{{ $scrollId }}::-webkit-scrollbar-thumb:hover { background: #4f8ef7; }
+                        </style>
+
+                        {{-- Scroll to bottom on init + after Livewire updates --}}
+                        <script>
+                            (function () {
+                                const id = '{{ $scrollId }}';
+
+                                function scrollToBottom() {
+                                    const el = document.getElementById(id);
+                                    if (el) el.scrollTop = el.scrollHeight;
+                                }
+
+                                // On initial page load
+                                document.addEventListener('DOMContentLoaded', scrollToBottom);
+
+                                // After every Livewire re-render (Livewire v3)
+                                document.addEventListener('livewire:navigated', scrollToBottom);
+                                document.addEventListener('livewire:updated',   scrollToBottom);
+
+                                // Fallback: run immediately in case DOM is already ready
+                                scrollToBottom();
+                            })();
+                        </script>
+
+                    @endif
+                </div>
+
+            </div>
+
+        @endif
 
 </div>
 
@@ -960,7 +1054,7 @@ $labels = [
     };
 
     const highchartsColors = [
-        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
+        '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
         '#8b5cf6', '#ec4899', '#06b6d4', '#f97316',
         '#b8c925ff', 'rgb(9, 10, 1)', 'rgba(99, 100, 3, 0.5)'
     ];
@@ -1195,7 +1289,7 @@ $labels = [
                     let s = '<b>' + this.x + '</b><br/>';
                     let total = 0;
                     this.points.forEach(point => {
-                        s += '<span style="color:' + point.color + '">\u25CF</span> ' + 
+                        s += '<span style="color:' + point.color + '">\u25CF</span> ' +
                              point.series.name + ': ' + point.y + '<br/>';
                         total += point.y;
                     });
