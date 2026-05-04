@@ -754,14 +754,14 @@ new class extends Component {
                     $scrollId = 'ua-scroll-' . uniqid();
                 @endphp
 
-                <div class="bg-white rounded-lg p-6 text-slate-200 overflow-hidden">
+                <div class="bg-white rounded-lg p-6 overflow-hidden">
 
                     {{-- ── Header ── --}}
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
                         <div class="flex items-center gap-3">
                             <div>
-                                <h2 class="text-base font-bold tracking-wide text-slate-100 m-0">Resumé Activité Utilisateur</h2>
-                                <p class="text-xs text-slate-500 mt-0.5">Resumé de chaque action utilisateur</p>
+                                <h2 class="text-base font-bold tracking-wide m-0">Resumé Activité Utilisateur</h2>
+                                <p class="text-xs mt-0.5">Resumé de chaque action utilisateur</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5">
@@ -770,23 +770,23 @@ new class extends Component {
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Mail : <tags class="text-sm font-normal text-slate-500 mt-0.5" >Envoyer un mail au client</tags></span>
-                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Marq. : <tags class="text-sm font-normal text-slate-500 mt-0.5">Marquer comme lu un mail</tags></span>
-                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Atte. : <tags class="text-sm font-normal text-slate-500 mt-0.5">Remettre en attente un ticket</tags></span>
-                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Prog. : <tags class="text-sm font-normal text-slate-500 mt-0.5">Mettre en cours un ticket</tags></span>
-                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Clot. : <tags class="text-sm font-normal text-slate-500 mt-0.5">Clôturer un ticket</tags></span>
+                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Mail : <tags class="text-sm font-normal mt-0.5" >Envoyer un mail au client</tags></span>
+                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Marq. : <tags class="text-sm font-normal mt-0.5">Marquer comme lu un mail</tags></span>
+                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Atte. : <tags class="text-sm font-normal mt-0.5">Remettre en attente un ticket</tags></span>
+                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Prog. : <tags class="text-sm font-normal mt-0.5">Mettre en cours un ticket</tags></span>
+                        <span class="text-[11px] font-bold tracking-wider px-2.5 py-1">Clot. : <tags class="text-sm font-normal mt-0.5">Clôturer un ticket</tags></span>
                     </div>
 
                     {{-- ── Loading ── --}}
                     @if($loadingUserActivity)
-                        <div class="flex items-center justify-center gap-3 py-12 text-slate-500">
+                        <div class="flex items-center justify-center gap-3 py-12">
                             <div class="w-5 h-5 rounded-full border-2 border-[#252a38] border-t-blue-500 animate-spin"></div>
                             <span class="text-sm">Loading activity data…</span>
                         </div>
 
                     {{-- ── Empty ── --}}
                     @elseif(empty($userActivityData2))
-                        <div class="flex flex-col items-center justify-center py-16 text-slate-500">
+                        <div class="flex flex-col items-center justify-center py-16">
                             <span class="text-4xl mb-3">📭</span>
                             <p class="text-sm">No activity data available for this period.</p>
                         </div>
@@ -815,12 +815,12 @@ new class extends Component {
                                     {{-- Agent row --}}
                                     <tr class="bg-[#181c27]">
                                         <th rowspan="2"
-                                            class="sticky left-0 z-40 bg-[#0f1117] text-left text-[10px] uppercase tracking-widest text-slate-500 px-4 py-2.5 border-b border-r-2 border-[#252a38] whitespace-nowrap min-w-[52px]">
+                                            class="sticky left-0 z-40 bg-[#0f1117] text-left text-[10px] uppercase tracking-widest px-4 py-2.5 border-b border-r-2 border-[#252a38] whitespace-nowrap min-w-[52px]">
                                             Date
                                         </th>
                                         @foreach($agents as $agent)
                                             <th colspan="{{ count($metrics) }}"
-                                                class="text-center px-2 pt-2.5 pb-1.5 border-b border-l-2 border-[#252a38] text-slate-100 text-[13px] font-bold whitespace-nowrap">
+                                                class="text-center px-2 pt-2.5 pb-1.5 border-b border-l-2 border-[#252a38] text-[13px] font-bold whitespace-nowrap">
                                                 {{ $agent }}
                                             </th>
                                         @endforeach
@@ -849,10 +849,10 @@ new class extends Component {
 
                                             {{-- Date cell --}}
                                             <td class="sticky left-0 z-10 bg-[#0f1117] text-center px-4 py-2 border-r-2 border-[#252a38] whitespace-nowrap bg-white">
-                                                <span class="block text-base font-bold text-slate-100 leading-none">
+                                                <span class="block text-base font-bold leading-none">
                                                     {{ \Carbon\Carbon::parse($row['date'])->format('d') }}
                                                 </span>
-                                                <span class="block text-[9px] uppercase tracking-widest text-slate-500 mt-0.5">
+                                                <span class="block text-[9px] uppercase tracking-widest mt-0.5">
                                                     {{ \Carbon\Carbon::parse($row['date'])->format('M') }}
                                                 </span>
                                             </td>
@@ -876,7 +876,7 @@ new class extends Component {
                                 {{-- Sticky footer totals --}}
                                 <tfoot class="bottom-0 z-30">
                                     <tr class="bg-[#1a1f2e]">
-                                        <td class="sticky left-0 z-40 bg-[#1a1f2e] text-center px-4 py-2.5 border-r-2 border-t-2 border-[#252a38] text-[10px] uppercase tracking-widest text-slate-500 font-extrabold">
+                                        <td class="sticky left-0 z-40 bg-[#1a1f2e] text-center px-4 py-2.5 border-r-2 border-t-2 border-[#252a38] text-[10px] uppercase tracking-widest font-extrabold">
                                             Total
                                         </td>
                                         @foreach($agents as $agent)
