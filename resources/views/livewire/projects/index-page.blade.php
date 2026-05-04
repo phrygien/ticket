@@ -754,7 +754,7 @@ new class extends Component {
                     $scrollId = 'ua-scroll-' . uniqid();
                 @endphp
 
-                <div class="bg-white rounded-lg p-6 text-slate-200 overflow-hidden text-gray-700">
+                <div class="bg-white rounded-lg p-6 text-slate-200 overflow-hidden">
 
                     {{-- ── Header ── --}}
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
