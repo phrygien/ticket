@@ -815,12 +815,12 @@ new class extends Component {
                                     {{-- Agent row --}}
                                     <tr class="bg-[#181c27]">
                                         <th rowspan="2"
-                                            class="sticky left-0 z-40 bg-[#0f1117] text-left text-[10px] uppercase tracking-widest px-4 py-2.5 border-b border-r-2 border-[#252a38] whitespace-nowrap min-w-[52px]">
+                                            class="sticky text-white left-0 z-40 bg-[#0f1117] text-left text-[10px] uppercase tracking-widest px-4 py-2.5 border-b border-r-2 border-[#252a38] whitespace-nowrap min-w-[52px]">
                                             Date
                                         </th>
                                         @foreach($agents as $agent)
                                             <th colspan="{{ count($metrics) }}"
-                                                class="text-center px-2 pt-2.5 pb-1.5 border-b border-l-2 border-[#252a38] text-[13px] font-bold whitespace-nowrap">
+                                                class="text-center text-white px-2 pt-2.5 pb-1.5 border-b border-l-2 border-[#252a38] text-[13px] font-bold whitespace-nowrap">
                                                 {{ $agent }}
                                             </th>
                                         @endforeach
