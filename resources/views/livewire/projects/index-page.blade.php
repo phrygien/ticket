@@ -744,12 +744,12 @@ new class extends Component {
 
                 @php
                     $metrics = [
-                        'total_action'       => ['label' => 'Total',  'color' => 'text-black'],
+                        'total_action'       => ['label' => 'Total',  'color' => 'text-gray-600'],
                         'answer_mail'        => ['label' => 'Mail',   'color' => 'text-info'],
-                        'mark_as_read'       => ['label' => 'Marq.',   'color' => 'text-violet-400'],
-                        'pending_ticket'     => ['label' => 'Atte.',  'color' => 'text-amber-400'],
-                        'in_progress_ticket' => ['label' => 'Prog.',  'color' => 'text-emerald-400'],
-                        'closed_ticket'      => ['label' => 'clot.',   'color' => 'text-green-400'],
+                        'mark_as_read'       => ['label' => 'Marq.',   'color' => 'text-gray-600'],
+                        'pending_ticket'     => ['label' => 'Atte.',  'color' => 'text-gray-600'],
+                        'in_progress_ticket' => ['label' => 'Prog.',  'color' => 'text-gray-600'],
+                        'closed_ticket'      => ['label' => 'clot.',   'color' => 'text-gray-600'],
                     ];
                     $scrollId = 'ua-scroll-' . uniqid();
                 @endphp
