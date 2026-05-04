@@ -27,11 +27,25 @@ new class extends Component {
     public string $project_id = "";
     public $projet;
 
+    public string $dateStartActivity;
+    public string $dateEndActivity;
+
+    public string $selectedMonthActivity;
+    public string $selectedYearActivity;
 
     public function mount(): void
     {
         $this->selectedMonth = date('m');
         $this->selectedYear = date('Y');
+
+        $this->selectedMonthActivity = date('m');
+        $this->selectedYearActivity =  date('Y');
+
+        $dateEnd = new DateTime(); // maintenant
+        $this->dateEndActivity = $dateEnd->format('Y-m-d');
+
+        $dateStart = (clone $dateEnd)->modify('-30 days');
+        $this->dateStartActivity = $dateStart->format('Y-m-d');
 
         $this->initializeFilters();
         $this->allProject();
@@ -297,48 +311,16 @@ new class extends Component {
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
                 ])->post(env('API_REST') . '/dash/getuseractivitysummary', [
-                            'month' => now()->format('m'),
-                            'year' => now()->format('Y'),
+                            'month' => $this->selectedMonthActivity,
+                            'year' => $this->selectedYearActivity,
                         ]);
 
-                $apiData = $response->successful() ? $response->json()['details'] ?? [] : [];
+                $this->userActivityData = $response->successful() ? $response->json()['details'] ?? [] : [];
 
-                // Génération de tous les jours du mois en cours
-                $start = Carbon::now()->startOfMonth();
-                $today = Carbon::now()->startOfDay();
-                $days = [];
+                $this->dispatch('column-chart-updated', [
+                    'data' => $this->userActivityData,
+                ]);
 
-                for ($date = $start->copy(); $date <= $today; $date->addDay()) {
-                    // Exclure samedi (6) et dimanche (0)
-                    if (in_array($date->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY])) {
-                        continue;
-                    }
-
-                    $days[$date->format('Y-m-d')] = ['date' => $date->format('Y-m-d')];
-                }
-
-                // Fusion avec les données API
-                foreach ($apiData as $row) {
-                    $date = Carbon::parse($row['date'])->format('Y-m-d');
-                    if (isset($days[$date])) {
-                        $days[$date] = array_merge($days[$date], $row);
-                    }
-                }
-
-                // Normalisation (remplir les valeurs manquantes à 0)
-                $allKeys = collect($apiData)->flatMap(fn($r) => array_keys($r))->unique()->toArray();
-
-                $this->userActivityData = collect($days)
-                    ->map(function ($day) use ($allKeys) {
-                        foreach ($allKeys as $key) {
-                            if (!isset($day[$key])) {
-                                $day[$key] = $key === 'date' ? $day['date'] : 0;
-                            }
-                        }
-                        return $day;
-                    })
-                    ->values()
-                    ->toArray();
             }
         } catch (\Exception $e) {
             \Log::error('Erreur chargement activité par personne : ' . $e->getMessage());
@@ -348,9 +330,11 @@ new class extends Component {
         }
     }
 
+    public function updatedSelectedMonthActivity(): void { $this->loadUserActivitySummary(); }
+
+    public function updatedSelectedYearActivity(): void { $this->loadUserActivitySummary(); }
+
     public $userActivityData2 = [];
-    public string $dateStartActivity = '2026-04-01';
-    public string $dateEndActivity   = '2026-04-30';
     public function loadUserActivitySummary2(): void {
         $this->loadingUserActivity = true;
         try{
@@ -730,14 +714,11 @@ new class extends Component {
 
                 <x-card subtitle="Statistiques par personne">
 
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-sm font-semibold text-gray-600">
-                            Activité par jour (du 1er au {{ now()->translatedFormat('d M Y') }}, hors week-ends)
-                        </h3>
-                        {{-- <x-button icon="o-arrow-path" wire:click="loadUserActivitySummary" spinner="loadUserActivitySummary"
-                            label="Rafraîchir" class="btn-soft btn-primary" /> --}}
+                    <div class="flex justify-center gap-3 items-center mb-4">
+                        <x-select label="Mois" icon="o-calendar" :options="$months" wire:model.live="selectedMonthActivity" />
+                        <x-select label="Année" icon="o-calendar-days" :options="$years" wire:model.live="selectedYearActivity" />
                     </div>
-
+                    <br><br>
                     @if($loadingUserActivity)
                         <div class="flex justify-center items-center h-64">
                             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -746,58 +727,11 @@ new class extends Component {
                     @elseif(empty($userActivityData))
                         <p class="text-center text-gray-500 py-6">Aucune donnée disponible.</p>
                     @else
-                        @php
-                            // Transformer les données : dates en colonnes, users en lignes
-                            $dates = [];
-                            $userStats = [];
-
-                            foreach ($userActivityData as $row) {
-                                $date = $row['date'];
-                                if (!in_array($date, $dates)) {
-                                    $dates[] = $date;
-                                }
-
-                                foreach ($row as $key => $value) {
-                                    if ($key !== 'date') {
-                                        if (!isset($userStats[$key])) {
-                                            $userStats[$key] = [];
-                                        }
-                                        $userStats[$key][$date] = $value;
-                                    }
-                                }
-                            }
-                        @endphp
-                        <div class="overflow-x-auto landscape-scrollbar">
-                            <table class="min-w-max border border-gray-200 rounded-lg text-sm shadow-sm">
-                                <thead class="bg-gray-50 text-gray-700 sticky top-0 z-10">
-                                    <tr>
-                                        <th class="px-4 py-2 text-left border-b border-gray-300 bg-gray-50 sticky left-0 z-20 whitespace-nowrap">
-                                            Utilisateur
-                                        </th>
-                                        @foreach($dates as $date)
-                                            <th class="px-4 py-2 text-center border-b border-gray-300 whitespace-nowrap">
-                                                {{ \Carbon\Carbon::parse($date)->translatedFormat('d M') }}
-                                            </th>
-                                        @endforeach
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    @foreach($userStats as $userName => $stats)
-                                        <tr class="hover:bg-gray-50 transition-colors duration-150">
-                                            <td class="px-4 py-2 border-b border-gray-100 bg-white sticky left-0 z-10 font-medium text-gray-800 whitespace-nowrap">
-                                                {{ ucfirst($userName) }}
-                                            </td>
-                                            @foreach($dates as $date)
-                                                <td class="px-4 py-2 border-b border-gray-100 text-gray-700 text-center">
-                                                    <span class="block min-w-[60px]">
-                                                        {{ $stats[$date] ?? '0' }}
-                                                    </span>
-                                                </td>
-                                            @endforeach
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                        {{-- wire:ignore empêche Livewire de toucher au DOM du chart --}}
+                        <div wire:ignore>
+                            <figure class="highcharts-figure">
+                                <div id="column_chart" style="height: 600px;"></div>
+                            </figure>
                         </div>
                     @endif
                 </x-card>
@@ -1008,11 +942,13 @@ new class extends Component {
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script src="https://code.highcharts.com/themes/adaptive.js"></script>
 
 <script>
     let lineChart = null;
     let donutChart = null;
     let barChart = null;
+    let column_chart = null;
 
     const dayLabels = {
         0: "7 jours",
@@ -1388,6 +1324,95 @@ new class extends Component {
         }, 100);
     }
 
+    // ===== COLUMN CHART ===== //
+    function renderColumnChart(categories, series){
+        const container = document.getElementById('column_chart');
+        if (!container) return;
+
+        // Fixer la hauteur AVANT de détruire
+        container.style.height = '600px';
+
+        if (column_chart) {
+            column_chart.destroy();
+            column_chart = null;
+        }
+
+        column_chart = Highcharts.chart('column_chart', {
+            chart: {
+                type: 'column',
+                height: 600,
+                scrollablePlotArea: {
+                    minWidth: categories.length * 50,
+                    scrollPositionX: 0
+                }
+            },
+            title: { text: 'Activité des utilisateurs' },
+            xAxis: {
+                categories: categories,
+                crosshair: true
+            },
+            yAxis: {
+                min: 0,
+                title: { text: 'Action(s)' }
+            },
+            tooltip: { valueSuffix: ' action(s)' },
+            plotOptions: {
+                column: { pointPadding: 0.2, borderWidth: 0 }
+            },
+            series: series
+        });
+    }
+
+    function initColumnChart(){
+        const container = document.getElementById('column_chart');
+        if (!container) return;
+
+        if (column_chart) {
+            column_chart.destroy();
+        }
+
+        // Initialiser avec des données vides
+        column_chart = Highcharts.chart('column_chart', {
+            chart: { type: 'column', height: 600 },
+            title: { text: 'Corn vs wheat estimated production for 2023' },
+            xAxis: { categories: [] },
+            yAxis: { min: 0, title: { text: '1000 metric tons (MT)' } },
+            series: []
+        });
+
+        const raw = @json($userActivityData ?? []);
+        if(raw.length > 0){
+            const tryRender = () => {
+                const container = document.getElementById('column_chart');
+                if (!container) {
+                    setTimeout(tryRender, 100);
+                    return;
+                }
+                const categories = raw.map(item => item.date);
+                const keys = Object.keys(raw[0]).filter(k => k !== "date");
+                const series = keys.map(name => ({
+                    name,
+                    data: raw.map(row => Number(row[name] || 0))
+                }));
+                renderColumnChart(categories, series);
+            };
+            tryRender();
+        }
+    }
+
+    function updateColumnChart(data){
+        if(!data || data.length === 0) return;
+
+        const categories = data.map(item => item.date);
+        const keys = Object.keys(data[0]).filter(k => k !== "date");
+        const series = keys.map(name => ({
+            name,
+            data: data.map(row => Number(row[name] || 0))
+        }));
+
+        renderColumnChart(categories, series);
+    }
+
     // ===== INITIALIZATION =====
     document.addEventListener("DOMContentLoaded", () => {
         const initialLabels = @json($chartData['labels'] ?? []);
@@ -1399,6 +1424,8 @@ new class extends Component {
 
         initDonutChart();
         initStackedBarChart();
+
+        initColumnChart();
     });
 
     document.addEventListener("livewire:navigated", () => {
@@ -1411,6 +1438,8 @@ new class extends Component {
 
         initDonutChart();
         initStackedBarChart();
+
+        initColumnChart()
     });
 
     document.addEventListener("livewire:init", () => {
@@ -1427,6 +1456,12 @@ new class extends Component {
         Livewire.on("ticket-partition-updated", (event) => {
             const [data] = event;
             renderStackedBarChart(data.data);
+        });
+
+        Livewire.on("column-chart-updated", (event) => {
+            // Livewire dispatch(['data' => ...]) arrive comme ça :
+            const data = event[0]?.data ?? event?.data ?? [];
+            updateColumnChart(data);
         });
     });
 </script>
