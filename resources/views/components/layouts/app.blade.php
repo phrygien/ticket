@@ -14,7 +14,7 @@
     }
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
 
 <head>
     <meta charset="utf-8">
@@ -41,7 +41,7 @@
     {{-- Sortable.js --}}
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.1/Sortable.min.js"></script>
 
-{{-- 
+{{--
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet"> --}}
@@ -130,15 +130,15 @@
                 {{-- <x-menu-item title="Tableau de bord principal" icon="o-sparkles" link="/sa-dashboard" /> --}}
                 <x-menu-item title="Projet disponible" icon="o-sparkles" link="/"  />
                 <x-menu-item title="Retour & Retractation" icon="o-bolt" link="/demande-rt"  />
-                <x-menu-item 
-                    title="Changement d’adresse" 
-                    icon="o-map-pin" 
-                    link="/changement-adresse"  
+                <x-menu-item
+                    title="Changement d’adresse"
+                    icon="o-map-pin"
+                    link="/changement-adresse"
                 />
-                <x-menu-item 
-                    title="Inversion de Colis" 
-                    icon="o-cube" 
-                    link="/inversion-colis"  
+                <x-menu-item
+                    title="Inversion de Colis"
+                    icon="o-cube"
+                    link="/inversion-colis"
                 />
                 <x-menu-item title="Tickets redondants" icon="o-rectangle-stack" link="/stat" />
                 @if($role  == 'super_admin')
