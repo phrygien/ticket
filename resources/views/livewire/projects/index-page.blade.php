@@ -853,7 +853,7 @@ new class extends Component {
                                                     {{ \Carbon\Carbon::parse($row['date'])->format('d') }}
                                                 </span>
                                                 <span class="block text-[9px] uppercase tracking-widest mt-0.5">
-                                                    {{ \Carbon\Carbon::parse($row['date'])->format('M') }}
+                                                    {{ \Carbon\Carbon::parse($row['date'])->locale('fr')->format('M') }}
                                                 </span>
                                             </td>
 
