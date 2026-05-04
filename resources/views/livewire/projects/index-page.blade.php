@@ -744,7 +744,7 @@ new class extends Component {
 
                 @php
                     $metrics = [
-                        'total_action'       => ['label' => 'Total',  'color' => 'text-slate-100'],
+                        'total_action'       => ['label' => 'Total',  'color' => 'text-black'],
                         'answer_mail'        => ['label' => 'Mail',   'color' => 'text-info'],
                         'mark_as_read'       => ['label' => 'Marq.',   'color' => 'text-violet-400'],
                         'pending_ticket'     => ['label' => 'Atte.',  'color' => 'text-amber-400'],
@@ -815,12 +815,12 @@ new class extends Component {
                                     {{-- Agent row --}}
                                     <tr class="bg-[#181c27]">
                                         <th rowspan="2"
-                                            class="sticky text-white left-0 z-40 bg-[#0f1117] text-left text-[10px] uppercase tracking-widest px-4 py-2.5 border-b border-r-2 border-[#252a38] whitespace-nowrap min-w-[52px]">
+                                            class="sticky left-0 z-40 bg-[#c3c3c3] text-left text-[10px] uppercase tracking-widest px-4 py-2.5 border-b border-r-2 border-[#252a38] whitespace-nowrap min-w-[52px]">
                                             Date
                                         </th>
                                         @foreach($agents as $agent)
                                             <th colspan="{{ count($metrics) }}"
-                                                class="text-center text-white px-2 pt-2.5 pb-1.5 border-b border-l-2 border-[#252a38] text-[13px] font-bold whitespace-nowrap">
+                                                class="text-center bg-[#c3c3c3] px-2 pt-2.5 pb-1.5 border-b border-l-2 border-[#252a38] text-[13px] font-bold whitespace-nowrap">
                                                 {{ $agent }}
                                             </th>
                                         @endforeach
@@ -875,8 +875,8 @@ new class extends Component {
 
                                 {{-- Sticky footer totals --}}
                                 <tfoot class="bottom-0 z-30">
-                                    <tr class="bg-[#1a1f2e]">
-                                        <td class="sticky left-0 z-40 bg-[#1a1f2e] text-center px-4 py-2.5 border-r-2 border-t-2 border-[#252a38] text-[10px] uppercase tracking-widest font-extrabold">
+                                    <tr class="bg-[#c3c3c3]">
+                                        <td class="sticky left-0 z-40 bg-[#c3c3c3] text-center px-4 py-2.5 border-r-2 border-t-2 border-[#252a38] text-[10px] uppercase tracking-widest font-extrabold">
                                             Total
                                         </td>
                                         @foreach($agents as $agent)
@@ -884,7 +884,7 @@ new class extends Component {
                                                 @php
                                                     $sum = collect($userActivityData2)->sum(fn($r) => (int)($r[$agent][$key] ?? 0));
                                                 @endphp
-                                                <td class="text-center px-1.5 py-2.5 tabular-nums border-t-2
+                                                <td class="text-center bg-[#c3c3c3] px-1.5 py-2.5 tabular-nums border-t-2
                                                     {{ $loop->first ? 'border-l-2 border-[#252a38]' : 'border-l border-[#252a38]' }}
                                                     {{ $sum > 0 ? 'font-bold text-sm ' . $meta['color'] : 'text-[#2d3347]' }}">
                                                     {{ $sum > 0 ? $sum : '—' }}
