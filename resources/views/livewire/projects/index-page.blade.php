@@ -813,20 +813,20 @@ new class extends Component {
                                 {{-- Sticky thead --}}
                                 <thead class="sticky top-0 z-30 bg-white">
                                     {{-- Agent row --}}
-                                    <tr class="bg-[#181c27]">
+                                    <tr class="bg-[#ffffff]">
                                         <th rowspan="2"
-                                            class="sticky left-0 z-40 bg-[#c3c3c3] text-left text-[10px] uppercase tracking-widest px-4 py-2.5 border-b border-r-2 border-[#252a38] whitespace-nowrap min-w-[52px]">
+                                            class="sticky left-0 z-40 bg-[#ffffff] text-left text-[10px] uppercase tracking-widest px-4 py-2.5 border-b border-r-2 border-[#252a38] whitespace-nowrap min-w-[52px]">
                                             Date
                                         </th>
                                         @foreach($agents as $agent)
                                             <th colspan="{{ count($metrics) }}"
-                                                class="text-center bg-[#c3c3c3] px-2 pt-2.5 pb-1.5 border-b border-l-2 border-[#252a38] text-[13px] font-bold whitespace-nowrap">
+                                                class="text-center bg-[#ffffff] px-2 pt-2.5 pb-1.5 border-b border-l-2 border-[#252a38] text-[13px] font-bold whitespace-nowrap">
                                                 {{ $agent }}
                                             </th>
                                         @endforeach
                                     </tr>
                                     {{-- Metric sub-headers --}}
-                                    <tr class="bg-[#181c27]">
+                                    <tr class="bg-[#ffffff]">
                                         @foreach($agents as $agent)
                                             @foreach($metrics as $key => $meta)
                                                 <th class="text-center px-1.5 pb-2 pt-1 text-[10px] uppercase tracking-[.07em] font-semibold border-b-2 border-[#252a38]
@@ -845,7 +845,7 @@ new class extends Component {
                                                 fn($a) => (int)($row[$a]['total_action'] ?? 0) > 0
                                             );
                                         @endphp
-                                        <tr class="border-b border-[#252a38] transition-colors hover:bg-[#1e2436] {{ !$hasActivity ? 'opacity-60' : '' }}">
+                                        <tr class="border-b border-[#252a38] transition-colors hover:bg-[#c3c3c3] {{ !$hasActivity ? 'opacity-60' : '' }}">
 
                                             {{-- Date cell --}}
                                             <td class="sticky left-0 z-10 bg-[#0f1117] text-center px-4 py-2 border-r-2 border-[#252a38] whitespace-nowrap bg-white">
@@ -875,8 +875,8 @@ new class extends Component {
 
                                 {{-- Sticky footer totals --}}
                                 <tfoot class="bottom-0 z-30">
-                                    <tr class="bg-[#c3c3c3]">
-                                        <td class="sticky left-0 z-40 bg-[#c3c3c3] text-center px-4 py-2.5 border-r-2 border-t-2 border-[#252a38] text-[10px] uppercase tracking-widest font-extrabold">
+                                    <tr class="bg-[#ffffff]">
+                                        <td class="sticky left-0 z-40 bg-[#ffffff] text-center px-4 py-2.5 border-r-2 border-t-2 border-[#252a38] text-[10px] uppercase tracking-widest font-extrabold">
                                             Total
                                         </td>
                                         @foreach($agents as $agent)
@@ -884,7 +884,7 @@ new class extends Component {
                                                 @php
                                                     $sum = collect($userActivityData2)->sum(fn($r) => (int)($r[$agent][$key] ?? 0));
                                                 @endphp
-                                                <td class="text-center bg-[#c3c3c3] px-1.5 py-2.5 tabular-nums border-t-2
+                                                <td class="text-center bg-[#ffffff] px-1.5 py-2.5 tabular-nums border-t-2
                                                     {{ $loop->first ? 'border-l-2 border-[#252a38]' : 'border-l border-[#252a38]' }}
                                                     {{ $sum > 0 ? 'font-bold text-sm ' . $meta['color'] : 'text-[#2d3347]' }}">
                                                     {{ $sum > 0 ? $sum : '—' }}
