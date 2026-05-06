@@ -26,6 +26,8 @@ new class extends Component {
     #[Validate(["photos.*" => "image|max:1024"])]
     public $photos = [];
 
+    public $newPhotos = [];
+
     public $destinateur;
 
     public bool $showDrawer2 = false;
@@ -58,6 +60,17 @@ new class extends Component {
     {
         $this->selectedMessage = $message;
         $this->translatedMessage = "";
+    }
+
+    public function updatedNewPhotos(): void
+    {
+        $this->validateOnly('newPhotos.*');
+
+        foreach ($this->newPhotos as $file) {
+            $this->photos[] = $file;
+        }
+
+        $this->newPhotos = [];
     }
 
     public function fetchTicketDetails()
@@ -1426,13 +1439,12 @@ new class extends Component {
                         <!-- Pièces jointes -->
                         <x-card title="Pièces jointes" subtitle="Formats acceptés: images (max 1 Mo)" class="shadow-lg">
                             <x-file
-                                wire:model="photos"
-                                label="Ajouter des fichiers"
+                                wire:model="newPhotos"   {{-- ← newPhotos au lieu de photos --}}
+                            label="Ajouter des fichiers"
                                 multiple
                                 accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                 hint="Images uniquement - 1 Mo max par fichier"
                             />
-
                             @if(!empty($photos))
                                 <div class="mt-4">
                                     <p class="mb-2 text-sm font-semibold">
