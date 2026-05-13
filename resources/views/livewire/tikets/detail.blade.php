@@ -1455,12 +1455,7 @@ new class extends Component {
                                         <x-button
                                             label="Suggestion"
                                             wire:click="correctionOpenAI"
-                                            class="border-0
-                                                text-white
-                                                bg-[linear-gradient(90deg,#ff0080,#ff8c00,#40e0d0,#7b61ff,#ff0080)]
-                                                bg-[length:300%_300%]
-                                                animate-[rainbow_6s_linear_infinite]
-                                                shadow-lg"
+                                            class="border-0 text-white bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500"
                                             icon="o-sparkles"
                                             spinner="correctionOpenAI"
                                             tooltip="Trouver une suggestion de texte avec l'IA"
