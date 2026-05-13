@@ -42,3 +42,18 @@
 .mary-table-pagination button {
     @apply cursor-pointer
 }
+
+@layer utilities {
+    @keyframes rainbow {
+        0% {
+            background-position: 0% 50%;
+        }
+        100% {
+            background-position: 200% 50%;
+        }
+    }
+
+    .animate-rainbow {
+        animation: rainbow 6s linear infinite;
+    }
+}
