@@ -313,6 +313,44 @@ new class extends Component {
         }
     }
 
+    public function correctionOpenAI()
+    {
+        $token = session("token");
+        if (!$token) {
+            return redirect()->route("login");
+        }
+
+        if (empty($this->message_txt)) {
+            $this->error("Veuillez écrire un message avant de le traduire");
+            return;
+        }
+
+        $correctedResponse = Http::withHeaders([
+            "x-secret-key" => env("X_SECRET_KEY"),
+            "Authorization" => "Bearer {$token}",
+            "Accept" => "application/json",
+        ])->post(env("API_REST") . "/openai/correct", [
+            "text" => $this->message_txt
+        ]);
+
+        if ($correctedResponse->successful()) {
+            $translated = $correctedResponse->json("corrected_text");
+
+            if (!empty($translated)) {
+                $this->message_txt = $translated;
+                $this->success(
+                    "Suggestion de text emit",
+                );
+            } else {
+                $this->error("La correction a échoué");
+            }
+        } else {
+            $this->error(
+                "Erreur lors de la correction : " . $correctedResponse->body(),
+            );
+        }
+    }
+
     public function updateStatus($newStatus)
     {
         $token = session("token");
@@ -1413,6 +1451,16 @@ new class extends Component {
                                             class="btn-ghost"
                                             icon="o-x-mark"
                                         />
+
+                                        <x-button
+                                            label="Suggestion"
+                                            wire:click="correctionOpenAI"
+                                            class="btn-outline btn-accent"
+                                            icon="o-sparkles"
+                                            spinner="correctionOpenAI"
+                                            tooltip="Trouver une suggestion de texte avec l'IA"
+                                        />
+
                                         <x-button
                                             label="Traduire"
                                             wire:click="translateOpenAI"
