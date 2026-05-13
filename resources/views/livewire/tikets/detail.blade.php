@@ -321,7 +321,7 @@ new class extends Component {
         }
 
         if (empty($this->message_txt)) {
-            $this->error("Veuillez écrire un message avant de le traduire");
+            $this->error("Veuillez écrire un message avant de chercher une suggestion");
             return;
         }
 
@@ -1455,7 +1455,7 @@ new class extends Component {
                                         <x-button
                                             label="Suggestion"
                                             wire:click="correctionOpenAI"
-                                            class="btn-primary text-white animate-pulse"
+                                            class="btn-outline btn-neutral text-white animate-pulse"
                                             icon="o-sparkles"
                                             spinner="correctionOpenAI"
                                             tooltip="Trouver une suggestion de texte avec l'IA"
@@ -1469,6 +1469,7 @@ new class extends Component {
                                             spinner="translateOpenAI"
                                             tooltip="Traduire et corriger le message avec l'IA"
                                         />
+
                                         <x-button
                                             label="Envoyer la réponse"
                                             class="btn-primary"
