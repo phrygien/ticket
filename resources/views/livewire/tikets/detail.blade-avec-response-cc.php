@@ -1448,20 +1448,20 @@ new class extends Component {
                                     icon="o-x-mark"
                                 />
                                 <x-button
-                                    label="Traduire"
-                                    wire:click="translateOpenAI"
-                                    class="btn-outline btn-accent"
-                                    icon="o-language"
-                                    spinner="translateOpenAI"
-                                    tooltip="Traduire et corriger le message avec l'IA"
-                                />
-                                <x-button
                                     label="Suggestion"
                                     wire:click="correctionOpenAI"
                                     class="btn-outline btn-accent"
                                     icon="o-sparkles"
                                     spinner="correctionOpenAI"
                                     tooltip="Trouver une suggestion de texte avec l'IA"
+                                />
+                                <x-button
+                                    label="Traduire"
+                                    wire:click="translateOpenAI"
+                                    class="btn-outline btn-accent"
+                                    icon="o-language"
+                                    spinner="translateOpenAI"
+                                    tooltip="Traduire et corriger le message avec l'IA"
                                 />
                                 <x-button
                                     label="Envoyer la réponse"
