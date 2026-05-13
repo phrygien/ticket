@@ -1455,7 +1455,7 @@ new class extends Component {
                                         <x-button
                                             label="Suggestion"
                                             wire:click="correctionOpenAI"
-                                            class="btn-outline btn-warning text-warning animate-pulse"
+                                            class="btn-outline btn-warning animate-pulse"
                                             icon="o-sparkles"
                                             spinner="correctionOpenAI"
                                             tooltip="Trouver une suggestion de texte avec l'IA"
