@@ -14,7 +14,10 @@ RUN npm run build
 # ─────────────────────────────────────────────
 # Stage 2 : dépendances PHP (Composer)
 # ─────────────────────────────────────────────
-FROM composer:2-php8.2 AS composer-builder
+FROM dunglas/frankenphp:1-php8.2 AS composer-builder
+
+# Récupère le binaire composer depuis l'image officielle
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
