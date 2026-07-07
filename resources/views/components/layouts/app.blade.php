@@ -56,26 +56,59 @@
 </head>
 
 <body class="min-h-screen font-sans antialiased bg-base-200">
+<x-toast />
+<div class="navbar bg-base-100 shadow-sm">
+    <div class="flex-1">
+        <span class="text-xl text-gray-500 font-bold">COSM</span> <span
+            class="text-xl text-amber-500 font-bold">IA</span>
+    </div>
+    <div class="flex-none">
+        <ul class="menu menu-horizontal px-1">
+            <li>
+                <details class="dropdown dropdown-end">
+                    <summary
+                        class="flex items-center gap-3 cursor-pointer rounded-full px-2 py-1 hover:bg-gray-100">
+                        <!-- Avatar cercle avec initiales -->
+                        <div
+                            class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+                            {{ $initials ?? '??' }}
+                        </div>
 
-{{-- NAVBAR mobile only --}}
-<x-nav sticky class="lg:hidden">
-    <x-slot:brand>
-        <div class="ml-5 pt-5">App</div>
-    </x-slot:brand>
-    <x-slot:actions>
-        <label for="main-drawer" class="lg:hidden mr-3">
-            <x-icon name="o-bars-3" class="cursor-pointer" />
-        </label>
-    </x-slot:actions>
-</x-nav>
+                        <!-- Nom (caché sur petits écrans si besoin) -->
+                        <span class="hidden md:inline text-sm text-gray-700">
+                                {{ $name ?? 'Invité' }}
+                            </span>
+                    </summary>
+
+                    <!-- Menu déroulant -->
+                    <ul tabindex="0"
+                        class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+                        <li>
+                            <a class="justify-between">
+                                Profil
+                            </a>
+                        </li>
+                        <li>
+                            <form method="POST" action="{{ route('logout') }}" class="w-full">
+                                @csrf
+                                <button type="submit"
+                                        class="w-full text-pink-600 underline hover:text-pink-800 bg-transparent border-0 p-0 cursor-pointer">
+                                    {{ __('Déconnexion') }}
+                                </button>
+                            </form>
+                        </li>
+
+                    </ul>
+                </details>
+            </li>
+        </ul>
+    </div>
+</div>
 
 {{-- MAIN --}}
 <x-main full-width>
     {{-- SIDEBAR --}}
-    <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
-
-        {{-- BRAND --}}
-        <div class="ml-5 pt-5">App</div>
+    <x-slot:sidebar drawer="main-drawer" collapsible class="bg-[#f6f6f7] text-gray-900 border-r border-gray-200 shadow-sm">
 
         {{-- MENU --}}
         <x-menu activate-by-route>
@@ -84,30 +117,45 @@
             @if($user = auth()->user())
                 <x-menu-separator />
 
-                <x-list-item :item="$user" value="name" sub-value="email" no-separator no-hover class="-mx-2 !-my-2 rounded">
+                <x-list-item :item="$user" value="name" sub-value="email" no-separator no-hover
+                             class="-mx-2 !-my-2 rounded">
                     <x-slot:actions>
-                        <x-button icon="o-power" class="btn-circle btn-ghost btn-xs" tooltip-left="logoff" no-wire-navigate link="/logout" />
+                        <x-button icon="o-power" class="btn-circle btn-ghost btn-xs" tooltip-left="logoff"
+                                  no-wire-navigate link="/logout" />
                     </x-slot:actions>
                 </x-list-item>
 
                 <x-menu-separator />
             @endif
-
-            <x-menu-item title="Hello" icon="o-sparkles" link="/" />
-            <x-menu-sub title="Settings" icon="o-cog-6-tooth">
-                <x-menu-item title="Wifi" icon="o-wifi" link="####" />
-                <x-menu-item title="Archives" icon="o-archive-box" link="####" />
-            </x-menu-sub>
+            {{-- <x-menu-item title="Tableau de bord principal" icon="o-sparkles" link="/sa-dashboard" /> --}}
+            <x-menu-item title="Projet disponible" icon="o-sparkles" link="/"  />
+            <x-menu-item title="Retour & Retractation" icon="o-bolt" link="/demande-rt"  />
+            <x-menu-item
+                title="Changement d’adresse"
+                icon="o-map-pin"
+                link="/changement-adresse"
+            />
+            <x-menu-item
+                title="Inversion de Colis"
+                icon="o-cube"
+                link="/inversion-colis"
+            />
+            <x-menu-item title="Tickets redondants" icon="o-rectangle-stack" link="/stat" />
+            @if($role  == 'super_admin')
+                <x-menu-item title="Utilisateur" icon="o-users" link="/users"  />
+            @endif
         </x-menu>
     </x-slot:sidebar>
 
     {{-- The `$slot` goes here --}}
     <x-slot:content>
         {{ $slot }}
+        @stack('scripts')
     </x-slot:content>
 </x-main>
 
-{{-- Toast --}}
+{{-- TOAST area --}}
 <x-toast />
 </body>
+
 </html>
