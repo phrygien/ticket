@@ -14,16 +14,7 @@ RUN npm run build
 # ─────────────────────────────────────────────
 # Stage 2 : dépendances PHP (Composer)
 # ─────────────────────────────────────────────
-FROM dunglas/frankenphp:1-php8.2 AS composer-builder
-
-# Récupère le binaire composer depuis l'image officielle
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# Composer a besoin de unzip (ou de l'extension zip) et git pour certains packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    unzip \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+FROM composer:2 AS composer-builder
 
 WORKDIR /app
 
@@ -34,12 +25,14 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
 # ─────────────────────────────────────────────
-# Stage 3 : image finale (FrankenPHP)
+# Stage 3 : image finale (PHP-FPM + Nginx + Supervisor)
 # ─────────────────────────────────────────────
-FROM dunglas/frankenphp:1-php8.2
+FROM php:8.2-fpm
 
 # Dépendances système + extensions PHP nécessaires à Laravel
 RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
@@ -52,7 +45,7 @@ RUN apt-get update && apt-get install -y \
     git \
     --no-install-recommends \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && install-php-extensions \
+    && docker-php-ext-install -j$(nproc) \
         mbstring \
         exif \
         pcntl \
@@ -62,24 +55,24 @@ RUN apt-get update && apt-get install -y \
         opcache \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /var/www/html
 
 # Copie de l'app avec vendor déjà installé
 COPY --from=composer-builder /app ./
 # Copie des assets compilés (Vite)
 COPY --from=node-builder /app/public/build ./public/build
 
-# Config Caddy (FrankenPHP)
-COPY docker/Caddyfile /etc/caddy/Caddyfile
+# Permissions Laravel
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Config Nginx et Supervisor
+COPY docker/nginx.conf /etc/nginx/sites-available/default
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Permissions Laravel
-RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
-    && chmod -R 775 /app/storage /app/bootstrap/cache
-
-ENV SERVER_NAME=":80"
 EXPOSE 80
 
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

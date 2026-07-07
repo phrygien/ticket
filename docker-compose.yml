@@ -12,9 +12,10 @@ services:
         env_file:
             - .env
         volumes:
-            - ./.env:/app/.env
-            - cosm-ia-storage:/app/storage
-            - ./public/build:/app/public/build
+            - ./.env:/var/www/html/.env
+            - cosm-ia-storage:/var/www/html/storage
+            - ./public/build:/var/www/html/public/build
+            - cosm-ia-database:/var/www/html/database
         networks:
             - cosm-ia-net
             - traefik-public
@@ -38,3 +39,4 @@ services:
 
 volumes:
     cosm-ia-storage:
+    cosm-ia-database:
