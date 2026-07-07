@@ -19,6 +19,12 @@ FROM dunglas/frankenphp:1-php8.2 AS composer-builder
 # Récupère le binaire composer depuis l'image officielle
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Composer a besoin de unzip (ou de l'extension zip) et git pour certains packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    unzip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY composer.json composer.lock ./
