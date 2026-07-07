@@ -91,7 +91,7 @@ new class extends Component {
                     'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getdonutSummary', [
+                ])->post(env('API_REST'). '/dash/getdonutSummary', [
                             'month' => $this->selectedMonth,
                             'year' => $this->selectedYear,
                             'project_id' => $this->projet,
@@ -249,7 +249,7 @@ new class extends Component {
                     'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getTicketPartitionSummary', [
+                ])->post(env('API_REST'). '/dash/getTicketPartitionSummary', [
                             'month' => $this->partitionMonth,
                             'year' => $this->partitionYear,
                             'project_id' => $this->project_id,
@@ -309,7 +309,7 @@ new class extends Component {
                     'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getuseractivitysummary', [
+                ])->post(env('API_REST'). '/dash/getuseractivitysummary', [
                             'month' => now()->format('m'),
                             'year' => now()->format('Y'),
                         ]);
@@ -477,12 +477,12 @@ new class extends Component {
 
     <div class="mt-3 grid grid-cols-1">
         <x-card subtitle="Classification par catégorie" separator>
-            
+
             {{-- Filtres mois/année/projet --}}
             <div class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-base-200 rounded-lg">
                 <x-select label="Mois" icon="o-calendar" :options="$months" wire:model.live="partitionMonth" />
                 <x-select label="Année" icon="o-calendar-days" :options="$years" wire:model.live="partitionYear" />
-                
+
                 <fieldset class="fieldset">
                     <legend class="fieldset-legend">Par projet</legend>
                     <select class="select w-full" wire:model.live="project_id">
@@ -514,7 +514,7 @@ new class extends Component {
                     <p class="font-medium">
                         Total: {{ $partitionTotal }} tickets classifiés
                         @if($partitionMonth !== 'all' || $partitionYear !== 'all' || $project_id !== '')
-                            • Filtré par: 
+                            • Filtré par:
                             @if($partitionMonth !== 'all')
                                 {{ collect($months)->firstWhere('id', $partitionMonth)['name'] ?? '' }}
                             @endif
@@ -583,7 +583,7 @@ new class extends Component {
                                 </td>
                             </tr>
                         @endforeach
-                        
+
                         <tr class="bg-gray-100 font-bold">
                             <td class="px-4 py-3 border-t-2 border-gray-300 bg-gray-100 sticky left-0 z-10">
                                 Total
@@ -613,7 +613,7 @@ new class extends Component {
                 <p><strong>Période :</strong> {{ count($ticketPartitionData) }} jours</p>
             </div>
         @endif
-    
+
         <x-slot:actions>
             <x-button label="Fermer" @click="$wire.myModal1 = false" class="btn-soft btn-primary" />
         </x-slot:actions>
@@ -781,7 +781,7 @@ new class extends Component {
     };
 
     const highchartsColors = [
-        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
+        '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
         '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'
     ];
 
@@ -1009,7 +1009,7 @@ new class extends Component {
                     let s = '<b>' + this.x + '</b><br/>';
                     let total = 0;
                     this.points.forEach(point => {
-                        s += '<span style="color:' + point.color + '">\u25CF</span> ' + 
+                        s += '<span style="color:' + point.color + '">\u25CF</span> ' +
                              point.series.name + ': ' + point.y + '<br/>';
                         total += point.y;
                     });
