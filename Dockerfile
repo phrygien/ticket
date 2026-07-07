@@ -14,7 +14,7 @@ RUN npm run build
 # ─────────────────────────────────────────────
 # Stage 2 : dépendances PHP (Composer)
 # ─────────────────────────────────────────────
-FROM composer:2 AS composer-builder
+FROM composer:2-php8.2 AS composer-builder
 
 WORKDIR /app
 
