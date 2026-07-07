@@ -23,7 +23,7 @@ new class extends Component {
                     'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getRedudantRequest', [
+                ])->post(env('API_REST'). '/dash/getRedudantRequest', [
                             'ticket_status' => 'all',
                             'date_range' => 1,
                         ]);
@@ -52,7 +52,7 @@ new class extends Component {
     <!-- Stats Mail avec Meme Probleme !-->
     <x-stat title="Nombre d'envois récurrents" value="{{ number_format($this->redundantCount ?? 0) }}" icon="o-envelope"
         color="text-primary" />
-    
+
     <x-stat title="Mail reçus" value="{{ number_format($this->totalEmails ?? 0) }}"
         icon="o-envelope" color="text-pink-500" />
 </div>

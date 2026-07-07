@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 use Livewire\Volt\Component;
 use Illuminate\Support\Facades\Http;
@@ -6,31 +6,31 @@ use Illuminate\Support\Facades\Http;
 new class extends Component {
     public string $clientEmail = '';
     public string $numCommande = '';
-    
+
     public array $ticketsByStatus = [
         'en attente' => [],
         'en cours' => [],
         'cloture' => []
     ];
-    
+
     public array $totalItemByStatus = [
         'en attente' => 0,
         'en cours' => 0,
         'cloture' => 0
     ];
-    
+
     public bool $loading = false;
-    
+
     public function mount()
     {
         $this->clientEmail = request()->get('email', '');
         $this->numCommande = request()->get('commande', '');
-        
+
         if ($this->clientEmail && $this->numCommande) {
             $this->loadTickets();
         }
     }
-    
+
     public function loadTickets(): void
     {
         $this->loading = true;
@@ -41,7 +41,7 @@ new class extends Component {
                 'x-secret-key' => env('X_SECRET_KEY'),
                 'Authorization' => 'Bearer ' . $token,
                 'Accept' => 'application/json',
-            ])->post('https://dev-ia.astucom.com/n8n_cosmia/ticket/getDetailRedudentTicket', [
+            ])->post(env('API_REST'). '/ticket/getDetailRedudentTicket', [
                 'client_email' => $this->clientEmail,
                 'num_commande' => $this->numCommande,
             ]);
@@ -49,14 +49,14 @@ new class extends Component {
             if ($response->successful()) {
                 $data = $response->json();
                 $tickets = $data['details'] ?? [];
-                
+
                 // Réinitialiser les tableaux
                 $this->ticketsByStatus = [
                     'en attente' => [],
                     'en cours' => [],
                     'cloture' => []
                 ];
-                
+
                 // Grouper les tickets par statut
                 foreach ($tickets as $ticket) {
                     $status = $ticket['status'] ?? 'en attente';
@@ -64,7 +64,7 @@ new class extends Component {
                         $this->ticketsByStatus[$status][] = $ticket;
                     }
                 }
-                
+
                 // Calculer les totaux
                 $this->totalItemByStatus['en attente'] = count($this->ticketsByStatus['en attente']);
                 $this->totalItemByStatus['en cours'] = count($this->ticketsByStatus['en cours']);
@@ -116,10 +116,10 @@ new class extends Component {
 <div class="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
     <x-header title="Détails des Tickets Redondants" separator>
         <x-slot:middle class="!justify-end">
-            <x-button 
-                label="Retour" 
-                icon="o-arrow-left" 
-                link="/stat" 
+            <x-button
+                label="Retour"
+                icon="o-arrow-left"
+                link="/stat"
                 wire:navigate
                 class="btn-ghost"
             />
@@ -173,8 +173,8 @@ new class extends Component {
                         </span>
                     </div>
 
-                    <div 
-                        id="status-en-attente" 
+                    <div
+                        id="status-en-attente"
                         class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-320px)]"
                         x-data="kanbanColumn('en attente')"
                         @drop.prevent="handleDrop($event)"
@@ -183,7 +183,7 @@ new class extends Component {
                         @dragleave.prevent="$el.classList.remove('ring-2', 'ring-purple-300', 'bg-purple-50')"
                     >
                         @forelse($ticketsByStatus['en attente'] as $ticket)
-                            <div 
+                            <div
                                 draggable="true"
                                 data-ticket-id="{{ $ticket['id'] }}"
                                 data-status="en attente"
@@ -239,7 +239,7 @@ new class extends Component {
                                 </div>
 
                                 <div class="flex items-center justify-end">
-                                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
+                                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}"
                                        wire:navigate
                                        class="text-sm font-medium text-purple-600 hover:text-purple-700 flex items-center gap-1 group-hover:gap-2 transition-all">
                                         Voir détails
@@ -274,8 +274,8 @@ new class extends Component {
                         </span>
                     </div>
 
-                    <div 
-                        id="status-en-cours" 
+                    <div
+                        id="status-en-cours"
                         class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-320px)]"
                         x-data="kanbanColumn('en cours')"
                         @drop.prevent="handleDrop($event)"
@@ -284,7 +284,7 @@ new class extends Component {
                         @dragleave.prevent="$el.classList.remove('ring-2', 'ring-amber-300', 'bg-amber-50')"
                     >
                         @forelse($ticketsByStatus['en cours'] as $ticket)
-                            <div 
+                            <div
                                 draggable="true"
                                 data-ticket-id="{{ $ticket['id'] }}"
                                 data-status="en cours"
@@ -340,7 +340,7 @@ new class extends Component {
                                 </div>
 
                                 <div class="flex items-center justify-end">
-                                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
+                                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}"
                                        wire:navigate
                                        class="text-sm font-medium text-amber-600 hover:text-amber-700 flex items-center gap-1 group-hover:gap-2 transition-all">
                                         Voir détails
@@ -375,8 +375,8 @@ new class extends Component {
                         </span>
                     </div>
 
-                    <div 
-                        id="status-cloture" 
+                    <div
+                        id="status-cloture"
                         class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-320px)]"
                         x-data="kanbanColumn('cloture')"
                         @drop.prevent="handleDrop($event)"
@@ -385,7 +385,7 @@ new class extends Component {
                         @dragleave.prevent="$el.classList.remove('ring-2', 'ring-green-300', 'bg-green-50')"
                     >
                         @forelse($ticketsByStatus['cloture'] as $ticket)
-                            <div 
+                            <div
                                 draggable="true"
                                 data-ticket-id="{{ $ticket['id'] }}"
                                 data-status="cloture"
@@ -441,7 +441,7 @@ new class extends Component {
                                 </div>
 
                                 <div class="flex items-center justify-end">
-                                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}" 
+                                    <a href="{{ route('ticket.detail', ['ticket' => $ticket['id']]) }}"
                                        wire:navigate
                                        class="text-sm font-medium text-green-600 hover:text-green-700 flex items-center gap-1 group-hover:gap-2 transition-all">
                                         Voir détails
@@ -472,15 +472,15 @@ function kanbanColumn(status) {
     return {
         status: status,
         draggedElement: null,
-        
+
         handleDragStart(event) {
             const card = event.target;
             this.draggedElement = card;
-            
+
             card.classList.add('opacity-50', 'scale-95');
             event.dataTransfer.effectAllowed = 'move';
             event.dataTransfer.setData('text/html', card.innerHTML);
-            
+
             const ticketId = card.dataset.ticketId;
             const currentStatus = card.dataset.status;
             event.dataTransfer.setData('ticketId', ticketId);
@@ -489,7 +489,7 @@ function kanbanColumn(status) {
 
         handleDragEnd(event) {
             event.target.classList.remove('opacity-50', 'scale-95');
-            
+
             document.querySelectorAll('[id^="status-"]').forEach(col => {
                 col.classList.remove('ring-2', 'ring-purple-300', 'ring-amber-300', 'ring-green-300', 'bg-purple-50', 'bg-amber-50', 'bg-green-50');
             });
@@ -498,9 +498,9 @@ function kanbanColumn(status) {
         handleDrop(event) {
             event.preventDefault();
             const column = event.currentTarget;
-            
+
             column.classList.remove('ring-2', 'ring-purple-300', 'ring-amber-300', 'ring-green-300', 'bg-purple-50', 'bg-amber-50', 'bg-green-50');
-            
+
             const ticketId = event.dataTransfer.getData('ticketId');
             const currentStatus = event.dataTransfer.getData('currentStatus');
             const newStatus = this.status;
@@ -508,9 +508,9 @@ function kanbanColumn(status) {
             if (currentStatus === newStatus) {
                 return;
             }
-            
+
             this.showLoadingIndicator(column);
-            
+
             @this.call('updateTicketStatus', ticketId, newStatus)
                 .then(() => {
                     this.hideLoadingIndicator(column);
@@ -555,7 +555,7 @@ function kanbanColumn(status) {
                 </div>
             `;
             column.parentElement.appendChild(success);
-            
+
             setTimeout(() => {
                 success.remove();
             }, 1000);
@@ -572,7 +572,7 @@ function kanbanColumn(status) {
                 </div>
             `;
             column.parentElement.appendChild(error);
-            
+
             setTimeout(() => {
                 error.remove();
             }, 1500);

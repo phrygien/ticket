@@ -5,7 +5,7 @@ use Livewire\Volt\Component;
 use Illuminate\Support\Facades\Http;
 
 new class extends Component {
-    
+
     public $redundantTickets = [];
     public $loadingTickets = false;
 
@@ -30,14 +30,14 @@ public function loadRedundantTickets($page = 1): void
                 'x-secret-key' => env('X_SECRET_KEY'),
                 'Authorization' => 'Bearer ' . $token,
                 'Accept' => 'application/json',
-            ])->get('https://dev-ia.astucom.com/n8n_cosmia/ticket/list/getRedudentTicket', [
+            ])->get(env('API_REST'). '/ticket/list/getRedudentTicket', [
                 'page' => $page,
                 'per_page' => $this->perPage,
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 $this->redundantTickets = $data['data'] ?? [];
                 $this->currentPage = $data['current_page'] ?? 1;
                 $this->totalPages = $data['total_page'] ?? 1;
@@ -104,7 +104,7 @@ public function getPageRange(): array
 <div class="mt-8" id="redundant-tickets-section">
     <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold text-gray-900">
-            Tickets Redondants 
+            Tickets Redondants
             @if($totalItems > 0)
                 <span class="text-sm font-normal text-gray-500">({{ $totalItems }} au total)</span>
             @endif
@@ -113,7 +113,7 @@ public function getPageRange(): array
         <!-- Select per page -->
         <div class="flex items-center gap-x-2">
             <label for="perPage" class="text-sm text-gray-700">Afficher:</label>
-            <select 
+            <select
                 id="perPage"
                 wire:model.live="perPage"
                 class="rounded-md border-gray-300 py-1.5 text-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -125,7 +125,7 @@ public function getPageRange(): array
             </select>
         </div>
     </div>
-    
+
     @if($loadingTickets)
         <x-card>
             <div class="flex justify-center py-8">
@@ -140,7 +140,7 @@ public function getPageRange(): array
                         <div class="flex-1 min-w-0">
                             <p class="text-sm/6 font-semibold text-gray-900 truncate">
                                 {{-- <a href="#" class="hover:underline">{{ Str::limit($ticket['subjects_ticket'] ?? 'Sans sujet', 80) }}</a> --}}
-                                <a 
+                                <a
                                     href="{{ route('redondant.view', ['email' => $ticket['original_client_mail'], 'commande' => $ticket['num_commande']]) }}"
                                     wire:navigate
                                     class="text-sm/6 font-semibold text-gray-900 hover:text-indigo-600 transition-colors"
@@ -161,7 +161,7 @@ public function getPageRange(): array
                                 </p>
                             </div>
                         </div>
-                        
+
                         <dl class="flex w-full flex-none justify-end gap-x-8 sm:w-auto">
                             <div class="flex items-center gap-x-2.5">
                                 <dt>
@@ -182,26 +182,26 @@ public function getPageRange(): array
                     </li>
                 @endforelse
             </ul>
-            
+
             @if($totalPages > 1)
                 <div class="border-t border-gray-200 px-4 py-4 sm:px-6">
                     <div class="flex items-center justify-center">
                         <div class="inline-flex rounded-md shadow-sm" role="group">
                             @foreach($this->getPageRange() as $page)
                                 @if($page === '...')
-                                    <button 
+                                    <button
                                         disabled
                                         class="px-4 py-2 text-sm font-medium text-gray-400 bg-white border border-gray-300 cursor-default"
                                     >
                                         ...
                                     </button>
                                 @else
-                                    <button 
+                                    <button
                                         wire:click="goToPage({{ $page }})"
                                         wire:loading.attr="disabled"
-                                        class="px-4 py-2 text-sm font-medium border {{ $currentPage === $page 
-                                            ? 'text-white bg-indigo-600 border-indigo-600 z-10' 
-                                            : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50' }} 
+                                        class="px-4 py-2 text-sm font-medium border {{ $currentPage === $page
+                                            ? 'text-white bg-indigo-600 border-indigo-600 z-10'
+                                            : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50' }}
                                             {{ $loop->first ? 'rounded-l-md' : '' }}
                                             {{ $loop->last ? 'rounded-r-md' : '' }}
                                             {{ !$loop->first && !$loop->last ? '-ml-px' : '' }}
@@ -216,7 +216,7 @@ public function getPageRange(): array
 
                     <!-- Navigation précédent/suivant -->
                     <div class="flex items-center justify-between mt-4">
-                        <button 
+                        <button
                             wire:click="goToPage({{ $currentPage - 1 }})"
                             wire:loading.attr="disabled"
                             @if($currentPage === 1) disabled @endif
@@ -232,7 +232,7 @@ public function getPageRange(): array
                             Page <span class="font-medium">{{ $currentPage }}</span> sur <span class="font-medium">{{ $totalPages }}</span>
                         </span>
 
-                        <button 
+                        <button
                             wire:click="goToPage({{ $currentPage + 1 }})"
                             wire:loading.attr="disabled"
                             @if($currentPage === $totalPages) disabled @endif
@@ -253,9 +253,9 @@ public function getPageRange(): array
 @script
 <script>
     $wire.on('scroll-to-top', () => {
-        document.getElementById('redundant-tickets-section').scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
+        document.getElementById('redundant-tickets-section').scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
         });
     });
 </script>
