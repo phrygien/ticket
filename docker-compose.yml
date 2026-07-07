@@ -1,9 +1,11 @@
 version: "3.9"
+
 networks:
     traefik-public:
         external: true
     cosm-ia-net:
         external: true
+
 services:
     cosm-ia-app:
         build: .
@@ -12,10 +14,7 @@ services:
         env_file:
             - .env
         volumes:
-            - ./.env:/var/www/html/.env
             - cosm-ia-storage:/var/www/html/storage
-            - ./public/build:/var/www/html/public/build
-            - cosm-ia-database:/var/www/html/database
         networks:
             - cosm-ia-net
             - traefik-public
@@ -27,16 +26,5 @@ services:
             - traefik.http.routers.cosm-ia.tls.certresolver=letsencrypt
             - traefik.http.services.cosm-ia.loadbalancer.server.port=80
 
-    cosm-ia-npm-build:
-        image: node:22-slim
-        container_name: cosmia-npm-build
-        working_dir: /app
-        volumes:
-            - .:/app
-        profiles:
-            - tools
-        command: sh -c "npm install && npm run build"
-
 volumes:
     cosm-ia-storage:
-    cosm-ia-database:
