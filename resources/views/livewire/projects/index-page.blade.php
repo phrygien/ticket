@@ -253,7 +253,7 @@ new class extends Component {
                     'x-secret-key' => env('X_SECRET_KEY'),
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
-                ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getTicketPartitionSummary', [
+                ])->post(env('API_REST') . '/dash/getTicketPartitionSummary', [
                             'month' => 'all',
                             'year' => 'all',
                             'project_id' => $this->project_id,
