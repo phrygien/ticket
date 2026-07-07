@@ -13,7 +13,7 @@
             ->join(''));
     }
 @endphp
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
 
 <head>
@@ -41,121 +41,121 @@
     {{-- Sortable.js --}}
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.1/Sortable.min.js"></script>
 
-{{--
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet"> --}}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Andika:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    {{--
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet"> --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Andika:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-@stack('styles')
+    @stack('styles')
 
 </head>
 
 <body class="min-h-screen font-sans antialiased bg-base-200">
-    <x-toast />
-    <div class="navbar bg-base-100 shadow-sm">
-        <div class="flex-1">
-            <span class="text-xl text-gray-500 font-bold">COSM</span> <span
-                class="text-xl text-amber-500 font-bold">IA</span>
-        </div>
-        <div class="flex-none">
-            <ul class="menu menu-horizontal px-1">
-                <li>
-                    <details class="dropdown dropdown-end">
-                        <summary
-                            class="flex items-center gap-3 cursor-pointer rounded-full px-2 py-1 hover:bg-gray-100">
-                            <!-- Avatar cercle avec initiales -->
-                            <div
-                                class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
-                                {{ $initials ?? '??' }}
-                            </div>
+<x-toast />
+<div class="navbar bg-base-100 shadow-sm">
+    <div class="flex-1">
+        <span class="text-xl text-gray-500 font-bold">COSM</span> <span
+            class="text-xl text-amber-500 font-bold">IA</span>
+    </div>
+    <div class="flex-none">
+        <ul class="menu menu-horizontal px-1">
+            <li>
+                <details class="dropdown dropdown-end">
+                    <summary
+                        class="flex items-center gap-3 cursor-pointer rounded-full px-2 py-1 hover:bg-gray-100">
+                        <!-- Avatar cercle avec initiales -->
+                        <div
+                            class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+                            {{ $initials ?? '??' }}
+                        </div>
 
-                            <!-- Nom (caché sur petits écrans si besoin) -->
-                            <span class="hidden md:inline text-sm text-gray-700">
+                        <!-- Nom (caché sur petits écrans si besoin) -->
+                        <span class="hidden md:inline text-sm text-gray-700">
                                 {{ $name ?? 'Invité' }}
                             </span>
-                        </summary>
+                    </summary>
 
-                        <!-- Menu déroulant -->
-                        <ul tabindex="0"
-                            class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-                            <li>
-                                <a class="justify-between">
-                                    Profil
-                                </a>
-                            </li>
-                            <li>
-                                <form method="POST" action="{{ route('logout') }}" class="w-full">
-                                    @csrf
-                                    <button type="submit"
+                    <!-- Menu déroulant -->
+                    <ul tabindex="0"
+                        class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+                        <li>
+                            <a class="justify-between">
+                                Profil
+                            </a>
+                        </li>
+                        <li>
+                            <form method="POST" action="{{ route('logout') }}" class="w-full">
+                                @csrf
+                                <button type="submit"
                                         class="w-full text-pink-600 underline hover:text-pink-800 bg-transparent border-0 p-0 cursor-pointer">
-                                        {{ __('Déconnexion') }}
-                                    </button>
-                                </form>
-                            </li>
+                                    {{ __('Déconnexion') }}
+                                </button>
+                            </form>
+                        </li>
 
-                        </ul>
-                    </details>
-                </li>
-            </ul>
-        </div>
+                    </ul>
+                </details>
+            </li>
+        </ul>
     </div>
+</div>
 
-    {{-- MAIN --}}
-    <x-main full-width>
-        {{-- SIDEBAR --}}
-        <x-slot:sidebar drawer="main-drawer" collapsible class="bg-[#f6f6f7] text-gray-900 border-r border-gray-200 shadow-sm">
+{{-- MAIN --}}
+<x-main full-width>
+    {{-- SIDEBAR --}}
+    <x-slot:sidebar drawer="main-drawer" collapsible class="bg-[#f6f6f7] text-gray-900 border-r border-gray-200 shadow-sm">
 
-            {{-- MENU --}}
-            <x-menu activate-by-route>
+        {{-- MENU --}}
+        <x-menu activate-by-route>
 
-                {{-- User --}}
-                @if($user = auth()->user())
-                    <x-menu-separator />
+            {{-- User --}}
+            @if($user = auth()->user())
+                <x-menu-separator />
 
-                    <x-list-item :item="$user" value="name" sub-value="email" no-separator no-hover
-                        class="-mx-2 !-my-2 rounded">
-                        <x-slot:actions>
-                            <x-button icon="o-power" class="btn-circle btn-ghost btn-xs" tooltip-left="logoff"
-                                no-wire-navigate link="/logout" />
-                        </x-slot:actions>
-                    </x-list-item>
+                <x-list-item :item="$user" value="name" sub-value="email" no-separator no-hover
+                             class="-mx-2 !-my-2 rounded">
+                    <x-slot:actions>
+                        <x-button icon="o-power" class="btn-circle btn-ghost btn-xs" tooltip-left="logoff"
+                                  no-wire-navigate link="/logout" />
+                    </x-slot:actions>
+                </x-list-item>
 
-                    <x-menu-separator />
-                @endif
-                {{-- <x-menu-item title="Tableau de bord principal" icon="o-sparkles" link="/sa-dashboard" /> --}}
-                <x-menu-item title="Projet disponible" icon="o-sparkles" link="/"  />
-                <x-menu-item title="Retour & Retractation" icon="o-bolt" link="/demande-rt"  />
-                <x-menu-item
-                    title="Changement d’adresse"
-                    icon="o-map-pin"
-                    link="/changement-adresse"
-                />
-                <x-menu-item
-                    title="Inversion de Colis"
-                    icon="o-cube"
-                    link="/inversion-colis"
-                />
-                <x-menu-item title="Tickets redondants" icon="o-rectangle-stack" link="/stat" />
-                @if($role  == 'super_admin')
-                    <x-menu-item title="Utilisateur" icon="o-users" link="/users"  />
-                @endif
-            </x-menu>
-        </x-slot:sidebar>
+                <x-menu-separator />
+            @endif
+            {{-- <x-menu-item title="Tableau de bord principal" icon="o-sparkles" link="/sa-dashboard" /> --}}
+            <x-menu-item title="Projet disponible" icon="o-sparkles" link="/"  />
+            <x-menu-item title="Retour & Retractation" icon="o-bolt" link="/demande-rt"  />
+            <x-menu-item
+                title="Changement d’adresse"
+                icon="o-map-pin"
+                link="/changement-adresse"
+            />
+            <x-menu-item
+                title="Inversion de Colis"
+                icon="o-cube"
+                link="/inversion-colis"
+            />
+            <x-menu-item title="Tickets redondants" icon="o-rectangle-stack" link="/stat" />
+            @if($role  == 'super_admin')
+                <x-menu-item title="Utilisateur" icon="o-users" link="/users"  />
+            @endif
+        </x-menu>
+    </x-slot:sidebar>
 
-        {{-- The `$slot` goes here --}}
-        <x-slot:content>
-            {{ $slot }}
-            @stack('scripts')
-        </x-slot:content>
-    </x-main>
+    {{-- The `$slot` goes here --}}
+    <x-slot:content>
+        {{ $slot }}
+        @stack('scripts')
+    </x-slot:content>
+</x-main>
 
-    {{-- TOAST area --}}
-    <x-toast />
+{{-- TOAST area --}}
+<x-toast />
 </body>
 
 </html>
