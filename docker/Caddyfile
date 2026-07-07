@@ -1,7 +1,4 @@
 {
-	frankenphp {
-		worker /app/public/index.php
-	}
 	order php_server before file_server
 }
 
@@ -10,7 +7,6 @@
 
 	encode gzip
 
-	# Laravel storage / public disk
 	@storage {
 		path /storage/*
 	}
