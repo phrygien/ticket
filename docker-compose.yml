@@ -1,11 +1,9 @@
 version: "3.9"
-
 networks:
     traefik-public:
         external: true
     cosm-ia-net:
         external: true
-
 services:
     cosm-ia-app:
         build: .
@@ -14,6 +12,7 @@ services:
         env_file:
             - .env
         volumes:
+            - ./.env:/app/.env
             - cosm-ia-storage:/app/storage
         networks:
             - cosm-ia-net
@@ -25,6 +24,5 @@ services:
             - traefik.http.routers.cosm-ia.entrypoints=websecure
             - traefik.http.routers.cosm-ia.tls.certresolver=letsencrypt
             - traefik.http.services.cosm-ia.loadbalancer.server.port=80
-
 volumes:
     cosm-ia-storage:
