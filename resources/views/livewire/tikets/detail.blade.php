@@ -23,9 +23,7 @@ new class extends Component {
 
     public ?array $selectedMessage = null;
 
-    //#[Validate(["photos.*" => "image|max:1024"])]
-    #[Validate(["photos.*" => "mimes:jpg,jpeg,png,gif,webp,heic,heif|max:1024"])]
-    public $photos = [];
+    #[Validate(["photos.*" => "image|max:5120"])] // 5 Mo max
     public $photos = [];
 
     public $newPhotos = [];
