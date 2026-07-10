@@ -60,6 +60,15 @@ RUN apt-get update && apt-get install -y \
         zip \
         opcache \
     && rm -rf /var/lib/apt/lists/*
+
+# Augmente les limites d'upload PHP (photos smartphone souvent > 2 Mo)
+RUN { \
+        echo 'upload_max_filesize=10M'; \
+        echo 'post_max_size=12M'; \
+        echo 'memory_limit=256M'; \
+        echo 'max_execution_time=120'; \
+    } > /usr/local/etc/php/conf.d/99-uploads.ini
+
 WORKDIR /var/www/html
 
 # Copie de l'app avec vendor déjà installé (depuis composer-builder)
