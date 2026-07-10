@@ -1,37 +1,4 @@
 # ─────────────────────────────────────────────
-# Stage 1 : dépendances PHP (Composer)
-# ─────────────────────────────────────────────
-FROM php:8.2-fpm AS composer-builder
-
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    unzip \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
-COPY . .
-RUN composer dump-autoload --optimize --no-dev
-
-# ─────────────────────────────────────────────
-# Stage 2 : build des assets front (Vite)
-# ─────────────────────────────────────────────
-FROM node:22-slim AS node-builder
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-# Récupère le code complet + vendor déjà installé (pour que Tailwind scanne vendor/)
-COPY --from=composer-builder /app ./
-
-RUN npm run build
-
-# ─────────────────────────────────────────────
 # Stage 3 : image finale (PHP-FPM + Nginx + Supervisor)
 # ─────────────────────────────────────────────
 FROM php:8.2-fpm
@@ -60,21 +27,13 @@ RUN apt-get update && apt-get install -y \
         zip \
         opcache \
     && rm -rf /var/lib/apt/lists/*
+
+# Augmente les limites d'upload PHP (photos smartphone souvent > 2 Mo)
+RUN { \
+        echo 'upload_max_filesize=10M'; \
+        echo 'post_max_size=12M'; \
+        echo 'memory_limit=256M'; \
+        echo 'max_execution_time=120'; \
+    } > /usr/local/etc/php/conf.d/99-uploads.ini
+
 WORKDIR /var/www/html
-
-# Copie de l'app avec vendor déjà installé (depuis composer-builder)
-COPY --from=composer-builder /app ./
-# Copie des assets compilés (Vite), qui ont maintenant scanné vendor/ correctement
-COPY --from=node-builder /app/public/build ./public/build
-
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-
-COPY docker/nginx.conf /etc/nginx/sites-available/default
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-EXPOSE 80
-ENTRYPOINT ["entrypoint.sh"]
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
