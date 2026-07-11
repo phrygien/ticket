@@ -152,7 +152,7 @@ new class extends Component {
             }
 
             if ($token) {
-                $url = 'https://dev-ia.astucom.com/n8n_cosmia/user/' . $this->selectedUserId;
+                $url = env('API_REST'). '/user/' . $this->selectedUserId;
 
                 $data = [
                     'name' => $this->editname,
@@ -269,7 +269,7 @@ new class extends Component {
                 </select>
                 @error('role') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </fieldset>
-            
+
             <x-input label="Nom / Prénoms" wire:model="name" />
             <x-input label="Mail" wire:model="email" type="email" />
             <x-password label="Mot de passe" hint="Mot de passe pour l'utilisateur" wire:model="password" clearable />
@@ -284,16 +284,16 @@ new class extends Component {
 
 <x-modal wire:model="updateModal" title="Modifier l'utilisateur" separator>
     <x-form wire:submit="update">
-        <x-input 
-            label="Nom" 
+        <x-input
+            label="Nom"
             wire:model="editname"
             placeholder="Nom complet de l'utilisateur"
             icon="o-user"
             hint="Minimum 3 caractères"
         />
 
-        <x-input 
-            label="Email" 
+        <x-input
+            label="Email"
             wire:model="editemail"
             type="email"
             placeholder="email@exemple.com"

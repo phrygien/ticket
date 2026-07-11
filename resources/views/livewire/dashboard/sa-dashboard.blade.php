@@ -11,7 +11,7 @@ new class extends Component {
     public bool $loading = false;
     public string $selectedMonth;
     public string $selectedYear;
-    
+
     // Options pour les filtres
     public array $months = [];
     public array $years = [];
@@ -21,7 +21,7 @@ new class extends Component {
         // Initialiser avec le mois et l'année en cours
         $this->selectedMonth = date('m');
         $this->selectedYear = date('Y');
-        
+
         $this->initializeFilters();
         $this->loadDonutData();
     }
@@ -65,7 +65,7 @@ $token = session('token');
                 'x-secret-key' => env('X_SECRET_KEY'),
                 'Authorization' => 'Bearer ' . $token,
                 'Accept' => 'application/json',
-            ])->post('https://dev-ia.astucom.com/n8n_cosmia/dash/getdonutSummary', [
+            ])->post(env('API_REST'). '/dash/getdonutSummary', [
                 'month' => $this->selectedMonth,
                 'year' => $this->selectedYear,
             ]);
@@ -119,28 +119,28 @@ $token = session('token');
 <x-header title="Statistiques" subtitle="Suivez les indicateurs clés en temps réel" separator>
     <x-slot:middle>
         <div class="flex items-center justify-end gap-3">
-            <x-select 
-                label="Mois" 
-                icon="o-calendar" 
-                :options="$months" 
-                wire:model.live="selectedMonth" 
+            <x-select
+                label="Mois"
+                icon="o-calendar"
+                :options="$months"
+                wire:model.live="selectedMonth"
                 class="w-40"
             />
-            <x-select 
-                label="Année" 
-                icon="o-calendar-days" 
-                :options="$years" 
-                wire:model.live="selectedYear" 
+            <x-select
+                label="Année"
+                icon="o-calendar-days"
+                :options="$years"
+                wire:model.live="selectedYear"
                 class="w-40"
             />
         </div>
     </x-slot:middle>
 
     <x-slot:actions>
-        <x-button 
-            label="Rafraîchir" 
-            icon="o-arrow-path" 
-            wire:click="loadDonutData" 
+        <x-button
+            label="Rafraîchir"
+            icon="o-arrow-path"
+            wire:click="loadDonutData"
             spinner="loadDonutData"
             class="btn-primary w-full md:w-auto"
         />
@@ -152,23 +152,23 @@ $token = session('token');
     {{-- <div class="mb-6">
         <x-card title="Filtres" class="bg-base-200">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <x-select 
-                    label="Mois" 
-                    icon="o-calendar" 
-                    :options="$months" 
-                    wire:model.live="selectedMonth" 
+                <x-select
+                    label="Mois"
+                    icon="o-calendar"
+                    :options="$months"
+                    wire:model.live="selectedMonth"
                 />
-                <x-select 
-                    label="Année" 
-                    icon="o-calendar-days" 
-                    :options="$years" 
-                    wire:model.live="selectedYear" 
+                <x-select
+                    label="Année"
+                    icon="o-calendar-days"
+                    :options="$years"
+                    wire:model.live="selectedYear"
                 />
                 <div class="flex items-end">
-                    <x-button 
-                        label="Rafraîchir" 
-                        icon="o-arrow-path" 
-                        wire:click="loadDonutData" 
+                    <x-button
+                        label="Rafraîchir"
+                        icon="o-arrow-path"
+                        wire:click="loadDonutData"
                         spinner="loadDonutData"
                         class="btn-primary w-full"
                     />
@@ -192,7 +192,7 @@ $token = session('token');
                             <div class="text-3xl font-bold text-primary">{{ $totalRequests }}</div>
                             <div class="text-sm text-gray-500">Demandes totales</div>
                         </div>
-                        
+
                         <div class="w-full max-w-sm">
                             <canvas id="donutChart"></canvas>
                         </div>
