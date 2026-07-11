@@ -45,7 +45,7 @@ new class extends Component {
                 'x-secret-key'  => env('X_SECRET_KEY'),
                 'Authorization' => "Bearer {$token}",
                 'Accept'        => 'application/json',
-            ])->post('https://dev-ia.astucom.com/n8n_cosmia/ticket/getTicketSet', [
+            ])->post(env('API_REST'). '/ticket/getTicketSet', [
                 'ticket_id' => (string) $this->ticketId,
             ]);
 
