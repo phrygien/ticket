@@ -1785,78 +1785,81 @@ new class extends Component {
                     x-data="{
                         isFirstLoad: true,
                         clickedLoadMore: false,
-                        prevScrollHeight: 0,
-
-                        prepareLoadMore(el) {
-                            this.clickedLoadMore = true;
-                            this.prevScrollHeight = el.scrollHeight;
-                            $wire.loadOlderMessages();
-                        }
+                        prevScrollHeight: 0
                     }"
                     x-init="
-                        $nextTick(() => { $el.scrollTop = $el.scrollHeight });
+                        $nextTick(() => { $refs.scrollBox.scrollTop = $refs.scrollBox.scrollHeight });
 
                         Livewire.hook('morph.updated', ({ el }) => {
-                            if (!(el.contains($el) || el === $el)) return;
+                            if (!(el.contains($refs.scrollBox) || el === $refs.scrollBox)) return;
 
                             $nextTick(() => {
                                 if (clickedLoadMore) {
-                                    $el.scrollTop = $el.scrollHeight - prevScrollHeight;
+                                    $refs.scrollBox.scrollTop = $refs.scrollBox.scrollHeight - prevScrollHeight;
                                     clickedLoadMore = false;
                                 } else if (isFirstLoad) {
-                                    $el.scrollTop = $el.scrollHeight;
+                                    $refs.scrollBox.scrollTop = $refs.scrollBox.scrollHeight;
                                     isFirstLoad = false;
                                 }
+                                // Sinon (nouveau message envoyé normalement) : on ne touche pas au scroll ici,
+                                // gérez ce cas séparément si besoin (voir note plus bas)
                             });
                         });
                     "
-                    style="
-                        display: flex;
-                        flex-direction: column;
-                        gap: 1rem;
-                        background-color: #eef2f7;
-                        background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
-                        background-size: 22px 22px;
-                        border-radius: 0.75rem;
-                        padding: 1rem;
-                        border: 1px solid #e5e7eb;
-                        height: 600px;
-                        overflow-y: auto;
-                        scroll-behavior: smooth;
-                        position: relative;
-                    "
+                    style="position: relative;"
                 >
-                    {{-- Bouton "voir plus anciens messages" --}}
-                    @if($hasMoreMessages)
-                        <div style="display: flex; justify-content: center; position: sticky; top: 0; z-index: 10; margin-bottom: 0.5rem;">
-                            <button
-                                @click="prepareLoadMore($el.closest('[wire\\:key]'))"
-                                wire:loading.attr="disabled"
-                                wire:target="loadOlderMessages"
-                                style="
-                                    background: white;
-                                    border: 1px solid #d1d5db;
-                                    border-radius: 9999px;
-                                    padding: 6px 16px;
-                                    font-size: 13px;
-                                    color: #374151;
-                                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                                    cursor: pointer;
-                                "
-                            >
-                                <span wire:loading.remove wire:target="loadOlderMessages">
-                                    Voir les messages plus anciens
-                                </span>
-                                <span wire:loading wire:target="loadOlderMessages">
-                                    Chargement...
-                                </span>
-                            </button>
-                        </div>
-                    @else
-                        <div style="text-align: center; font-size: 12px; color: #9ca3af; padding: 0.5rem 0;">
-                            Début de la conversation
-                        </div>
-                    @endif
+                    <div
+                        x-ref="scrollBox"
+                        style="
+                            display: flex;
+                            flex-direction: column;
+                            gap: 1rem;
+                            background-color: #eef2f7;
+                            background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+                            background-size: 22px 22px;
+                            border-radius: 0.75rem;
+                            padding: 1rem;
+                            border: 1px solid #e5e7eb;
+                            height: 600px;
+                            overflow-y: auto;
+                            scroll-behavior: smooth;
+                        "
+                    >
+                        {{-- Bouton "voir plus anciens messages" --}}
+                        @if($hasMoreMessages)
+                            <div style="display: flex; justify-content: center; position: sticky; top: 0; z-index: 10; margin-bottom: 0.5rem;">
+                                <button
+                                    @click="
+                                        clickedLoadMore = true;
+                                        prevScrollHeight = $refs.scrollBox.scrollHeight;
+                                        $wire.loadOlderMessages();
+                                    "
+                                    wire:loading.attr="disabled"
+                                    wire:target="loadOlderMessages"
+                                    style="
+                                        background: white;
+                                        border: 1px solid #d1d5db;
+                                        border-radius: 9999px;
+                                        padding: 6px 16px;
+                                        font-size: 13px;
+                                        color: #374151;
+                                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                        cursor: pointer;
+                                    "
+                                >
+                                    <span wire:loading.remove wire:target="loadOlderMessages">
+                                        Voir les messages plus anciens
+                                    </span>
+                                    <span wire:loading wire:target="loadOlderMessages">
+                                        Chargement...
+                                    </span>
+                                </button>
+                            </div>
+                        @else
+                            <div style="text-align: center; font-size: 12px; color: #9ca3af; padding: 0.5rem 0;">
+                                Début de la conversation
+                            </div>
+                        @endif
 
                     @forelse(collect($this->messagesChatBot)->sortBy('date_created') as $msg)
                         @php $isClient = $msg['acteur'] === 'client'; @endphp
