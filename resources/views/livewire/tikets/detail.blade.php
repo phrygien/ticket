@@ -1810,7 +1810,7 @@ new class extends Component {
                                         ? 'background-color: #3b82f6; color: white; border-bottom-left-radius: 0.25rem;'
                                         : 'background-color: white; color: #1f2937; border: 1px solid #e5e7eb; border-bottom-right-radius: 0.25rem;' }}
                                 ">
-                                    {{ $msg['message'] }}
+                                    {{ trim($msg['message']) }}
                                 </div>
                             </div>
                         </div>
