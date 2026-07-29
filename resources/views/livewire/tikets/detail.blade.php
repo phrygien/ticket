@@ -1893,7 +1893,7 @@ new class extends Component {
                                     padding: 0.5rem 1rem;
                                     border-radius: 1rem;
                                     font-size: 0.875rem;
-                                    white-space: pre-line;
+                                    /* white-space: pre-line; */
                                     {{ $isClient
                                         ? 'background-color: #3b82f6; color: white; border-bottom-left-radius: 0.25rem;'
                                         : 'background-color: white; color: #1f2937; border: 1px solid #e5e7eb; border-bottom-right-radius: 0.25rem;' }}
