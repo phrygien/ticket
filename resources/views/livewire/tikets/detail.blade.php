@@ -1793,9 +1793,9 @@ new class extends Component {
                         @else
                             {{-- Message AGENT IA --}}
                             <div class="flex justify-start">
-                                <div class="max-w-[75%] flex flex-col items-start">
+                                <div class="max-w-[75%] flex flex-col items-start" style="background-color: white">
                                     <div class="flex items-center gap-2 mb-1">
-                                        <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white bg-emerald-500">
+                                        <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-emerald-500">
                                             IA
                                         </span>
                                         <span class="text-xs text-gray-500">
@@ -1803,7 +1803,7 @@ new class extends Component {
                                         </span>
                                     </div>
 
-                                    <div class="px-4 py-2 rounded-2xl text-sm whitespace-pre-line bg-white text-gray-800 border border-gray-200 rounded-bl-sm">
+                                    <div class="px-4 py-2 rounded-2xl text-sm whitespace-pre-line bg-white border border-gray-200 rounded-bl-sm">
                                         {{ $msg['message'] }}
                                     </div>
                                 </div>
