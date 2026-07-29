@@ -1784,15 +1784,13 @@ new class extends Component {
                     wire:key="chat-container-{{ $activeTab }}"
                     x-data="{
                         isFirstLoad: true,
-                        loadingOlder: false,
+                        clickedLoadMore: false,
                         prevScrollHeight: 0,
 
-                        handleScroll(el) {
-                            if (el.scrollTop < 80 && !this.loadingOlder && {{ $hasMoreMessages ? 'true' : 'false' }}) {
-                                this.loadingOlder = true;
-                                this.prevScrollHeight = el.scrollHeight;
-                                $wire.loadOlderMessages();
-                            }
+                        prepareLoadMore(el) {
+                            this.clickedLoadMore = true;
+                            this.prevScrollHeight = el.scrollHeight;
+                            $wire.loadOlderMessages();
                         }
                     }"
                     x-init="
@@ -1802,10 +1800,9 @@ new class extends Component {
                             if (!(el.contains($el) || el === $el)) return;
 
                             $nextTick(() => {
-                                if (loadingOlder) {
-                                    // On recalcule la position pour compenser les messages ajoutés en haut
+                                if (clickedLoadMore) {
                                     $el.scrollTop = $el.scrollHeight - prevScrollHeight;
-                                    loadingOlder = false;
+                                    clickedLoadMore = false;
                                 } else if (isFirstLoad) {
                                     $el.scrollTop = $el.scrollHeight;
                                     isFirstLoad = false;
@@ -1813,7 +1810,6 @@ new class extends Component {
                             });
                         });
                     "
-                    @scroll="handleScroll($el)"
                     style="
                         display: flex;
                         flex-direction: column;
@@ -1827,11 +1823,38 @@ new class extends Component {
                         height: 600px;
                         overflow-y: auto;
                         scroll-behavior: smooth;
+                        position: relative;
                     "
                 >
-                    @if($loadingMore)
-                        <div style="text-align: center; padding: 0.5rem; font-size: 12px; color: #6b7280;">
-                            Chargement des anciens messages...
+                    {{-- Bouton "voir plus anciens messages" --}}
+                    @if($hasMoreMessages)
+                        <div style="display: flex; justify-content: center; position: sticky; top: 0; z-index: 10; margin-bottom: 0.5rem;">
+                            <button
+                                @click="prepareLoadMore($el.closest('[wire\\:key]'))"
+                                wire:loading.attr="disabled"
+                                wire:target="loadOlderMessages"
+                                style="
+                                    background: white;
+                                    border: 1px solid #d1d5db;
+                                    border-radius: 9999px;
+                                    padding: 6px 16px;
+                                    font-size: 13px;
+                                    color: #374151;
+                                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                    cursor: pointer;
+                                "
+                            >
+                                <span wire:loading.remove wire:target="loadOlderMessages">
+                                    Voir les messages plus anciens
+                                </span>
+                                <span wire:loading wire:target="loadOlderMessages">
+                                    Chargement...
+                                </span>
+                            </button>
+                        </div>
+                    @else
+                        <div style="text-align: center; font-size: 12px; color: #9ca3af; padding: 0.5rem 0;">
+                            Début de la conversation
                         </div>
                     @endif
 
