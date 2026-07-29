@@ -1282,6 +1282,7 @@ new class extends Component {
             </div>
 
         @endif
+        
         @if($activeTab === 'sendmail')
             <div class="mx-auto w-full max-w-6xl">
                 <x-header title="Répondre à l'email" separator>
@@ -1587,6 +1588,7 @@ new class extends Component {
                 </div>
             </div>
         @endif
+
         @if($activeTab === 'commentaire')
             <div class="mx-auto max-w-5xl">
                 <x-header title="Historique des commentaires" separator>
@@ -1717,6 +1719,8 @@ new class extends Component {
                     </x-card>
                 @endif
             </div>
+
+        @endif
 
         @if($activeTab === 'chabotmessage')
             <div class="mx-auto max-w-5xl">
