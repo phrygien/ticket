@@ -50,7 +50,11 @@ new class extends Component {
     public string $subject = '';
     public string $subjectOriginal = '';
 
+    // variable pour le CHATBOT
     public bool $chatbotMessageTab = false; // pour rendre visible le tab de chatbot
+    public $messagesChatBot = [];
+    public $conversation_chat_id;
+    public $pageChat;
 
     public function mount($ticket)
     {
@@ -97,6 +101,10 @@ new class extends Component {
 
             if($response["details"][0]["conversation_chat_id"]){
                 $this->chatbotMessageTab = true;
+                $this->conversation_chat_id = $response["details"][0]["conversation_chat_id"];
+                $this->pageChat = 1;
+                // avoir les messages du chat
+                $this->getChatbotConversation($this->conversation_chat_id, $this->pageChat)
             }
 
             $firstSubject = $this->ticketDetails['conversation']['messages'][0]['subject'] ?? '';
@@ -688,7 +696,24 @@ new class extends Component {
     }
 
     //avoir la liste des messages effectuer par le client via le chatbot
+    public function getChatbotConversation($conversation_chat_id, $page){
+        $token = session("token");
+        $body = [
+            "conversation_chat_id" => $conversation_chat_id,
+            "page" => $page
+        ];
 
+        $response = Http::withHeaders([
+            "x-secret-key" => env("X_SECRET_KEY"),
+            "Authorization" => "Bearer {$token}",
+            "Accept" => "application/json",
+        ])->post(env("API_REST") . "/chatbot/getchatmessage", $body);
+
+        if ($response->successful()) {
+            $this->$messagesChatBot = array_merge($this->$messagesChatBot, $response["messages"]);
+        }
+
+    }
 };
 ?>
 
@@ -1732,6 +1757,9 @@ new class extends Component {
         @if($activeTab === 'chabotmessage')
             <div class="mx-auto max-w-5xl">
                 <p>Ici les message du chatbot</p>
+                @php
+                    var_dump($this->messagesChatBot);
+                @endphp
             </div>
 
         @endif
