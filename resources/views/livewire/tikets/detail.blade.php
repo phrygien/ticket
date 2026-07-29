@@ -50,7 +50,7 @@ new class extends Component {
     public string $subject = '';
     public string $subjectOriginal = '';
 
-    public bool $chatbotMessageTab = true; // pour rendre visible le tab de chatbot
+    public bool $chatbotMessageTab = false; // pour rendre visible le tab de chatbot
 
     public function mount($ticket)
     {
@@ -92,9 +92,12 @@ new class extends Component {
 
         if ($response->successful()) {
             $this->ticketDetails = $response->json();
-            $this->destinateur =
-                $response["details"][0]["original_client_mail"];
+            $this->destinateur = $response["details"][0]["original_client_mail"];
             $this->destinateurOriginal = $this->destinateur;
+
+            if($response["details"][0]["conversation_chat_id"]){
+                $this->chatbotMessageTab = true;
+            }
 
             $firstSubject = $this->ticketDetails['conversation']['messages'][0]['subject'] ?? '';
             $this->subject = 'RE: ' . $firstSubject;
@@ -683,6 +686,9 @@ new class extends Component {
             array_splice($this->cc, $index, 1);
         }
     }
+
+    //avoir la liste des messages effectuer par le client via le chatbot
+
 };
 ?>
 
