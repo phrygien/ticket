@@ -55,6 +55,8 @@ new class extends Component {
     public $messagesChatBot = [];
     public $conversation_chat_id;
     public $pageChat;
+    public $hasMoreMessages = true;
+    public $loadingMore = false;
 
     public function mount($ticket)
     {
@@ -696,11 +698,12 @@ new class extends Component {
     }
 
     //avoir la liste des messages effectuer par le client via le chatbot
-    public function getChatbotConversation($conversation_chat_id, $page){
+    public function getChatbotConversation($conversation_chat_id, $page)
+    {
         $token = session("token");
         $body = [
             "conversation_chat_id" => $conversation_chat_id,
-            "page" => $page
+            "page" => $page,
         ];
 
         $response = Http::withHeaders([
@@ -710,9 +713,26 @@ new class extends Component {
         ])->post(env("API_REST") . "/chatbot/getchatmessage", $body);
 
         if ($response->successful()) {
-            $this->messagesChatBot = array_merge($this->messagesChatBot, $response["messages"]);
+            $newMessages = $response["messages"];
+
+            if (empty($newMessages)) {
+                $this->hasMoreMessages = false;
+            } else {
+                $this->messagesChatBot = array_merge($this->messagesChatBot, $newMessages);
+            }
+        }
+    }
+
+    public function loadOlderMessages()
+    {
+        if (!$this->hasMoreMessages || $this->loadingMore) {
+            return;
         }
 
+        $this->loadingMore = true;
+        $this->pageChat++;
+        $this->getChatbotConversation($this->conversation_chat_id, $this->pageChat);
+        $this->loadingMore = false;
     }
 };
 ?>
@@ -1762,15 +1782,38 @@ new class extends Component {
 
                 <div
                     wire:key="chat-container-{{ $activeTab }}"
-                    x-data
+                    x-data="{
+                        isFirstLoad: true,
+                        loadingOlder: false,
+                        prevScrollHeight: 0,
+
+                        handleScroll(el) {
+                            if (el.scrollTop < 80 && !this.loadingOlder && {{ $hasMoreMessages ? 'true' : 'false' }}) {
+                                this.loadingOlder = true;
+                                this.prevScrollHeight = el.scrollHeight;
+                                $wire.loadOlderMessages();
+                            }
+                        }
+                    }"
                     x-init="
                         $nextTick(() => { $el.scrollTop = $el.scrollHeight });
+
                         Livewire.hook('morph.updated', ({ el }) => {
-                            if (el.contains($el) || el === $el) {
-                                $nextTick(() => { $el.scrollTop = $el.scrollHeight });
-                            }
+                            if (!(el.contains($el) || el === $el)) return;
+
+                            $nextTick(() => {
+                                if (loadingOlder) {
+                                    // On recalcule la position pour compenser les messages ajoutés en haut
+                                    $el.scrollTop = $el.scrollHeight - prevScrollHeight;
+                                    loadingOlder = false;
+                                } else if (isFirstLoad) {
+                                    $el.scrollTop = $el.scrollHeight;
+                                    isFirstLoad = false;
+                                }
+                            });
                         });
                     "
+                    @scroll="handleScroll($el)"
                     style="
                         display: flex;
                         flex-direction: column;
@@ -1786,6 +1829,12 @@ new class extends Component {
                         scroll-behavior: smooth;
                     "
                 >
+                    @if($loadingMore)
+                        <div style="text-align: center; padding: 0.5rem; font-size: 12px; color: #6b7280;">
+                            Chargement des anciens messages...
+                        </div>
+                    @endif
+
                     @forelse(collect($this->messagesChatBot)->sortBy('date_created') as $msg)
                         @php $isClient = $msg['acteur'] === 'client'; @endphp
 
