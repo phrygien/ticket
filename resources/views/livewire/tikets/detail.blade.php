@@ -1776,11 +1776,11 @@ new class extends Component {
                     @forelse(collect($this->messagesChatBot)->sortBy('date_created') as $msg)
                         @php $isClient = $msg['acteur'] === 'client'; @endphp
 
-                        <div style="display: flex; justify-content: {{ $isClient ? 'flex-end' : 'flex-start' }};">
-                            <div style="max-width: 75%; display: flex; flex-direction: column; align-items: {{ $isClient ? 'flex-end' : 'flex-start' }};">
+                        <div style="display: flex; justify-content: {{ $isClient ? 'flex-start' : 'flex-end' }};">
+                            <div style="max-width: 75%; display: flex; flex-direction: column; align-items: {{ $isClient ? 'flex-start' : 'flex-end' }};">
 
                                 {{-- En-tête : avatar + date --}}
-                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; flex-direction: {{ $isClient ? 'row-reverse' : 'row' }};">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; flex-direction: {{ $isClient ? 'row' : 'row-reverse' }};">
                                     <span style="
                                         display: flex;
                                         align-items: center;
@@ -1807,8 +1807,8 @@ new class extends Component {
                                     font-size: 0.875rem;
                                     white-space: pre-line;
                                     {{ $isClient
-                                        ? 'background-color: #3b82f6; color: white; border-bottom-right-radius: 0.25rem;'
-                                        : 'background-color: white; color: #1f2937; border: 1px solid #e5e7eb; border-bottom-left-radius: 0.25rem;' }}
+                                        ? 'background-color: #3b82f6; color: white; border-bottom-left-radius: 0.25rem;'
+                                        : 'background-color: white; color: #1f2937; border: 1px solid #e5e7eb; border-bottom-right-radius: 0.25rem;' }}
                                 ">
                                     {{ $msg['message'] }}
                                 </div>
