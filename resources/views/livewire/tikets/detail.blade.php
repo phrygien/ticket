@@ -710,7 +710,7 @@ new class extends Component {
         ])->post(env("API_REST") . "/chatbot/getchatmessage", $body);
 
         if ($response->successful()) {
-            $this->$messagesChatBot = array_merge($this->$messagesChatBot, $response["messages"]);
+            $this->messagesChatBot = array_merge($this->messagesChatBot, $response["messages"]);
         }
 
     }
