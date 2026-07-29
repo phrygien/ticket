@@ -714,10 +714,11 @@ new class extends Component {
                     <button wire:click="setTab('chabotmessage')"
                             class="px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 relative
                 {{ $activeTab === 'chabotmessage' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200' }}">
-                        <svg wire:loading.remove wire:target="setTab('chabotmessage')" class="w-4 h-4 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                             stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        <svg wire:loading.remove wire:target="setTab('chabotmessage')" class="w-4 h-4 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+                            <rect x="4" y="6" width="16" height="12" rx="2" stroke-width="2" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h.01M15 12h.01M2 10v4M22 10v4" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"   d="M9 16c.667.667 1.667 1 3 1s2.333-.333 3-1" />
                         </svg>
                         <svg wire:loading wire:target="setTab('chabotmessage')" class="animate-spin w-4 h-4 inline-block mr-1" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1282,7 +1283,7 @@ new class extends Component {
             </div>
 
         @endif
-        
+
         @if($activeTab === 'sendmail')
             <div class="mx-auto w-full max-w-6xl">
                 <x-header title="Répondre à l'email" separator>
