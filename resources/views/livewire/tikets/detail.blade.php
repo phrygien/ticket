@@ -1771,7 +1771,20 @@ new class extends Component {
                             }
                         });
                     "
-                    style="display: flex; flex-direction: column; gap: 1rem; background-color: #f9fafb; border-radius: 0.75rem; padding: 1rem; border: 1px solid #e5e7eb; height: 600px; overflow-y: auto; scroll-behavior: smooth;"
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: 1rem;
+                        background-color: #eef2f7;
+                        background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+                        background-size: 22px 22px;
+                        border-radius: 0.75rem;
+                        padding: 1rem;
+                        border: 1px solid #e5e7eb;
+                        height: 600px;
+                        overflow-y: auto;
+                        scroll-behavior: smooth;
+                    "
                 >
                     @forelse(collect($this->messagesChatBot)->sortBy('date_created') as $msg)
                         @php $isClient = $msg['acteur'] === 'client'; @endphp
