@@ -1756,7 +1756,9 @@ new class extends Component {
 
         @if($activeTab === 'chabotmessage')
             <div class="mx-auto max-w-3xl">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">Historique du chatbot</h2>
+                <h2 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem;">
+                    Historique du chatbot
+                </h2>
 
                 <div
                     wire:key="chat-container-{{ $activeTab }}"
@@ -1769,48 +1771,53 @@ new class extends Component {
                             }
                         });
                     "
-                    class="flex flex-col gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200 h-[600px] overflow-y-auto scroll-smooth"
+                    style="display: flex; flex-direction: column; gap: 1rem; background-color: #f9fafb; border-radius: 0.75rem; padding: 1rem; border: 1px solid #e5e7eb; height: 600px; overflow-y: auto; scroll-behavior: smooth;"
                 >
                     @forelse(collect($this->messagesChatBot)->sortBy('date_created') as $msg)
-                        @if($msg['acteur'] === 'client')
-                            {{-- Message CLIENT --}}
-                            <div class="flex justify-start">
-                                <div class="max-w-[75%] flex flex-col items-end" style="background-color: #5c5cff">
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white">
-                                            C
-                                        </span>
-                                        <span class="text-xs text-gray-500">
-                                            {{ \Carbon\Carbon::parse($msg['date_created'])->format('d/m/Y H:i') }}
-                                        </span>
-                                    </div>
+                        @php $isClient = $msg['acteur'] === 'client'; @endphp
 
-                                    <div class="px-4 py-2 rounded-2xl text-sm whitespace-pre-line rounded-br-sm text-white">
-                                        {{ $msg['message'] }}
-                                    </div>
+                        <div style="display: flex; justify-content: {{ $isClient ? 'flex-end' : 'flex-start' }};">
+                            <div style="max-width: 75%; display: flex; flex-direction: column; align-items: {{ $isClient ? 'flex-end' : 'flex-start' }};">
+
+                                {{-- En-tête : avatar + date --}}
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; flex-direction: {{ $isClient ? 'row-reverse' : 'row' }};">
+                                    <span style="
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        width: 1.5rem;
+                                        height: 1.5rem;
+                                        border-radius: 9999px;
+                                        font-size: 0.75rem;
+                                        font-weight: 700;
+                                        color: white;
+                                        background-color: {{ $isClient ? '#3b82f6' : '#10b981' }};
+                                    ">
+                                        {{ $isClient ? 'C' : 'IA' }}
+                                    </span>
+                                    <span style="font-size: 0.75rem; color: #6b7280;">
+                                        {{ \Carbon\Carbon::parse($msg['date_created'])->format('d/m/Y H:i') }}
+                                    </span>
+                                </div>
+
+                                {{-- Bulle de message --}}
+                                <div style="
+                                    padding: 0.5rem 1rem;
+                                    border-radius: 1rem;
+                                    font-size: 0.875rem;
+                                    white-space: pre-line;
+                                    {{ $isClient
+                                        ? 'background-color: #3b82f6; color: white; border-bottom-right-radius: 0.25rem;'
+                                        : 'background-color: white; color: #1f2937; border: 1px solid #e5e7eb; border-bottom-left-radius: 0.25rem;' }}
+                                ">
+                                    {{ $msg['message'] }}
                                 </div>
                             </div>
-                        @else
-                            {{-- Message AGENT IA --}}
-                            <div class="flex justify-end">
-                                <div class="max-w-[75%] flex flex-col items-start" style="background-color: white">
-                                    <div class="flex items-center gap-2 mb-1 flex-row-reverse">
-                                        <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-emerald-500">
-                                            IA
-                                        </span>
-                                        <span class="text-xs text-gray-500">
-                                            {{ \Carbon\Carbon::parse($msg['date_created'])->format('d/m/Y H:i') }}
-                                        </span>
-                                    </div>
-
-                                    <div class="px-4 py-2 rounded-2xl text-sm whitespace-pre-line bg-white border border-gray-200 rounded-bl-sm">
-                                        {{ $msg['message'] }}
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
+                        </div>
                     @empty
-                        <p class="text-center text-gray-400 text-sm py-6">Aucun message dans cette conversation.</p>
+                        <p style="text-align: center; color: #9ca3af; font-size: 0.875rem; padding: 1.5rem 0;">
+                            Aucun message dans cette conversation.
+                        </p>
                     @endforelse
                 </div>
             </div>
