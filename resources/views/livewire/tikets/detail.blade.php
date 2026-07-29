@@ -1775,9 +1775,9 @@ new class extends Component {
                         @if($msg['acteur'] === 'client')
                             {{-- Message CLIENT --}}
                             <div class="flex justify-end">
-                                <div class="max-w-[75%] flex flex-col items-end" style="background-color: blue">
+                                <div class="max-w-[75%] flex flex-col items-end" style="background-color: #5c5cff">
                                     <div class="flex items-center gap-2 mb-1 flex-row-reverse">
-                                        <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-blue">
+                                        <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white">
                                             C
                                         </span>
                                         <span class="text-xs text-gray-500">
@@ -1785,7 +1785,7 @@ new class extends Component {
                                         </span>
                                     </div>
 
-                                    <div class="px-4 py-2 rounded-2xl text-sm whitespace-pre-line bg-blue rounded-br-sm">
+                                    <div class="px-4 py-2 rounded-2xl text-sm whitespace-pre-line rounded-br-sm text-white">
                                         {{ $msg['message'] }}
                                     </div>
                                 </div>
