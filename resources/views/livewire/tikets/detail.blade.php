@@ -1774,9 +1774,9 @@ new class extends Component {
                     @forelse(collect($this->messagesChatBot)->sortBy('date_created') as $msg)
                         @if($msg['acteur'] === 'client')
                             {{-- Message CLIENT --}}
-                            <div class="flex justify-end">
+                            <div class="flex justify-start">
                                 <div class="max-w-[75%] flex flex-col items-end" style="background-color: #5c5cff">
-                                    <div class="flex items-center gap-2 mb-1 flex-row-reverse">
+                                    <div class="flex items-center gap-2 mb-1">
                                         <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white">
                                             C
                                         </span>
@@ -1792,9 +1792,9 @@ new class extends Component {
                             </div>
                         @else
                             {{-- Message AGENT IA --}}
-                            <div class="flex justify-start">
+                            <div class="flex justify-end">
                                 <div class="max-w-[75%] flex flex-col items-start" style="background-color: white">
-                                    <div class="flex items-center gap-2 mb-1">
+                                    <div class="flex items-center gap-2 mb-1 flex-row-reverse">
                                         <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-emerald-500">
                                             IA
                                         </span>
