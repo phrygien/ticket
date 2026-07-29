@@ -1755,13 +1755,51 @@ new class extends Component {
         @endif
 
         @if($activeTab === 'chabotmessage')
-            <div class="mx-auto max-w-5xl">
-                <p>Ici les message du chatbot</p>
-                @php
-                    var_dump($this->messagesChatBot);
-                @endphp
-            </div>
+            <div class="mx-auto max-w-3xl">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Historique du chatbot</h2>
 
+                <div
+                    wire:key="chat-container-{{ $activeTab }}"
+                    x-data
+                    x-init="
+                        $nextTick(() => { $el.scrollTop = $el.scrollHeight });
+                        Livewire.hook('morph.updated', ({ el }) => {
+                            if (el.contains($el) || el === $el) {
+                                $nextTick(() => { $el.scrollTop = $el.scrollHeight });
+                            }
+                        });
+                    "
+                    class="flex flex-col gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200 h-[600px] overflow-y-auto scroll-smooth"
+                >
+                    @forelse(collect($this->messagesChatBot)->sortBy('date_created') as $msg)
+                        @php
+                            $isClient = $msg['acteur'] === 'client';
+                        @endphp
+
+                        <div class="flex {{ $isClient ? 'justify-end' : 'justify-start' }}">
+                            <div class="max-w-[75%] {{ $isClient ? 'items-end' : 'items-start' }} flex flex-col">
+                                <div class="flex items-center gap-2 mb-1 {{ $isClient ? 'flex-row-reverse' : '' }}">
+                                    <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white {{ $isClient ? 'bg-blue-500' : 'bg-emerald-500' }}">
+                                        {{ $isClient ? 'C' : 'IA' }}
+                                    </span>
+                                    <span class="text-xs text-gray-500">
+                                        {{ \Carbon\Carbon::parse($msg['date_created'])->format('d/m/Y H:i') }}
+                                    </span>
+                                </div>
+
+                                <div class="px-4 py-2 rounded-2xl text-sm whitespace-pre-line
+                                    {{ $isClient
+                                        ? 'bg-blue-500 text-white rounded-br-sm'
+                                        : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm' }}">
+                                    {{ $msg['message'] }}
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-center text-gray-400 text-sm py-6">Aucun message dans cette conversation.</p>
+                    @endforelse
+                </div>
+            </div>
         @endif
 
     </div>
