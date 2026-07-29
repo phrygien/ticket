@@ -104,7 +104,7 @@ new class extends Component {
                 $this->conversation_chat_id = $response["details"][0]["conversation_chat_id"];
                 $this->pageChat = 1;
                 // avoir les messages du chat
-                $this->getChatbotConversation($this->conversation_chat_id, $this->pageChat)
+                $this->getChatbotConversation($this->conversation_chat_id, $this->pageChat);
             }
 
             $firstSubject = $this->ticketDetails['conversation']['messages'][0]['subject'] ?? '';
