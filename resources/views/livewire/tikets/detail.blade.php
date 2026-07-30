@@ -112,7 +112,7 @@ new class extends Component {
             }
 
             $firstSubject = $this->ticketDetails['conversation']['messages'][0]['subject'] ?? '';
-            $this->subject = 'RE: ' . $firstSubject;
+            $this->subject = $firstSubject;
             $this->subjectOriginal = $this->subject;
         }
 
