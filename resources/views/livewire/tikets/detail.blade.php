@@ -526,7 +526,7 @@ new class extends Component {
 
         // avoir les conv
         $messages = $this->ticketDetails["conversation"]["messages"] ?? [];
-        if($messages[0]){
+        if(count($messages) > 0){
 
             // si un message dans le mail exist
             $firstMessage = $messages[0];
