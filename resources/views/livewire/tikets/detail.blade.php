@@ -47,7 +47,9 @@ new class extends Component {
     public array $cc = [];
 
     public bool $editSubject = false;
+
     public string $subject = '';
+
     public string $subjectOriginal = '';
 
     // variable pour le CHATBOT
@@ -465,15 +467,18 @@ new class extends Component {
             [
                 "message_txt" => $this->message_txt,
                 "destinateur" => $this->destinateur,
+                "subject" => $this->subject,
             ],
             [
                 "message_txt" => "required|string",
                 "destinateur" => "required",
+                "subject" => "required",
             ],
             [
                 // Messages personnalisés (optionnel)
                 "message_txt.required" => "Le message est obligatoire",
                 "destinateur.required" => "Le destinataire est obligatoire",
+                "subject.required" => "L'objet du mail est obligatoire",
             ],
         );
         // Si la validation échoue, afficher les erreurs dans un toast
@@ -568,7 +573,6 @@ new class extends Component {
         } else {
             // si aucun message existe dans le mail (fonction envoie nouvau mail)
             $ticket_id = $this->ticketId;
-
             $body = [
                 "ticket_id" => $ticket_id,
                 "replyText" => $this->message_txt,
@@ -1496,6 +1500,47 @@ new class extends Component {
                                 <!-- Affichage du sujet en lecture seule -->
                                 {{-- APRÈS --}}
                                 @if(!empty($ticketDetails['conversation']['messages'][0]['subject']))
+                                    <div class="mb-4 rounded-lg bg-base-200 p-4">
+                                        <div class="flex items-end gap-3">
+                                            <div class="flex-1">
+                                                <x-input
+                                                    label="Objet"
+                                                    wire:model="subject"
+                                                    icon="o-chat-bubble-left-right"
+                                                    hint="Objet de votre réponse"
+                                                    :readonly="!$editSubject"
+                                                    class="font-semibold {{ !$editSubject ? 'opacity-75' : '' }}"
+                                                />
+                                            </div>
+                                            <div class="mb-5 flex gap-2">
+                                                @if(!$editSubject)
+                                                    <x-button
+                                                        label="Modifier"
+                                                        wire:click="$set('editSubject', true)"
+                                                        class="btn-sm btn-outline btn-warning"
+                                                        icon="o-pencil"
+                                                        tooltip="Modifier l'objet"
+                                                    />
+                                                @else
+                                                    <x-button
+                                                        label="Valider"
+                                                        wire:click="$set('editSubject', false)"
+                                                        class="btn-sm btn-success"
+                                                        icon="o-check"
+                                                        tooltip="Confirmer"
+                                                    />
+                                                    <x-button
+                                                        label="Annuler"
+                                                        wire:click="resetSubject"
+                                                        class="btn-sm btn-ghost"
+                                                        icon="o-x-mark"
+                                                        tooltip="Annuler la modification"
+                                                    />
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                @else
                                     <div class="mb-4 rounded-lg bg-base-200 p-4">
                                         <div class="flex items-end gap-3">
                                             <div class="flex-1">
