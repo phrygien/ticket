@@ -215,7 +215,12 @@ new class extends Component {
         }
 
         $this->showSendmailTab = true;
+        $this->activeTab = "sendmail";
+    }
 
+    public function writeNewMessage()
+    {
+        $this->showSendmailTab = true;
         $this->activeTab = "sendmail";
     }
 
@@ -1779,6 +1784,12 @@ new class extends Component {
                 <h2 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem;">
                     Historique du chatbot
                 </h2>
+                <button wire:click="writeNewMessage" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    </svg>
+                    Répondre
+                </button>
 
                 <div
                     wire:key="chat-container-{{ $activeTab }}"
