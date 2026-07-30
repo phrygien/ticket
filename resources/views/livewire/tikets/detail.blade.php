@@ -524,41 +524,81 @@ new class extends Component {
             return;
         }
 
+        // avoir les conv
         $messages = $this->ticketDetails["conversation"]["messages"] ?? [];
-        $firstMessage = $messages[0];
-        $firstMessageId = $firstMessage["message_id"];
-        $ticket_id = $this->ticketId;
+        if($messages[0]){
 
-        $body = [
-            "ticket_id" => $ticket_id,
-            "first_message_id" => $firstMessageId,
-            "replyText" => $this->message_txt,
-            "attachements" => $attachments,
-            "destinataire"      => $this->destinateur,
-            "cc"               => $this->cc,
-            "subject"          => $this->subject
-        ];
+            // si un message dans le mail exist
+            $firstMessage = $messages[0];
+            $firstMessageId = $firstMessage["message_id"];
+            $ticket_id = $this->ticketId;
 
-        $response = Http::withHeaders([
-            "x-secret-key" => env("X_SECRET_KEY"),
-            "Authorization" => "Bearer {$token}",
-            "Accept" => "application/json",
-        ])->post(env("API_REST") . "/ticket/replymail2", $body);
+            $body = [
+                "ticket_id" => $ticket_id,
+                "first_message_id" => $firstMessageId,
+                "replyText" => $this->message_txt,
+                "attachements" => $attachments,
+                "destinataire"      => $this->destinateur,
+                "cc"               => $this->cc,
+                "subject"          => $this->subject
+            ];
 
-        if ($response->successful()) {
-            $this->myModal12 = false;
-            $this->message_txt = "";
-            $this->photos = [];
-            $this->fetchTicketDetails();
-            $this->success("Email envoyé avec succès !");
+            $response = Http::withHeaders([
+                "x-secret-key" => env("X_SECRET_KEY"),
+                "Authorization" => "Bearer {$token}",
+                "Accept" => "application/json",
+            ])->post(env("API_REST") . "/ticket/replymail2", $body);
+
+            if ($response->successful()) {
+                $this->myModal12 = false;
+                $this->message_txt = "";
+                $this->photos = [];
+                $this->fetchTicketDetails();
+                $this->success("Email envoyé avec succès !");
+            } else {
+                \Log::error("Erreur API:", [
+                    "status" => $response->status(),
+                    "body" => $response->body(),
+                ]);
+                $this->error(
+                    'Erreur lors de l\'envoi de l\'email : ' . $response->body(),
+                );
+            }
+
         } else {
-            \Log::error("Erreur API:", [
-                "status" => $response->status(),
-                "body" => $response->body(),
-            ]);
-            $this->error(
-                'Erreur lors de l\'envoi de l\'email : ' . $response->body(),
-            );
+            // si aucun message existe dans le mail (fonction envoie nouvau mail)
+            $ticket_id = $this->ticketId;
+
+            $body = [
+                "ticket_id" => $ticket_id,
+                "replyText" => $this->message_txt,
+                "attachements" => $attachments,
+                "destinataire"      => $this->destinateur,
+                "cc"               => $this->cc,
+                "subject"          => $this->subject
+            ];
+
+            $response = Http::withHeaders([
+                "x-secret-key" => env("X_SECRET_KEY"),
+                "Authorization" => "Bearer {$token}",
+                "Accept" => "application/json",
+            ])->post(env("API_REST") . "/ticket/sendNewMail", $body);
+
+            if ($response->successful()) {
+                $this->myModal12 = false;
+                $this->message_txt = "";
+                $this->photos = [];
+                $this->fetchTicketDetails();
+                $this->success("Email envoyé avec succès !");
+            } else {
+                \Log::error("Erreur API:", [
+                    "status" => $response->status(),
+                    "body" => $response->body(),
+                ]);
+                $this->error(
+                    'Erreur lors de l\'envoi de l\'email : ' . $response->body(),
+                );
+            }
         }
     }
 
@@ -1415,16 +1455,16 @@ new class extends Component {
                                             <!-- Tags existants -->
                                             @foreach($cc as $index => $email)
                                                 <span class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                <x-icon name="o-envelope" class="h-3 w-3" />
-                {{ $email }}
-                <button
-                    type="button"
-                    wire:click="removeCC({{ $index }})"
-                    class="ml-1 rounded-full hover:bg-primary/20 p-0.5"
-                >
-                    <x-icon name="o-x-mark" class="h-3 w-3" />
-                </button>
-            </span>
+                                                    <x-icon name="o-envelope" class="h-3 w-3" />
+                                                    {{ $email }}
+                                                    <button
+                                                        type="button"
+                                                        wire:click="removeCC({{ $index }})"
+                                                        class="ml-1 rounded-full hover:bg-primary/20 p-0.5"
+                                                    >
+                                                        <x-icon name="o-x-mark" class="h-3 w-3" />
+                                                    </button>
+                                                </span>
                                             @endforeach
 
                                             <!-- Input -->
@@ -1432,17 +1472,17 @@ new class extends Component {
                                                 type="email"
                                                 x-model="inputVal"
                                                 @blur="
-                if (inputVal.trim() !== '') {
-                    $wire.addCC(inputVal.trim());
-                    inputVal = '';
-                }
-            "
+                                                    if (inputVal.trim() !== '') {
+                                                        $wire.addCC(inputVal.trim());
+                                                        inputVal = '';
+                                                    }
+                                                "
                                                 @keydown.enter.prevent="
-                if (inputVal.trim() !== '') {
-                    $wire.addCC(inputVal.trim());
-                    inputVal = '';
-                }
-            "
+                                                    if (inputVal.trim() !== '') {
+                                                        $wire.addCC(inputVal.trim());
+                                                        inputVal = '';
+                                                    }
+                                                "
                                                 placeholder="ajouter@exemple.com"
                                                 class="flex-1 min-w-[180px] border-none bg-transparent outline-none text-sm placeholder-base-content/40 p-1"
                                             />
@@ -1781,15 +1821,17 @@ new class extends Component {
 
         @if($activeTab === 'chabotmessage')
             <div class="mx-auto max-w-3xl">
-                <h2 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem;">
-                    Historique du chatbot
-                </h2>
-                <button wire:click="writeNewMessage" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                    </svg>
-                    Répondre
-                </button>
+                <div style="display: flex; justify-content:space-between">
+                    <h2 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem;">
+                        Historique du chatbot
+                    </h2>
+                    <button wire:click="writeNewMessage" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                        Répondre
+                    </button>
+                </div>
 
                 <div
                     wire:key="chat-container-{{ $activeTab }}"
