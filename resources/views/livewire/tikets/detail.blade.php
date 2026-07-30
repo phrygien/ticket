@@ -1866,8 +1866,8 @@ new class extends Component {
 
         @if($activeTab === 'chabotmessage')
             <div class="mx-auto max-w-3xl">
-                <div style="display: flex; justify-content:space-between">
-                    <h2 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content:space-between; margin-bottom: 10px;">
+                    <h2 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">
                         Historique du chatbot
                     </h2>
                     <button wire:click="writeNewMessage" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
